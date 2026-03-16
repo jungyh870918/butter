@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Newsreader", "Noto Serif KR", serif;
+  --font-sans: "Manrope", sans-serif;
+  --color-butter-bg: #fbf9f5;
+  --color-butter-primary: #755b00;
+  --color-butter-text: #1a1a1a;
+  --color-butter-muted: #666666;
+  --color-butter-accent: #e5e1d5;
+}
+
+@layer base {
+  body {
+    @apply bg-butter-bg text-butter-text font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Noto+Serif+KR:wght@200;300;400;500;600;700;900&display=swap');
