@@ -1,69 +1,70 @@
-import { Book, Reflection, JournalEntry, EmotionData } from '../types';
-
-const API_BASE_URL = '';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://butter-backend-production.up.railway.app';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    headers: { 'Content-Type': 'application/json' },
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-    throw new Error(error.message || 'Request failed');
+  if (!res.ok) {
+    throw new Error(`API error ${res.status}: ${res.statusText}`);
   }
-
-  return response.json();
+  return res.json();
 }
 
-export const api = {
-  // Books
-  getBooks: (params?: { tag?: string; search?: string }) => {
-    const query = new URLSearchParams();
-    if (params?.tag && params.tag !== 'All') query.append('tag', params.tag);
-    if (params?.search) query.append('search', params.search);
-    const queryString = query.toString();
-    return request<Book[]>(`/api/books${queryString ? `?${queryString}` : ''}`);
-  },
-  getBook: (id: string) => request<Book>(`/api/books/${id}`),
-  getBookReflections: (bookId: string) => request<Reflection[]>(`/api/books/${bookId}/reflections`),
-
-  // Reflections
-  getReflections: (params?: { bookId?: string; limit?: number }) => {
-    const query = new URLSearchParams();
-    if (params?.bookId) query.append('bookId', params.bookId);
-    if (params?.limit) query.append('limit', params.limit.toString());
-    const queryString = query.toString();
-    return request<Reflection[]>(`/api/reflections${queryString ? `?${queryString}` : ''}`);
-  },
-  getReflection: (id: string) => request<Reflection>(`/api/reflections/${id}`),
-  createReflection: (payload: Partial<Reflection>) => request<Reflection>('/api/reflections', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  }),
-
-  // Journal
-  getJournalEntries: () => request<JournalEntry[]>('/api/journal'),
-  createJournalEntry: (payload: Partial<JournalEntry>) => request<JournalEntry>('/api/journal', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  }),
-  updateJournalEntry: (id: string, payload: Partial<JournalEntry>) => request<JournalEntry>(`/api/journal/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(payload),
-  }),
-  deleteJournalEntry: (id: string) => request<void>(`/api/journal/${id}`, {
-    method: 'DELETE',
-  }),
-
-  // Emotions
-  getEmotions: () => request<EmotionData[]>('/api/emotions'),
-  getEmotionSummary: () => request<{ topEmotions: string[]; averageIntensity: number }>('/api/emotions/summary'),
-  createEmotionLog: (payload: EmotionData) => request<EmotionData>('/api/emotions', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  }),
+// Books
+export const getBooks = (params?: { tag?: string; search?: string }) => {
+  const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v) as string[][]).toString() : '';
+  return request<any[]>(`/api/books${qs}`);
 };
+
+export const getBook = (id: string) => request<any>(`/api/books/${id}`);
+
+export const getBookReflections = (bookId: string) => request<any[]>(`/api/books/${bookId}/reflections`);
+
+// Reflections
+export const getReflections = (params?: { bookId?: string; limit?: number }) => {
+  const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString() : '';
+  return request<any[]>(`/api/reflections${qs}`);
+};
+
+export const getReflection = (id: string) => request<any>(`/api/reflections/${id}`);
+
+export const createReflection = (payload: {
+  title: string;
+  content: string;
+  author: string;
+  authorAvatar: string;
+  tags: string[];
+  image?: string | null;
+  bookId?: string | null;
+}) => request<any>('/api/reflections', { method: 'POST', body: JSON.stringify(payload) });
+
+// Journal
+export const getJournalEntries = () => request<any[]>('/api/journal');
+
+export const createJournalEntry = (payload: {
+  content: string;
+  prompt?: string | null;
+  mood?: string | null;
+  intensity: number;
+}) => request<any>('/api/journal', { method: 'POST', body: JSON.stringify(payload) });
+
+export const updateJournalEntry = (id: string, payload: Partial<{
+  content: string;
+  prompt: string;
+  mood: string;
+  intensity: number;
+}>) => request<any>(`/api/journal/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+
+export const deleteJournalEntry = (id: string) => request<any>(`/api/journal/${id}`, { method: 'DELETE' });
+
+// Emotions
+export const getEmotions = () => request<any[]>('/api/emotions');
+
+export const getEmotionSummary = () => request<any>('/api/emotions/summary');
+
+export const createEmotionLog = (payload: {
+  date: string;
+  intensity: number;
+  emotion: string;
+}) => request<any>('/api/emotions', { method: 'POST', body: JSON.stringify(payload) });

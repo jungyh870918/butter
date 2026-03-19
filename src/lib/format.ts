@@ -1,13 +1,12 @@
-export function formatDate(dateString: string): string {
+export function formatDate(dateStr: string): string {
+  if (!dateStr) return '';
+  // Handle ISO strings
   try {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }).format(date);
-  } catch (e) {
-    return dateString;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch {
+    return dateStr;
   }
 }
 

@@ -28,11 +28,17 @@ export interface JournalEntry {
   content: string;
   prompt?: string;
   mood?: string;
-  intensity: number; // 1-10
+  intensity: number;
 }
 
 export interface EmotionData {
   date: string;
   intensity: number;
   emotion: string;
+}
+
+export interface EmotionSummary {
+  topEmotions: Array<{ emotion: string; count: number; avgIntensity: number }>;
+  totalEntries: number;
+  avgIntensity: number;
 }
