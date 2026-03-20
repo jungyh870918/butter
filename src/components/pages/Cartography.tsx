@@ -17,9 +17,9 @@ export const Cartography = () => {
   const { emotions, summary, loading, error } = useEmotions();
 
   return (
-    <div className="pt-24 pb-12 px-6 max-w-6xl mx-auto">
+    <div className="pt-20 md:pt-24 pb-12 px-4 md:px-6 max-w-6xl mx-auto">
       <header className="mb-12 text-center">
-        <h1 className="text-5xl font-serif mb-4">Personal Cartography</h1>
+        <h1 className="text-3xl md:text-5xl font-serif mb-3 md:mb-4">Personal Cartography</h1>
         <p className="text-butter-muted">Mapping the emotional terrain of your literary journey.</p>
       </header>
 
@@ -28,7 +28,7 @@ export const Cartography = () => {
 
       {!loading && !error && (
         <>
-          <div className="grid md:grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8 mb-5 md:mb-8">
             <NarrativeArc emotions={emotions} />
             <IntensityMatrix emotions={emotions} />
           </div>
@@ -42,8 +42,8 @@ export const Cartography = () => {
 // ── NarrativeArc ───────────────────────────────────────────────────────────
 
 const NarrativeArc = ({ emotions }: { emotions: EmotionData[] }) => (
-  <div className="bg-white p-8 rounded-[32px] border border-butter-accent shadow-sm">
-    <h3 className="text-sm font-bold uppercase tracking-widest mb-8">
+  <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[32px] border border-butter-accent shadow-sm">
+    <h3 className="text-sm font-bold uppercase tracking-widest mb-5 md:mb-8">
       Narrative Arc (Weekly Intensity)
     </h3>
     <div className="h-[300px] w-full">
@@ -97,8 +97,8 @@ const IntensityMatrix = ({ emotions }: { emotions: EmotionData[] }) => {
   });
 
   return (
-    <div className="bg-white p-8 rounded-[32px] border border-butter-accent shadow-sm">
-      <h3 className="text-sm font-bold uppercase tracking-widest mb-8">Intensity Matrix</h3>
+    <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[32px] border border-butter-accent shadow-sm">
+      <h3 className="text-sm font-bold uppercase tracking-widest mb-5 md:mb-8">Intensity Matrix</h3>
       {emotions.length === 0 ? (
         <EmptyState message="No emotion data yet" />
       ) : (
@@ -145,7 +145,7 @@ const LexiconCloud = ({ emotions, summary }: LexiconCloudProps) => {
     [...new Set(emotions.map((e) => e.emotion))].slice(0, 8);
 
   return (
-    <div className="bg-butter-primary text-white p-12 rounded-[40px] shadow-2xl overflow-hidden relative">
+    <div className="bg-butter-primary text-white p-6 md:p-12 rounded-3xl md:rounded-[40px] shadow-2xl overflow-hidden relative">
       <div className="relative z-10">
         <h3 className="text-sm font-bold uppercase tracking-[0.3em] mb-8 opacity-60">
           Lexicon of Feelings
@@ -160,7 +160,7 @@ const LexiconCloud = ({ emotions, summary }: LexiconCloudProps) => {
               <span
                 key={word}
                 className="font-serif italic opacity-80 hover:opacity-100 transition-opacity cursor-default"
-                style={{ fontSize: `${Math.max(2, 5 - i * 0.4)}rem` }}
+                style={{ fontSize: `${Math.max(1.2, 3.2 - i * 0.3)}rem` }}
               >
                 {word}
               </span>

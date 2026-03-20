@@ -32,8 +32,8 @@ export function useJournal(enabled: boolean) {
     prompt: string;
     mood: string;
     intensity: number;
-  }) => {
-    await createJournalEntry({
+  }): Promise<{ id: string }> => {
+    const entry = await createJournalEntry({
       content: payload.content,
       prompt: payload.prompt,
       mood: payload.mood || null,
@@ -46,6 +46,7 @@ export function useJournal(enabled: boolean) {
         emotion: payload.mood,
       });
     }
+    return entry; // { id, date, content, ... }
   };
 
   const update = async (

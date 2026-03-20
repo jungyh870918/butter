@@ -9,10 +9,10 @@ export const Home = () => {
   const { reflections, loading, error } = useReflections({ limit: 10 });
 
   return (
-    <div className="pt-24 pb-12 px-6 max-w-5xl mx-auto">
-      <header className="mb-12">
-        <h1 className="text-5xl font-serif mb-4">Recent Reflections</h1>
-        <p className="text-butter-muted max-w-2xl">
+    <div className="pt-20 md:pt-24 pb-12 px-4 md:px-6 max-w-5xl mx-auto">
+      <header className="mb-8 md:mb-12">
+        <h1 className="text-3xl md:text-5xl font-serif mb-3 md:mb-4">Recent Reflections</h1>
+        <p className="text-butter-muted text-sm md:text-base max-w-2xl">
           A curated stream of thoughts and insights from our community of deep readers.
         </p>
       </header>
@@ -22,7 +22,7 @@ export const Home = () => {
       {!loading && !error && reflections.length === 0 && <EmptyState message="No reflections yet" />}
 
       {!loading && !error && (
-        <div className="grid gap-12">
+        <div className="grid gap-8 md:gap-12">
           {reflections.map((reflection) => (
             <ReflectionCard key={reflection.id} reflection={reflection} />
           ))}
@@ -38,9 +38,9 @@ const ReflectionCard = ({ reflection }: { reflection: Reflection }) => (
     animate={{ opacity: 1, y: 0 }}
     className="group"
   >
-    <div className="grid md:grid-cols-2 gap-8 items-center">
+    <div className="flex flex-col md:grid md:grid-cols-2 gap-5 md:gap-8 items-start md:items-center">
       {reflection.image && (
-        <div className="overflow-hidden rounded-2xl aspect-[16/9] md:aspect-[4/3]">
+        <div className="w-full overflow-hidden rounded-2xl aspect-[16/9] md:aspect-[4/3]">
           <img
             src={reflection.image}
             alt={reflection.title}
@@ -51,15 +51,15 @@ const ReflectionCard = ({ reflection }: { reflection: Reflection }) => (
         </div>
       )}
       <div className={reflection.image ? '' : 'md:col-span-2'}>
-        <div className="flex gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-3 md:mb-4">
           {(reflection.tags || []).map((tag) => (
             <span key={tag} className="text-[10px] uppercase tracking-widest bg-butter-accent px-2 py-1 rounded-full text-butter-muted font-semibold">
               {tag}
             </span>
           ))}
         </div>
-        <h2 className="text-3xl font-serif mb-4">{reflection.title}</h2>
-        <p className="text-butter-muted line-clamp-3 mb-6 font-light leading-relaxed">{reflection.content}</p>
+        <h2 className="text-2xl md:text-3xl font-serif mb-3 md:mb-4">{reflection.title}</h2>
+        <p className="text-butter-muted line-clamp-3 mb-5 md:mb-6 font-light leading-relaxed text-sm md:text-base">{reflection.content}</p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AvatarImage

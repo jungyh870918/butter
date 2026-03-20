@@ -8,6 +8,7 @@ export interface Book {
   rating: number;
   historicalContext?: string;
   quote?: string;
+  authorNote?: string;
 }
 
 export interface Reflection {

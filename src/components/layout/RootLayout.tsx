@@ -10,7 +10,8 @@ export const RootLayout = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-1">
+      {/* 모바일: 상단바 + 하단탭바 여백, 데스크탑: 상단바 여백만 */}
+      <main className="flex-1 pb-20 md:pb-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

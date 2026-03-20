@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Heart, Share2, MessageSquare, History, Link, Check, Copy } from 'lucide-react';
+import { ArrowLeft, Heart, Share2, MessageSquare, History, Link, Check, Copy, User } from 'lucide-react';
 import { Book, Reflection } from '../../types';
 import { useBook } from '../../hooks/useBook';
 import { useReflections } from '../../hooks/useReflections';
@@ -14,16 +14,16 @@ export const BookDetail = () => {
   const { book, loading: bookLoading, error: bookError } = useBook(bookId);
   const { reflections, loading: refLoading, error: refError } = useReflections({ bookId });
 
-  if (bookLoading) return <div className="pt-24"><LoadingSpinner /></div>;
-  if (bookError || !book) return <div className="pt-24"><ErrorMessage message={bookError || 'Book not found'} /></div>;
+  if (bookLoading) return <div className="pt-20 md:pt-24"><LoadingSpinner /></div>;
+  if (bookError || !book) return <div className="pt-20 md:pt-24"><ErrorMessage message={bookError || 'Book not found'} /></div>;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-24 pb-12 px-6 max-w-6xl mx-auto">
-      <button onClick={() => navigate('/explore')} className="mb-8 flex items-center gap-2 text-butter-muted hover:text-butter-text transition-colors">
-        <ArrowLeft size={20} />
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-20 md:pt-24 pb-12 px-4 md:px-6 max-w-6xl mx-auto">
+      <button onClick={() => navigate('/explore')} className="mb-6 md:mb-8 flex items-center gap-2 text-butter-muted hover:text-butter-text transition-colors">
+        <ArrowLeft size={18} />
         <span className="uppercase tracking-widest text-xs font-bold">Back to Explore</span>
       </button>
-      <div className="grid md:grid-cols-2 gap-16">
+      <div className="grid md:grid-cols-2 gap-8 md:gap-16">
         <BookCover book={book} bookId={bookId!} />
         <BookInfo book={book} reflections={reflections} loading={refLoading} error={refError} />
       </div>
@@ -44,7 +44,7 @@ const BookCover = ({ book, bookId }: { book: Book; bookId: string }) => {
 
   return (
     <div>
-      <div className="sticky top-24">
+      <div className="md:sticky md:top-24">
         <div className="aspect-[2/3] rounded-3xl overflow-hidden shadow-2xl mb-8">
           <BookCoverImage src={book.cover} alt={book.title} className="w-full h-full object-cover" />
         </div>
@@ -97,28 +97,62 @@ const BookCover = ({ book, bookId }: { book: Book; bookId: string }) => {
   );
 };
 
-const BookInfo = ({ book, reflections, loading, error }: { book: Book; reflections: Reflection[]; loading: boolean; error: string }) => (
+const DESCRIPTION_LIMIT = 180;
+
+const BookInfo = ({ book, reflections, loading, error }: { book: Book; reflections: Reflection[]; loading: boolean; error: string }) => {
+  const [descExpanded, setDescExpanded] = useState(false);
+  const description = book.description || '';
+  const isTruncated = description.length > DESCRIPTION_LIMIT;
+  const displayedDescription = isTruncated && !descExpanded
+    ? description.slice(0, DESCRIPTION_LIMIT).trimEnd() + '…'
+    : description;
+
+  return (
   <div>
-    <div className="flex gap-2 mb-6">
+    <div className="flex flex-wrap gap-2 mb-5 md:mb-6">
       {(book.tags || []).map((tag) => (
         <span key={tag} className="text-[10px] uppercase tracking-widest bg-butter-accent px-3 py-1.5 rounded-full text-butter-muted font-bold">{tag}</span>
       ))}
     </div>
-    <h1 className="text-6xl font-serif mb-4 leading-tight">{book.title}</h1>
-    <p className="text-2xl font-serif italic text-butter-muted mb-8">by {book.author}</p>
-    <div className="prose prose-stone max-w-none mb-12">
-      <p className="text-lg leading-relaxed text-butter-muted font-light">{book.description}</p>
+    <h1 className="text-4xl md:text-6xl font-serif mb-3 md:mb-4 leading-tight">{book.title}</h1>
+    <p className="text-xl md:text-2xl font-serif italic text-butter-muted mb-6 md:mb-8">by {book.author}</p>
+
+    {/* description */}
+    <div className="prose prose-stone max-w-none mb-10">
+      <p className="text-lg leading-relaxed text-butter-muted font-light">{displayedDescription}</p>
+      {isTruncated && (
+        <button
+          onClick={() => setDescExpanded((prev) => !prev)}
+          className="mt-2 text-xs font-bold uppercase tracking-widest text-butter-primary hover:opacity-70 transition-opacity"
+        >
+          {descExpanded ? 'Show less' : 'Read more'}
+        </button>
+      )}
     </div>
+
+    {/* authorNote — OpenAI 보강 데이터 */}
+    {book.authorNote && (
+      <div className="mb-10">
+        <h3 className="text-sm font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
+          <User size={16} /> About the Author
+        </h3>
+        <p className="text-butter-muted leading-relaxed font-light">{book.authorNote}</p>
+      </div>
+    )}
+
+    {/* quote */}
     {book.quote && (
-      <blockquote className="bg-butter-primary/5 border-l-4 border-butter-primary p-8 rounded-r-2xl mb-12">
-        <p className="text-2xl font-serif italic mb-4">"{book.quote}"</p>
+      <blockquote className="bg-butter-primary/5 border-l-4 border-butter-primary p-6 md:p-8 rounded-r-2xl mb-10">
+        <p className="text-xl md:text-2xl font-serif italic mb-4">"{book.quote}"</p>
         <footer className="text-sm uppercase tracking-widest font-bold text-butter-primary">— Author's Note</footer>
       </blockquote>
     )}
+
+    {/* historicalContext — OpenAI 보강 데이터 */}
     {book.historicalContext && (
-      <div className="mb-12">
-        <h3 className="text-sm font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-          <History size={18} /> Historical Context
+      <div className="mb-10">
+        <h3 className="text-sm font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
+          <History size={16} /> Historical Context
         </h3>
         <p className="text-butter-muted leading-relaxed font-light">{book.historicalContext}</p>
       </div>
@@ -149,4 +183,5 @@ const BookInfo = ({ book, reflections, loading, error }: { book: Book; reflectio
       )}
     </div>
   </div>
-);
+  );
+};

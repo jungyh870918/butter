@@ -1,6 +1,6 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  'https://butter-backend-production.up.railway.app';
+  'http://localhost:4000';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -54,6 +54,8 @@ export const createReflection = (payload: {
   tags: string[];
   image?: string | null;
   bookId?: string | null;
+  userId?: string | null;
+  journalEntryId?: string | null;
 }) => request<any>('/api/reflections', { method: 'POST', body: JSON.stringify(payload) });
 
 // ── Journal ────────────────────────────────────────────────────────────────
