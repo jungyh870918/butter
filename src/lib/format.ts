@@ -1,6 +1,5 @@
 export function formatDate(dateStr: string): string {
   if (!dateStr) return '';
-  // Handle ISO strings
   try {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;

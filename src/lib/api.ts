@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://butter-backend-production.up.railway.app';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  'https://butter-backend-production.up.railway.app';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -11,19 +13,34 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// Books
+// ── Books ──────────────────────────────────────────────────────────────────
+
 export const getBooks = (params?: { tag?: string; search?: string }) => {
-  const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v) as string[][]).toString() : '';
+  const qs = params
+    ? '?' +
+      new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v) as string[][],
+      ).toString()
+    : '';
   return request<any[]>(`/api/books${qs}`);
 };
 
 export const getBook = (id: string) => request<any>(`/api/books/${id}`);
 
-export const getBookReflections = (bookId: string) => request<any[]>(`/api/books/${bookId}/reflections`);
+export const getBookReflections = (bookId: string) =>
+  request<any[]>(`/api/books/${bookId}/reflections`);
 
-// Reflections
+// ── Reflections ────────────────────────────────────────────────────────────
+
 export const getReflections = (params?: { bookId?: string; limit?: number }) => {
-  const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString() : '';
+  const qs = params
+    ? '?' +
+      new URLSearchParams(
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)]),
+      ).toString()
+    : '';
   return request<any[]>(`/api/reflections${qs}`);
 };
 
@@ -39,7 +56,8 @@ export const createReflection = (payload: {
   bookId?: string | null;
 }) => request<any>('/api/reflections', { method: 'POST', body: JSON.stringify(payload) });
 
-// Journal
+// ── Journal ────────────────────────────────────────────────────────────────
+
 export const getJournalEntries = () => request<any[]>('/api/journal');
 
 export const createJournalEntry = (payload: {
@@ -49,16 +67,21 @@ export const createJournalEntry = (payload: {
   intensity: number;
 }) => request<any>('/api/journal', { method: 'POST', body: JSON.stringify(payload) });
 
-export const updateJournalEntry = (id: string, payload: Partial<{
-  content: string;
-  prompt: string;
-  mood: string;
-  intensity: number;
-}>) => request<any>(`/api/journal/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+export const updateJournalEntry = (
+  id: string,
+  payload: Partial<{
+    content: string;
+    prompt: string;
+    mood: string;
+    intensity: number;
+  }>,
+) => request<any>(`/api/journal/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 
-export const deleteJournalEntry = (id: string) => request<any>(`/api/journal/${id}`, { method: 'DELETE' });
+export const deleteJournalEntry = (id: string) =>
+  request<any>(`/api/journal/${id}`, { method: 'DELETE' });
 
-// Emotions
+// ── Emotions ───────────────────────────────────────────────────────────────
+
 export const getEmotions = () => request<any[]>('/api/emotions');
 
 export const getEmotionSummary = () => request<any>('/api/emotions/summary');
