@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Filter, Star, ChevronDown, X } from 'lucide-react';
+import { Star, X } from 'lucide-react';
 import { Book } from '../../types';
 import { useBooks } from '../../hooks/useBooks';
 import { LoadingSpinner, ErrorMessage, EmptyState, BookCoverImage } from '../ui';
@@ -15,44 +15,179 @@ export const Explore = () => {
   const navigate = useNavigate();
 
   const handleSelectBook = (book: Book) => navigate(`/explore/${book.id}`);
+  const trendingBooks = books.slice(0, 3);
 
   return (
-    <div className="pt-20 md:pt-24 pb-12 px-4 md:px-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-butter-bg">
 
-      {/* ── 모바일 필터 드롭다운 버튼 ── */}
-      <div className="md:hidden mb-5">
-        <button
-          onClick={() => setDrawerOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-butter-accent bg-white shadow-sm text-sm font-bold uppercase tracking-widest"
-        >
-          <Filter size={15} />
-          {filter === 'All' ? 'All Categories' : filter}
-          <ChevronDown size={15} className="text-butter-muted ml-1" />
-        </button>
+      {/* ── Hero 헤더 ── */}
+      <div className="pt-28 pb-8 px-8 md:px-14 max-w-7xl mx-auto">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-butter-muted/70 font-medium mb-5">
+          Curated Readings
+        </p>
+        <h1 className="text-5xl md:text-[3.75rem] font-serif font-light leading-[1.08] tracking-tight mb-5">
+          Explore{' '}
+          <em style={{ fontStyle: 'italic', color: 'var(--color-butter-primary)' }}>
+            the library
+          </em>
+        </h1>
+        <p className="text-butter-muted leading-[1.75] max-w-md font-light text-[15px]">
+          A sanctuary for slow reading. Discover volumes curated for contemplation, curiosity, and the quiet pursuit of knowledge.
+        </p>
       </div>
 
-      {/* ── 모바일 카테고리 드로어 ── */}
+      <div className="px-8 md:px-14 max-w-7xl mx-auto">
+
+        {/* ── 카테고리 필터 ── */}
+        <div className="flex items-center gap-2.5 mb-10 overflow-x-auto pb-1 scrollbar-hide pt-6"
+          style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}>
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilter(cat)}
+              className={`shrink-0 px-4 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 ${
+                filter === cat
+                  ? 'bg-butter-primary text-white'
+                  : 'text-butter-muted hover:text-butter-text'
+              }`}
+              style={filter !== cat ? { background: 'rgba(0,0,0,0.035)' } : {}}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* ── 메인 + 사이드바 ── */}
+        <div className="flex flex-col lg:flex-row gap-14 lg:gap-20 pb-24">
+
+          {/* 책 그리드 */}
+          <main className="flex-1 min-w-0">
+            {loading && <LoadingSpinner />}
+            {!loading && error && <ErrorMessage message={error} />}
+            {!loading && !error && books.length === 0 && <EmptyState message="No books found" />}
+            {!loading && !error && books.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-12">
+                {books.map((book, i) => (
+                  <BookCard key={book.id} book={book} onClick={() => handleSelectBook(book)} index={i} />
+                ))}
+              </div>
+            )}
+          </main>
+
+          {/* ── 사이드바 ── */}
+          <aside className="lg:w-60 xl:w-64 shrink-0 space-y-0">
+
+            {/* A. Trending Now — 소프트 따뜻한 배경 패널 */}
+            {!loading && trendingBooks.length > 0 && (
+              <div
+                className="p-6 mb-8"
+                style={{
+                  background: '#f2ede3',
+                  borderRadius: '4px',
+                }}
+              >
+                <p className="text-[9px] uppercase tracking-[0.28em] font-bold text-butter-muted/80 mb-5">
+                  Trending Now
+                </p>
+                <div className="space-y-5">
+                  {trendingBooks.map((book, i) => (
+                    <div
+                      key={book.id}
+                      className="flex gap-3.5 items-start cursor-pointer group"
+                      onClick={() => handleSelectBook(book)}
+                    >
+                      <span
+                        className="font-serif font-light leading-none mt-0.5 shrink-0 select-none w-5 text-right"
+                        style={{ fontSize: '1.1rem', color: '#c5b89a' }}
+                      >
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-medium leading-snug group-hover:text-butter-primary transition-colors line-clamp-2">
+                          {book.title}
+                        </p>
+                        <p className="text-[11px] text-butter-muted italic mt-0.5 font-light">{book.author}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* B. Journaling Circle — 왼쪽 룰 callout */}
+            <div
+              className="pl-5 py-1 mb-8"
+              style={{ borderLeft: '2px solid rgba(107,82,0,0.25)' }}
+            >
+              <h3 className="font-serif text-[1.05rem] font-light leading-snug mb-2 text-butter-text">
+                The Journaling Circle
+              </h3>
+              <p className="text-[12px] text-butter-muted leading-[1.7] mb-5 font-light">
+                Join our weekly correspondence on the art of slow reading and curated lists from our library.
+              </p>
+              <input
+                type="email"
+                placeholder="Email address"
+                className="w-full px-0 py-2 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/50 transition-colors"
+                style={{ borderBottom: '1px solid rgba(0,0,0,0.12)' }}
+              />
+              <button
+                className="mt-4 w-full py-2.5 text-white text-[10px] uppercase tracking-[0.18em] font-semibold hover:brightness-110 transition-all"
+                style={{
+                  background: 'var(--color-butter-text)',
+                  borderRadius: '2px',
+                }}
+              >
+                Subscribe
+              </button>
+            </div>
+
+            {/* C. Did you know — 밝은 흰색 카드 */}
+            <div
+              className="p-5"
+              style={{
+                background: '#ffffff',
+                borderRadius: '4px',
+                boxShadow: '0 1px 8px rgba(0,0,0,0.05)',
+              }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span style={{ fontSize: '15px', lineHeight: 1 }}>📖</span>
+                <p className="text-[9px] uppercase tracking-[0.24em] font-bold text-butter-muted/70">
+                  Did you know?
+                </p>
+              </div>
+              <p className="text-[13px] text-butter-muted leading-[1.75] italic font-light">
+                "Reading is that fruitful miracle of a communication in the midst of solitude."
+              </p>
+              <p className="text-[11px] text-butter-muted/70 mt-2.5 not-italic font-medium">
+                — Marcel Proust
+              </p>
+            </div>
+
+          </aside>
+        </div>
+      </div>
+
+      {/* 모바일 드로어 */}
       <AnimatePresence>
         {drawerOpen && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/30"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/20"
               onClick={() => setDrawerOpen(false)}
             />
             <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-butter-bg rounded-t-3xl p-6 pb-10 shadow-2xl"
+              className="fixed bottom-0 left-0 right-0 z-50 bg-butter-bg rounded-t-2xl p-6 pb-10"
+              style={{ boxShadow: '0 -4px 40px rgba(0,0,0,0.08)' }}
             >
               <div className="flex justify-between items-center mb-6">
-                <h3 className="font-serif text-xl">Categories</h3>
-                <button onClick={() => setDrawerOpen(false)} className="p-1 text-butter-muted">
-                  <X size={20} />
+                <h3 className="font-serif text-xl font-light">Categories</h3>
+                <button onClick={() => setDrawerOpen(false)}>
+                  <X size={18} className="text-butter-muted" />
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -60,9 +195,10 @@ export const Explore = () => {
                   <button
                     key={cat}
                     onClick={() => { setFilter(cat); setDrawerOpen(false); }}
-                    className={`py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-widest transition-all ${
-                      filter === cat ? 'bg-butter-primary text-white shadow-md' : 'bg-butter-accent text-butter-muted'
+                    className={`py-3 px-4 rounded-lg text-sm font-medium transition-all ${
+                      filter === cat ? 'bg-butter-primary text-white' : 'text-butter-muted'
                     }`}
+                    style={filter !== cat ? { background: 'rgba(0,0,0,0.04)' } : {}}
                   >
                     {cat}
                   </button>
@@ -72,105 +208,37 @@ export const Explore = () => {
           </>
         )}
       </AnimatePresence>
-
-      <div className="flex flex-col md:flex-row gap-8 md:gap-12">
-        {/* ── 데스크탑 사이드바 ── */}
-        <Sidebar
-          filter={filter}
-          onFilterChange={setFilter}
-          trendingBooks={books.slice(0, 2)}
-          onSelectBook={handleSelectBook}
-        />
-
-        {/* ── 책 그리드 ── */}
-        <main className="flex-1">
-          {loading && <LoadingSpinner />}
-          {!loading && error && <ErrorMessage message={error} />}
-          {!loading && !error && books.length === 0 && <EmptyState message="No books found" />}
-          {!loading && !error && books.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
-              {books.map((book) => (
-                <BookCard key={book.id} book={book} onClick={() => handleSelectBook(book)} />
-              ))}
-            </div>
-          )}
-        </main>
-      </div>
     </div>
   );
 };
 
-interface SidebarProps {
-  filter: string;
-  onFilterChange: (f: string) => void;
-  trendingBooks: Book[];
-  onSelectBook: (b: Book) => void;
-}
-
-const Sidebar = ({ filter, onFilterChange, trendingBooks, onSelectBook }: SidebarProps) => (
-  <aside className="hidden md:block md:w-64 shrink-0">
-    <div className="sticky top-24">
-      <h2 className="text-xl font-serif mb-6 flex items-center gap-2">
-        <Filter size={18} /> Curated Readings
-      </h2>
-      <div className="flex flex-col gap-2">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => onFilterChange(cat)}
-            className={`text-left px-4 py-2 rounded-lg transition-all ${
-              filter === cat ? 'bg-butter-primary text-white shadow-lg' : 'hover:bg-butter-accent text-butter-muted'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-      {trendingBooks.length > 0 && (
-        <div className="mt-12 p-6 bg-butter-accent/50 rounded-2xl border border-butter-accent">
-          <h3 className="text-sm font-bold uppercase tracking-widest mb-4">Trending Now</h3>
-          <div className="space-y-4">
-            {trendingBooks.map((book) => (
-              <div key={book.id} className="flex gap-3 items-center cursor-pointer" onClick={() => onSelectBook(book)}>
-                <BookCoverImage
-                  src={book.cover}
-                  alt={book.title}
-                  className="w-12 h-16 object-cover rounded shadow-sm"
-                />
-                <div>
-                  <p className="text-xs font-bold line-clamp-1">{book.title}</p>
-                  <p className="text-[10px] text-butter-muted">{book.author}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  </aside>
-);
-
-const BookCard = ({ book, onClick }: { book: Book; onClick: () => void }) => (
-  <motion.div
-    layout
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
+const BookCard = ({ book, onClick, index }: { book: Book; onClick: () => void; index: number }) => (
+  <motion.article
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: index * 0.04, duration: 0.35 }}
     className="group cursor-pointer"
     onClick={onClick}
   >
-    <div className="relative aspect-[2/3] mb-3 overflow-hidden rounded-xl md:rounded-2xl shadow-lg md:shadow-xl transition-all group-hover:-translate-y-1 md:group-hover:-translate-y-2 group-hover:shadow-xl md:group-hover:shadow-2xl">
-      <BookCoverImage src={book.cover} alt={book.title} className="w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex items-center justify-center">
-        <button className="bg-white text-butter-text px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest">
-          View Details
-        </button>
+    <div
+      className="relative aspect-[2/3] mb-4 overflow-hidden rounded-sm transition-all duration-500 group-hover:-translate-y-1"
+      style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.10)' }}
+    >
+      <BookCoverImage
+        src={book.cover}
+        alt={book.title}
+        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+      />
+    </div>
+    <h3 className="font-serif text-base leading-snug mb-1 group-hover:text-butter-primary transition-colors duration-300 line-clamp-2">
+      {book.title}
+    </h3>
+    <p className="text-[12px] text-butter-muted italic mb-1.5 line-clamp-1 font-light">{book.author}</p>
+    {book.rating > 0 && (
+      <div className="flex items-center gap-1">
+        <Star size={10} fill="currentColor" className="text-butter-primary" />
+        <span className="text-[11px] text-butter-primary font-medium">{book.rating}</span>
       </div>
-    </div>
-    <h3 className="font-serif text-sm md:text-lg mb-0.5 md:mb-1 group-hover:text-butter-primary transition-colors line-clamp-2">{book.title}</h3>
-    <p className="text-xs md:text-sm text-butter-muted mb-1 md:mb-2 line-clamp-1">{book.author}</p>
-    <div className="flex items-center gap-1 text-butter-primary">
-      <Star size={12} fill="currentColor" />
-      <span className="text-xs font-bold">{book.rating}</span>
-    </div>
-  </motion.div>
+    )}
+  </motion.article>
 );

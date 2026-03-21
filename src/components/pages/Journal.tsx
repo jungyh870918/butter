@@ -78,7 +78,7 @@ export const Journal = () => {
 
 const ViewToggle = ({ view, onToggle }: { view: JournalView; onToggle: (v: JournalView) => void }) => (
   <div className="flex justify-center mb-12">
-    <div className="bg-butter-accent p-1 rounded-full flex">
+    <div className="flex gap-1 p-1 rounded-full" style={{background: "rgba(0,0,0,0.05)"}}>
       {(['write', 'archive'] as const).map((v) => (
         <button
           key={v}
@@ -491,7 +491,7 @@ const JournalEntryCard = ({ entry, onUpdate, onDelete }: JournalEntryCardProps) 
   };
 
   return (
-    <div className="bg-white p-8 rounded-3xl border border-butter-accent shadow-sm hover:shadow-md transition-all">
+    <div className="py-6">
       {editing ? (
         <div className="flex flex-col gap-4">
           <textarea

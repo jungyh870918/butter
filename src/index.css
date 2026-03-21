@@ -3,21 +3,53 @@
 @theme {
   --font-serif: "Newsreader", "Noto Serif KR", serif;
   --font-sans: "Manrope", sans-serif;
-  --color-butter-bg: #fbf9f5;
-  --color-butter-primary: #755b00;
-  --color-butter-text: #1a1a1a;
-  --color-butter-muted: #666666;
-  --color-butter-accent: #e5e1d5;
+  --color-butter-bg: #faf8f4;
+  --color-butter-surface: #f5f2eb;
+  --color-butter-primary: #6b5200;
+  --color-butter-text: #1c1a17;
+  --color-butter-muted: #7a7068;
+  --color-butter-faint: #ede9de;
+  --color-butter-accent: #e8e3d6;
+  --color-butter-rule: rgba(0,0,0,0.06);
 }
 
 @layer base {
   body {
     @apply bg-butter-bg text-butter-text font-sans antialiased;
+    font-feature-settings: "kern" 1, "liga" 1;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
+    letter-spacing: -0.01em;
   }
+
+  /* 스크롤바 숨기기 */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* 얇은 구분선 — 테두리 대신 */
+.divider {
+  height: 1px;
+  background: var(--color-butter-rule);
+}
+
+/* 에디토리얼 drop cap */
+.drop-cap::first-letter {
+  font-family: var(--font-serif);
+  font-size: 4.5em;
+  line-height: 0.75;
+  float: left;
+  margin-right: 0.1em;
+  margin-top: 0.05em;
+  color: var(--color-butter-primary);
+  font-weight: 300;
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Noto+Serif+KR:wght@200;300;400;500;600;700;900&display=swap');
