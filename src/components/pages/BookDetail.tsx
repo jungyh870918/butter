@@ -7,12 +7,18 @@ import {
 } from 'lucide-react';
 import { Book, Reflection } from '../../types';
 import { useBook } from '../../hooks/useBook';
+import { useBooks } from '../../hooks/useBooks';
 import { useReflections } from '../../hooks/useReflections';
 import { LoadingSpinner, ErrorMessage, EmptyState, BookCoverImage, AvatarImage } from '../ui';
 import { formatDate } from '../../lib/format';
 
 const TagPill = ({ label }: { label: string }) => (
-  <span className="text-[10px] uppercase tracking-widest text-butter-muted font-medium">{label}</span>
+  <span
+    className="inline-block px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] font-bold rounded-sm"
+    style={{ background: 'var(--color-butter-primary)', color: '#ffffff' }}
+  >
+    {label}
+  </span>
 );
 
 export const BookDetail = () => {
@@ -33,12 +39,15 @@ export const BookDetail = () => {
         </button>
       </div>
 
-      <div className="px-6 md:px-12 max-w-6xl mx-auto pb-24">
+      <div className="px-6 md:px-12 max-w-6xl mx-auto pb-16">
         <div className="flex flex-col md:flex-row gap-10 md:gap-16 lg:gap-20">
           <LeftColumn book={book} bookId={bookId!} />
           <RightColumn book={book} reflections={reflections} refLoading={refLoading} refError={refError} />
         </div>
       </div>
+
+      {/* From the Same Collection */}
+      <SameCollectionSection currentBookId={bookId!} tags={book.tags || []} />
     </motion.div>
   );
 };
@@ -121,17 +130,35 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
         </AnimatePresence>
 
         {/* 메타 */}
-        <div className="pt-2 space-y-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-          {book.rating > 0 && (
+        <div className="pt-3 space-y-3.5" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          {book.publishedDate && (
             <div className="flex justify-between items-baseline">
-              <span className="text-[10px] uppercase tracking-widest text-butter-muted">Rating</span>
-              <span className="text-sm font-serif italic">{book.rating}</span>
+              <span className="text-[10px] uppercase tracking-widest text-butter-muted">Published</span>
+              <span className="text-[12px] font-serif italic text-butter-text/80">
+                {book.publishedDate}
+              </span>
+            </div>
+          )}
+          {book.pageCount && (
+            <div className="flex justify-between items-baseline">
+              <span className="text-[10px] uppercase tracking-widest text-butter-muted">Length</span>
+              <span className="text-[12px] font-serif italic text-butter-text/80">
+                {book.pageCount} Pages
+              </span>
             </div>
           )}
           {(book.tags || []).length > 0 && (
             <div className="flex justify-between items-baseline">
               <span className="text-[10px] uppercase tracking-widest text-butter-muted">Genre</span>
-              <span className="text-[12px] font-light text-butter-text text-right max-w-[60%] line-clamp-1">{(book.tags || []).slice(0, 1)[0]}</span>
+              <span className="text-[12px] font-light text-butter-text text-right max-w-[60%] line-clamp-1">
+                {(book.tags || []).slice(0, 1)[0]}
+              </span>
+            </div>
+          )}
+          {book.rating > 0 && (
+            <div className="flex justify-between items-baseline">
+              <span className="text-[10px] uppercase tracking-widest text-butter-muted">Rating</span>
+              <span className="text-sm font-serif italic">{book.rating}</span>
             </div>
           )}
         </div>
@@ -156,12 +183,9 @@ const RightColumn = ({ book, reflections, refLoading, refError }: {
     <div className="flex-1 min-w-0">
       {/* 태그 */}
       {(book.tags || []).length > 0 && (
-        <div className="flex flex-wrap gap-3 mb-6">
-          {(book.tags || []).map((tag, i) => (
-            <span key={tag}>
-              <TagPill label={tag} />
-              {i < (book.tags || []).length - 1 && <span className="text-butter-muted/30 ml-3 text-[10px]">/</span>}
-            </span>
+        <div className="flex flex-wrap gap-2 mb-6">
+          {(book.tags || []).map((tag) => (
+            <TagPill key={tag} label={tag} />
           ))}
         </div>
       )}
@@ -201,8 +225,13 @@ const RightColumn = ({ book, reflections, refLoading, refError }: {
             "{book.quote}"
           </blockquote>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-butter-surface flex items-center justify-center shrink-0 overflow-hidden">
-              <span className="text-sm font-serif text-butter-muted">{book.author.charAt(0)}</span>
+            <div className="w-9 h-9 rounded-full overflow-hidden shrink-0"
+              style={{ background: 'var(--color-butter-surface)', boxShadow: '0 2px 8px rgba(0,0,0,0.10)' }}>
+              <AvatarImage
+                src={`https://api.dicebear.com/7.x/personas/svg?seed=${encodeURIComponent(book.author)}`}
+                alt={book.author}
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <p className="text-[13px] font-medium">{book.author}</p>
@@ -268,5 +297,66 @@ const RightColumn = ({ book, reflections, refLoading, refError }: {
         )}
       </div>
     </div>
+  );
+};
+
+// ── From the Same Collection ───────────────────────────────────────────────
+
+const SameCollectionSection = ({
+  currentBookId,
+  tags,
+}: {
+  currentBookId: string;
+  tags: string[];
+}) => {
+  const navigate = useNavigate();
+  const tag = tags[0] ?? '';
+  const { books, loading } = useBooks(tag || 'All');
+
+  const related = books
+    .filter((b) => b.id !== currentBookId)
+    .slice(0, 3);
+
+  if (loading || related.length === 0) return null;
+
+  return (
+    <section
+      className="px-6 md:px-12 max-w-6xl mx-auto pb-24"
+      style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '3.5rem' }}
+    >
+      <h2 className="font-serif text-2xl md:text-3xl italic font-light mb-10 text-butter-text">
+        From the Same Collection
+      </h2>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-10">
+        {related.map((book, i) => (
+          <motion.article
+            key={book.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06, duration: 0.35 }}
+            className="group cursor-pointer"
+            onClick={() => navigate(`/explore/${book.id}`)}
+          >
+            <div
+              className="aspect-[2/3] mb-4 overflow-hidden rounded-sm transition-all duration-500 group-hover:-translate-y-1"
+              style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.09)' }}
+            >
+              <BookCoverImage
+                src={book.cover}
+                alt={book.title}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+              />
+            </div>
+            <h3 className="font-serif text-[0.95rem] leading-snug mb-1 group-hover:text-butter-primary transition-colors duration-300 line-clamp-2">
+              {book.title}
+            </h3>
+            <p className="text-[12px] text-butter-muted italic font-light line-clamp-1">
+              {book.author}
+            </p>
+          </motion.article>
+        ))}
+      </div>
+    </section>
   );
 };

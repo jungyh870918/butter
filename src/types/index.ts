@@ -6,6 +6,8 @@ export interface Book {
   description: string;
   tags: string[];
   rating: number;
+  publishedDate?: string;
+  pageCount?: number;
   historicalContext?: string;
   quote?: string;
   authorNote?: string;

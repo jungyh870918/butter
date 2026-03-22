@@ -8,11 +8,8 @@ export const Footer = () => (
       <div className="flex flex-col md:flex-row md:items-baseline gap-8 md:gap-16 mb-10">
 
         {/* 로고 */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="w-5 h-5 bg-butter-primary rounded-full flex items-center justify-center text-white font-serif italic text-xs">
-            B
-          </div>
-          <span className="font-serif text-base font-semibold tracking-tight">Butter</span>
+        <div className="shrink-0">
+          <span className="font-serif text-base font-bold italic tracking-tight text-butter-text">Butter</span>
         </div>
 
         {/* 링크 */}

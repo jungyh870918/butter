@@ -20,11 +20,8 @@ export const Navbar = () => {
         style={{ boxShadow: '0 1px 0 rgba(0,0,0,0.045)' }}
       >
         {/* 로고 */}
-        <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => navigate('/')}>
-          <div className="w-6 h-6 bg-butter-primary rounded-full flex items-center justify-center text-white font-serif italic text-sm">
-            B
-          </div>
-          <span className="font-serif text-[1.05rem] font-semibold tracking-tight">Butter</span>
+        <div className="flex items-center cursor-pointer shrink-0" onClick={() => navigate('/')}>
+          <span className="font-serif text-[1.15rem] font-bold italic tracking-tight text-butter-text">Butter</span>
         </div>
 
         {/* 네비 링크 — 로고 바로 오른쪽 */}
@@ -54,13 +51,13 @@ export const Navbar = () => {
 
         {/* 오른쪽 — 검색 + 아바타 */}
         <div className="ml-auto flex items-center gap-5">
-          <div className="relative">
-            <Search size={15} className="absolute left-0 top-1/2 -translate-y-1/2 text-butter-muted pointer-events-none" />
+          <div className="relative flex items-center">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-butter-muted/60 pointer-events-none" />
             <input
               type="text"
               placeholder="Search the library…"
-              className="pl-6 pr-3 py-1 text-[12px] bg-transparent border-0 focus:outline-none text-butter-text placeholder:text-butter-muted/60 w-36 focus:w-48 transition-all duration-300"
-              style={{ borderBottom: '1px solid rgba(0,0,0,0.10)' }}
+              className="pl-8 pr-3 py-1.5 text-[12px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/50 w-40 focus:w-52 transition-all duration-300 rounded-sm"
+              style={{ border: '1px solid rgba(0,0,0,0.13)' }}
             />
           </div>
           <div className="w-7 h-7 rounded-full overflow-hidden" style={{ opacity: 0.82 }}>
@@ -74,11 +71,8 @@ export const Navbar = () => {
         className="md:hidden fixed top-0 left-0 right-0 z-50 bg-butter-bg/95 backdrop-blur-sm px-5 py-3.5 flex justify-between items-center"
         style={{ boxShadow: '0 1px 0 rgba(0,0,0,0.045)' }}
       >
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="w-6 h-6 bg-butter-primary rounded-full flex items-center justify-center text-white font-serif italic text-sm">
-            B
-          </div>
-          <span className="font-serif text-base font-semibold">Butter</span>
+        <div className="flex items-center cursor-pointer" onClick={() => navigate('/')}>
+          <span className="font-serif text-base font-bold italic tracking-tight text-butter-text">Butter</span>
         </div>
         <div className="flex items-center gap-4">
           <Search size={16} className="text-butter-muted" />

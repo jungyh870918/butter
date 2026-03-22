@@ -1,12 +1,20 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Star, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Book } from '../../types';
 import { useBooks } from '../../hooks/useBooks';
 import { LoadingSpinner, ErrorMessage, EmptyState, BookCoverImage } from '../ui';
 
 const CATEGORIES = ['All', 'Fiction', 'Poetry', 'Philosophy', 'Sci-Fi', 'Historical'] as const;
+const CATEGORY_LABELS: Record<string, string> = {
+  'All': 'All',
+  'Fiction': 'Fiction',
+  'Poetry': 'Poetry Anthology',
+  'Philosophy': 'Philosophy',
+  'Sci-Fi': 'Sci-Fi',
+  'Historical': 'Classic Lit',
+};
 
 export const Explore = () => {
   const [filter, setFilter] = useState('All');
@@ -21,13 +29,13 @@ export const Explore = () => {
     <div className="min-h-screen bg-butter-bg">
 
       {/* ── Hero 헤더 ── */}
-      <div className="pt-28 pb-8 px-8 md:px-14 max-w-7xl mx-auto">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-butter-muted/70 font-medium mb-5">
+      <div className="pt-24 pb-6 px-8 md:px-14 max-w-7xl mx-auto">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-butter-muted/70 font-medium mb-4">
           Curated Readings
         </p>
-        <h1 className="text-5xl md:text-[3.75rem] font-serif font-light leading-[1.08] tracking-tight mb-5">
+        <h1 className="text-5xl md:text-[3.75rem] font-serif font-black leading-[1.06] tracking-tight mb-5">
           Explore{' '}
-          <em style={{ fontStyle: 'italic', color: 'var(--color-butter-primary)' }}>
+          <em style={{ fontStyle: 'italic', color: 'var(--color-butter-primary)', fontWeight: 700 }}>
             the library
           </em>
         </h1>
@@ -39,7 +47,7 @@ export const Explore = () => {
       <div className="px-8 md:px-14 max-w-7xl mx-auto">
 
         {/* ── 카테고리 필터 ── */}
-        <div className="flex items-center gap-2.5 mb-10 overflow-x-auto pb-1 scrollbar-hide pt-6"
+        <div className="flex items-center gap-1 mb-10 overflow-x-auto pb-1 scrollbar-hide pt-6"
           style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}>
           {CATEGORIES.map((cat) => (
             <button
@@ -50,9 +58,8 @@ export const Explore = () => {
                   ? 'bg-butter-primary text-white'
                   : 'text-butter-muted hover:text-butter-text'
               }`}
-              style={filter !== cat ? { background: 'rgba(0,0,0,0.035)' } : {}}
             >
-              {cat}
+              {CATEGORY_LABELS[cat]}
             </button>
           ))}
         </div>
@@ -66,7 +73,7 @@ export const Explore = () => {
             {!loading && error && <ErrorMessage message={error} />}
             {!loading && !error && books.length === 0 && <EmptyState message="No books found" />}
             {!loading && !error && books.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-12">
+              <div className="grid grid-cols-2 gap-x-7 gap-y-12">
                 {books.map((book, i) => (
                   <BookCard key={book.id} book={book} onClick={() => handleSelectBook(book)} index={i} />
                 ))}
@@ -77,13 +84,13 @@ export const Explore = () => {
           {/* ── 사이드바 ── */}
           <aside className="lg:w-60 xl:w-64 shrink-0 space-y-0">
 
-            {/* A. Trending Now — 소프트 따뜻한 배경 패널 */}
+            {/* A. Trending Now */}
             {!loading && trendingBooks.length > 0 && (
               <div
                 className="p-6 mb-8"
                 style={{
                   background: '#f2ede3',
-                  borderRadius: '4px',
+                  borderRadius: '3px',
                 }}
               >
                 <p className="text-[9px] uppercase tracking-[0.28em] font-bold text-butter-muted/80 mb-5">
@@ -98,7 +105,7 @@ export const Explore = () => {
                     >
                       <span
                         className="font-serif font-light leading-none mt-0.5 shrink-0 select-none w-5 text-right"
-                        style={{ fontSize: '1.1rem', color: '#c5b89a' }}
+                        style={{ fontSize: '1.05rem', color: '#c5b89a' }}
                       >
                         {String(i + 1).padStart(2, '0')}
                       </span>
@@ -114,12 +121,12 @@ export const Explore = () => {
               </div>
             )}
 
-            {/* B. Journaling Circle — 왼쪽 룰 callout */}
+            {/* B. Journaling Circle */}
             <div
               className="pl-5 py-1 mb-8"
-              style={{ borderLeft: '2px solid rgba(107,82,0,0.25)' }}
+              style={{ borderLeft: '2px solid rgba(107,82,0,0.20)' }}
             >
-              <h3 className="font-serif text-[1.05rem] font-light leading-snug mb-2 text-butter-text">
+              <h3 className="font-serif text-[1rem] font-light leading-snug mb-2 text-butter-text">
                 The Journaling Circle
               </h3>
               <p className="text-[12px] text-butter-muted leading-[1.7] mb-5 font-light">
@@ -128,8 +135,8 @@ export const Explore = () => {
               <input
                 type="email"
                 placeholder="Email address"
-                className="w-full px-0 py-2 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/50 transition-colors"
-                style={{ borderBottom: '1px solid rgba(0,0,0,0.12)' }}
+                className="w-full px-0 py-2 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/40 transition-colors"
+                style={{ borderBottom: '1px solid rgba(0,0,0,0.10)' }}
               />
               <button
                 className="mt-4 w-full py-2.5 text-white text-[10px] uppercase tracking-[0.18em] font-semibold hover:brightness-110 transition-all"
@@ -142,25 +149,25 @@ export const Explore = () => {
               </button>
             </div>
 
-            {/* C. Did you know — 밝은 흰색 카드 */}
+            {/* C. Did you know */}
             <div
               className="p-5"
               style={{
                 background: '#ffffff',
-                borderRadius: '4px',
-                boxShadow: '0 1px 8px rgba(0,0,0,0.05)',
+                borderRadius: '3px',
+                boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
               }}
             >
               <div className="flex items-center gap-2 mb-3">
-                <span style={{ fontSize: '15px', lineHeight: 1 }}>📖</span>
-                <p className="text-[9px] uppercase tracking-[0.24em] font-bold text-butter-muted/70">
+                <span style={{ fontSize: '14px', lineHeight: 1 }}>📖</span>
+                <p className="text-[9px] uppercase tracking-[0.24em] font-bold text-butter-muted/60">
                   Did you know?
                 </p>
               </div>
               <p className="text-[13px] text-butter-muted leading-[1.75] italic font-light">
                 "Reading is that fruitful miracle of a communication in the midst of solitude."
               </p>
-              <p className="text-[11px] text-butter-muted/70 mt-2.5 not-italic font-medium">
+              <p className="text-[11px] text-butter-muted/60 mt-2.5 not-italic font-medium">
                 — Marcel Proust
               </p>
             </div>
@@ -222,7 +229,7 @@ const BookCard = ({ book, onClick, index }: { book: Book; onClick: () => void; i
   >
     <div
       className="relative aspect-[2/3] mb-4 overflow-hidden rounded-sm transition-all duration-500 group-hover:-translate-y-1"
-      style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.10)' }}
+      style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.09)' }}
     >
       <BookCoverImage
         src={book.cover}
@@ -230,15 +237,9 @@ const BookCard = ({ book, onClick, index }: { book: Book; onClick: () => void; i
         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
       />
     </div>
-    <h3 className="font-serif text-base leading-snug mb-1 group-hover:text-butter-primary transition-colors duration-300 line-clamp-2">
+    <h3 className="font-serif text-[0.95rem] leading-snug mb-1 group-hover:text-butter-primary transition-colors duration-300 line-clamp-2">
       {book.title}
     </h3>
-    <p className="text-[12px] text-butter-muted italic mb-1.5 line-clamp-1 font-light">{book.author}</p>
-    {book.rating > 0 && (
-      <div className="flex items-center gap-1">
-        <Star size={10} fill="currentColor" className="text-butter-primary" />
-        <span className="text-[11px] text-butter-primary font-medium">{book.rating}</span>
-      </div>
-    )}
+    <p className="text-[12px] text-butter-muted italic font-light line-clamp-1">{book.author}</p>
   </motion.article>
 );
