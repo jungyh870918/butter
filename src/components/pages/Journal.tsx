@@ -151,6 +151,7 @@ export const Journal = () => {
               error={error}
               onUpdate={update}
               onDelete={remove}
+              onSwitchToWrite={() => setView('write')}
             />
           )}
         </AnimatePresence>
@@ -775,78 +776,92 @@ const BookContextPanel = ({
         <p className="text-[9px] uppercase tracking-[0.28em] font-medium text-butter-muted/60 mb-4">
           Currently Reflecting On
         </p>
+
+        {/* 비활성 상태와 동일한 surface 컨테이너 */}
         <div
-          className="flex items-center gap-2 px-3 py-2.5 mb-3"
-          style={{ border: '1px solid rgba(0,0,0,0.12)', borderRadius: '2px' }}
+          className="p-4"
+          style={{ background: 'var(--color-butter-surface)', borderRadius: '3px' }}
         >
-          <Search size={12} className="text-butter-muted/50 shrink-0" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => handleQueryChange(e.target.value)}
-            placeholder="Search by title or author…"
-            className="flex-1 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/35 font-light"
-          />
-          {searchLoading && <Loader2 size={12} className="text-butter-muted/50 animate-spin shrink-0" />}
-          <button onClick={closeSearch} className="text-butter-muted/40 hover:text-butter-muted transition-colors shrink-0">
-            <X size={13} />
-          </button>
-        </div>
-
-        {searchError && (
-          <p className="text-[11px] text-red-400 font-light mb-2">{searchError}</p>
-        )}
-
-        {!searchLoading && results.length > 0 && (
-          <div className="space-y-0.5">
-            {results.map((book) => (
-              <button
-                key={book.id}
-                onClick={() => handleSelect(book)}
-                className="w-full flex items-center gap-3 px-2 py-2 text-left transition-colors hover:bg-butter-surface group"
-                style={{ borderRadius: '2px' }}
-              >
-                <div
-                  className="shrink-0 overflow-hidden"
-                  style={{ width: '28px', aspectRatio: '2/3', borderRadius: '1px', background: 'var(--color-butter-accent)' }}
-                >
-                  <BookCoverImage
-                    src={book.cover}
-                    alt={book.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[12px] font-medium text-butter-text leading-snug line-clamp-1 group-hover:text-butter-primary transition-colors">
-                    {book.title}
-                  </p>
-                  <p className="text-[11px] text-butter-muted font-light italic line-clamp-1">
-                    {book.author}
-                  </p>
-                </div>
-              </button>
-            ))}
+          {/* 검색 input — 컨테이너 안에 자연스럽게 */}
+          <div
+            className="flex items-center gap-2 px-3 py-2 mb-3"
+            style={{
+              background: 'var(--color-butter-bg)',
+              borderRadius: '2px',
+              border: '1px solid var(--color-butter-rule)',
+            }}
+          >
+            <Search size={12} className="text-butter-muted/50 shrink-0" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => handleQueryChange(e.target.value)}
+              placeholder="Search by title or author…"
+              className="flex-1 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/35 font-light"
+            />
+            {searchLoading && <Loader2 size={12} className="text-butter-muted/50 animate-spin shrink-0" />}
+            <button onClick={closeSearch} className="text-butter-muted/40 hover:text-butter-muted transition-colors shrink-0">
+              <X size={13} />
+            </button>
           </div>
-        )}
 
-        {!searchLoading && query.trim() && results.length === 0 && !searchError && (
-          <p className="text-[12px] text-butter-muted/50 font-light italic mt-2">
-            No books found for "{query}"
-          </p>
-        )}
+          {/* 안내 문구 */}
+          {!query.trim() && (
+            <p className="text-[11px] text-butter-muted/50 font-light italic leading-[1.6]">
+              Type a title or author name to search.
+            </p>
+          )}
+          {query.trim().length > 0 && query.trim().length < 3 && (
+            <p className="text-[11px] text-butter-muted/50 font-light italic leading-[1.6]">
+              Keep typing…
+            </p>
+          )}
+          {searchError && (
+            <p className="text-[11px] text-red-400 font-light">{searchError}</p>
+          )}
 
-        {!query.trim() && (
-          <p className="text-[11px] text-butter-muted/40 font-light italic leading-[1.6] mt-2">
-            Type a title or author name to search.
-          </p>
-        )}
+          {/* 검색 결과 */}
+          {!searchLoading && results.length > 0 && (
+            <div className="space-y-0.5">
+              {results.map((book) => (
+                <button
+                  key={book.id}
+                  onClick={() => handleSelect(book)}
+                  className="w-full flex items-center gap-3 px-2 py-2 text-left transition-colors group"
+                  style={{ borderRadius: '2px' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-butter-accent)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <div
+                    className="shrink-0 overflow-hidden"
+                    style={{ width: '28px', aspectRatio: '2/3', borderRadius: '1px', background: 'var(--color-butter-accent)' }}
+                  >
+                    <BookCoverImage
+                      src={book.cover}
+                      alt={book.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[12px] font-medium text-butter-text leading-snug line-clamp-1 group-hover:text-butter-primary transition-colors">
+                      {book.title}
+                    </p>
+                    <p className="text-[11px] text-butter-muted font-light italic line-clamp-1">
+                      {book.author}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
 
-        {query.trim().length > 0 && query.trim().length < 3 && (
-          <p className="text-[11px] text-butter-muted/40 font-light italic leading-[1.6] mt-2">
-            Keep typing…
-          </p>
-        )}
+          {!searchLoading && query.trim().length >= 3 && results.length === 0 && !searchError && (
+            <p className="text-[12px] text-butter-muted/50 font-light italic">
+              No books found for "{query}"
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -925,7 +940,7 @@ const BookContextPanel = ({
       <button
         onClick={openSearch}
         className="w-full flex items-center gap-3 p-4 text-left transition-all group"
-        style={{ background: '#f2ede3', borderRadius: '3px' }}
+        style={{ background: 'var(--color-butter-surface)', borderRadius: '3px' }}
       >
         <BookOpen size={13} className="text-butter-primary/50 shrink-0" />
         <div>
@@ -942,6 +957,57 @@ const BookContextPanel = ({
   );
 };
 
+
+// ── Archive 헬퍼 함수들 ────────────────────────────────────────────────────
+
+function groupEntriesByMonth(entries: JournalEntry[]): Map<string, JournalEntry[]> {
+  const map = new Map<string, JournalEntry[]>();
+  entries.forEach((e) => {
+    const key = e.date.slice(0, 7);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(e);
+  });
+  return map;
+}
+
+function formatMonthYear(yyyyMm: string): string {
+  const [y, m] = yyyyMm.split('-');
+  return new Date(Number(y), Number(m) - 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+}
+
+// 날짜 → 계절 레이블 (디자인의 "AUTUMN EQUINOX · 2024" 스타일)
+function getSeasonLabel(dateStr: string): string {
+  const date = new Date(dateStr);
+  const month = date.getMonth(); // 0-11
+  const year = date.getFullYear();
+  if (month >= 2 && month <= 4) return `Spring · ${year}`;
+  if (month >= 5 && month <= 7) return `Summer · ${year}`;
+  if (month >= 8 && month <= 10) return `Autumn · ${year}`;
+  return `Winter · ${year}`;
+}
+
+// 엔트리의 첫 번째 의미있는 텍스트 줄 (서브타이틀용)
+function getEntrySubtitle(entry: JournalEntry): string {
+  const sections = entry.content.split(/\n\n(?=\[)/);
+  const first = sections[0];
+  const match = first.match(/^\[.+?\]\n([\s\S]+)/);
+  const raw = match ? match[1] : first;
+  const firstLine = raw.trim().split('\n')[0].trim();
+  return firstLine.length > 60 ? firstLine.slice(0, 57) + '…' : firstLine;
+}
+
+// 해당 월의 날짜에 엔트리가 있는지 확인
+function getEntryDatesInMonth(entries: JournalEntry[], year: number, month: number): Set<number> {
+  const set = new Set<number>();
+  entries.forEach((e) => {
+    const d = new Date(e.date);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      set.add(d.getDate());
+    }
+  });
+  return set;
+}
+
 // ── ArchiveView ────────────────────────────────────────────────────────────
 
 interface ArchiveViewProps {
@@ -950,46 +1016,338 @@ interface ArchiveViewProps {
   error: string;
   onUpdate: (id: string, payload: { content: string; mood: string; intensity: number }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onSwitchToWrite: () => void;
 }
 
-const ArchiveView = ({ entries, loading, error, onUpdate, onDelete }: ArchiveViewProps) => (
-  <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -12 }}
-    className="max-w-2xl"
-  >
-    {loading && <LoadingSpinner />}
-    {!loading && error && <ErrorMessage message={error} />}
-    {!loading && !error && entries.length === 0 && (
-      <EmptyState message="No journal entries yet — write your first reflection." />
-    )}
-    {!loading && !error && entries.map((entry, i) => (
-      <JournalEntryCard
-        key={entry.id}
-        entry={entry}
-        onUpdate={onUpdate}
-        onDelete={onDelete}
-        first={i === 0}
-      />
-    ))}
-  </motion.div>
-);
+const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWrite }: ArchiveViewProps) => {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-// ── JournalEntryCard ───────────────────────────────────────────────────────
+  // 캘린더 상태 — 현재 표시 월 (YYYY, MM 0-indexed)
+  const now = new Date();
+  const [calYear, setCalYear] = useState(now.getFullYear());
+  const [calMonth, setCalMonth] = useState(now.getMonth());
 
-interface JournalEntryCardProps {
+  // 첫 로드 시 최신 엔트리 자동 선택
+  useEffect(() => {
+    if (entries.length > 0 && !selectedId) {
+      setSelectedId(entries[0].id);
+    }
+  }, [entries]);
+
+  const selectedEntry = entries.find((e) => e.id === selectedId) ?? null;
+
+  // 캘린더용 데이터
+  const entryDates = getEntryDatesInMonth(entries, calYear, calMonth);
+  const firstDayOfMonth = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+  // 캘린더에서 날짜 클릭 → 해당 날짜의 첫 엔트리 선택
+  const handleCalDateClick = (day: number) => {
+    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const found = entries.find((e) => e.date === dateStr);
+    if (found) setSelectedId(found.id);
+  };
+
+  // Recent entries — 최근 10개
+  const recentEntries = entries.slice(0, 10);
+
+  // 첫 엔트리 날짜 (아카이브 시작일)
+  const firstEntryDate = entries.length > 0
+    ? new Date(entries[entries.length - 1].date).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+    : null;
+
+  if (loading) return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-center py-32">
+      <LoadingSpinner />
+    </motion.div>
+  );
+  if (error) return <ErrorMessage message={error} />;
+  if (entries.length === 0) return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col items-center justify-center py-32 text-center"
+    >
+      <p className="font-serif text-2xl font-light mb-3 italic" style={{ color: 'var(--color-butter-muted)' }}>
+        Nothing here yet.
+      </p>
+      <p className="text-[13px] font-light mb-6" style={{ color: 'var(--color-butter-muted)' }}>
+        Write your first reflection to begin your archive.
+      </p>
+      <button
+        onClick={onSwitchToWrite}
+        className="flex items-center gap-2 px-6 py-2.5 bg-butter-primary text-white text-[11px] font-medium uppercase tracking-[0.14em] hover:brightness-110 transition-all"
+        style={{ borderRadius: '2px' }}
+      >
+        + New Journal Entry
+      </button>
+    </motion.div>
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      className="flex flex-col lg:flex-row gap-0 lg:gap-16 xl:gap-20"
+    >
+      {/* ══════════════════════════════════════════════
+          LEFT — 엔트리 상세 뷰
+          ══════════════════════════════════════════════ */}
+      <main className="flex-1 min-w-0">
+        {selectedEntry ? (
+          <AnimatePresence mode="wait">
+            <ArchiveDetailView
+              key={selectedEntry.id}
+              entry={selectedEntry}
+              onUpdate={onUpdate}
+              onDelete={async (id) => {
+                await onDelete(id).catch(() => {});
+                setSelectedId(entries.find((e) => e.id !== id)?.id ?? null);
+              }}
+              onSwitchToWrite={onSwitchToWrite}
+            />
+          </AnimatePresence>
+        ) : (
+          <div className="flex items-center justify-center h-64">
+            <p className="text-[13px] italic font-light" style={{ color: 'var(--color-butter-muted)' }}>
+              Select an entry to read.
+            </p>
+          </div>
+        )}
+      </main>
+
+      {/* ══════════════════════════════════════════════
+          RIGHT — 캘린더 + 엔트리 목록
+          ══════════════════════════════════════════════ */}
+      <aside
+        className="lg:w-72 xl:w-80 shrink-0"
+        style={{ borderLeft: '1px solid var(--color-butter-rule)', paddingLeft: '2rem' }}
+      >
+
+        {/* ── 캘린더 ── */}
+        <div className="mb-8">
+          {/* 캘린더 헤더 */}
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="font-serif text-[1.1rem] font-light" style={{ color: 'var(--color-butter-text)' }}>
+              {new Date(calYear, calMonth).toLocaleString('en-US', { month: 'long', year: 'numeric' })}
+            </h3>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); }
+                  else setCalMonth(m => m - 1);
+                }}
+                className="w-7 h-7 flex items-center justify-center transition-colors"
+                style={{ color: 'var(--color-butter-muted)', borderRadius: '2px' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-butter-text)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-butter-muted)')}
+              >
+                <ArrowLeft size={13} />
+              </button>
+              <button
+                onClick={() => {
+                  if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); }
+                  else setCalMonth(m => m + 1);
+                }}
+                className="w-7 h-7 flex items-center justify-center transition-colors"
+                style={{ color: 'var(--color-butter-muted)', borderRadius: '2px' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-butter-text)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-butter-muted)')}
+              >
+                <ArrowRight size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* 요일 헤더 */}
+          <div className="grid grid-cols-7 mb-2">
+            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+              <div
+                key={d}
+                className="text-center text-[10px] font-medium uppercase tracking-[0.08em] py-1"
+                style={{ color: 'var(--color-butter-muted)', opacity: 0.5 }}
+              >
+                {d}
+              </div>
+            ))}
+          </div>
+
+          {/* 날짜 그리드 */}
+          <div className="grid grid-cols-7 gap-y-1">
+            {/* 첫 주 빈 칸 */}
+            {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+              <div key={`empty-${i}`} />
+            ))}
+            {/* 날짜 */}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1;
+              const hasEntry = entryDates.has(day);
+              const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              const isSelected = selectedEntry?.date === dateStr;
+              const isToday = dateStr === new Date().toISOString().split('T')[0];
+
+              return (
+                <button
+                  key={day}
+                  onClick={() => hasEntry && handleCalDateClick(day)}
+                  disabled={!hasEntry}
+                  className="relative flex flex-col items-center justify-center py-1 transition-all"
+                  style={{ cursor: hasEntry ? 'pointer' : 'default' }}
+                >
+                  <span
+                    className="w-7 h-7 flex items-center justify-center text-[12px] font-medium transition-all"
+                    style={{
+                      borderRadius: '50%',
+                      background: isSelected
+                        ? 'var(--color-butter-primary)'
+                        : 'transparent',
+                      color: isSelected
+                        ? '#fff'
+                        : hasEntry
+                        ? 'var(--color-butter-text)'
+                        : 'var(--color-butter-muted)',
+                      opacity: hasEntry ? 1 : 0.3,
+                      fontWeight: isToday && !isSelected ? 600 : undefined,
+                    }}
+                  >
+                    {day}
+                  </span>
+                  {/* 엔트리 있는 날 도트 */}
+                  {hasEntry && !isSelected && (
+                    <span
+                      className="absolute bottom-0.5 w-1 h-1 rounded-full"
+                      style={{ background: 'var(--color-butter-primary)', opacity: 0.6 }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Recent Entries ── */}
+        <div className="mb-6">
+          <p
+            className="text-[9px] uppercase tracking-[0.25em] font-semibold mb-4"
+            style={{ color: 'var(--color-butter-muted)', opacity: 0.6 }}
+          >
+            Recent Entries
+          </p>
+          <div className="space-y-1">
+            {recentEntries.map((entry) => {
+              const isSelected = entry.id === selectedId;
+              const displayEmotions = (entry.emotions ?? []).length > 0
+                ? entry.emotions.slice(0, 2)
+                : entry.mood ? [entry.mood] : [];
+              // 날짜 포맷 — "Sep 09" 스타일
+              const d = new Date(entry.date);
+              const dateLabel = d.toLocaleString('en-US', { month: 'short', day: '2-digit' });
+
+              return (
+                <button
+                  key={entry.id}
+                  onClick={() => setSelectedId(entry.id)}
+                  className="w-full text-left py-3 px-3 transition-all group"
+                  style={{
+                    borderRadius: '2px',
+                    background: isSelected ? 'var(--color-butter-surface)' : 'transparent',
+                    borderLeft: isSelected ? '2px solid var(--color-butter-primary)' : '2px solid transparent',
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      {/* 제목 */}
+                      <p
+                        className="text-[13px] font-serif font-light leading-snug line-clamp-1 transition-colors mb-1"
+                        style={{
+                          color: isSelected ? 'var(--color-butter-text)' : 'var(--color-butter-text)',
+                          opacity: isSelected ? 1 : 0.85,
+                        }}
+                      >
+                        {entry.bookTitle ?? getEntrySubtitle(entry) ?? 'Reflection'}
+                      </p>
+                      {/* 감정 태그들 */}
+                      {displayEmotions.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {displayEmotions.map((em) => (
+                            <span
+                              key={em}
+                              className="text-[9px] uppercase tracking-[0.1em] font-semibold"
+                              style={{ color: 'var(--color-butter-muted)', opacity: 0.7 }}
+                            >
+                              {em}
+                            </span>
+                          ))}
+                          {isSelected && (
+                            <span
+                              className="text-[9px] uppercase tracking-[0.1em] font-semibold"
+                              style={{ color: 'var(--color-butter-primary)' }}
+                            >
+                              · TODAY
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {/* 날짜 */}
+                    <span
+                      className="text-[10px] font-medium shrink-0 mt-0.5"
+                      style={{ color: 'var(--color-butter-muted)', opacity: 0.6 }}
+                    >
+                      {dateLabel}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── New Journal Entry CTA ── */}
+        <div>
+          <button
+            onClick={onSwitchToWrite}
+            className="w-full flex items-center justify-center gap-2 py-3 font-medium uppercase tracking-[0.14em] text-[11px] hover:brightness-110 transition-all text-white bg-butter-primary"
+            style={{ borderRadius: '2px' }}
+          >
+            + New Journal Entry
+          </button>
+          {firstEntryDate && (
+            <p
+              className="text-center text-[11px] font-light italic mt-3"
+              style={{ color: 'var(--color-butter-muted)', opacity: 0.5 }}
+            >
+              {entries.length} {entries.length === 1 ? 'entry' : 'entries'} since {firstEntryDate}
+            </p>
+          )}
+        </div>
+      </aside>
+    </motion.div>
+  );
+};
+
+// ── ArchiveDetailView ──────────────────────────────────────────────────────
+
+interface ArchiveDetailViewProps {
   entry: JournalEntry;
-  first: boolean;
   onUpdate: (id: string, payload: { content: string; mood: string; intensity: number }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onSwitchToWrite: () => void;
 }
 
-const JournalEntryCard = ({ entry, first, onUpdate, onDelete }: JournalEntryCardProps) => {
+const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: ArchiveDetailViewProps) => {
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(entry.content);
   const [editMood, setEditMood] = useState(entry.mood || '');
   const [editIntensity, setEditIntensity] = useState(entry.intensity);
+
+  useEffect(() => {
+    setEditContent(entry.content);
+    setEditMood(entry.mood || '');
+    setEditIntensity(entry.intensity);
+    setEditing(false);
+  }, [entry.id]);
 
   const sections = entry.content
     .split(/\n\n(?=\[)/)
@@ -1003,6 +1361,8 @@ const JournalEntryCard = ({ entry, first, onUpdate, onDelete }: JournalEntryCard
     ? entry.emotions
     : entry.mood ? [entry.mood] : [];
 
+  const subtitle = getEntrySubtitle(entry);
+
   const handleUpdate = async () => {
     try {
       await onUpdate(entry.id, { content: editContent, mood: editMood, intensity: editIntensity });
@@ -1013,23 +1373,121 @@ const JournalEntryCard = ({ entry, first, onUpdate, onDelete }: JournalEntryCard
   };
 
   return (
-    <article
-      className="py-10"
-      style={{ borderTop: first ? 'none' : '1px solid rgba(0,0,0,0.06)' }}
+    <motion.article
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.28 }}
     >
+      {/* ── 헤더 영역 ── */}
+      <header className="mb-10">
+
+        {/* 계절 레이블 */}
+        <p
+          className="text-[10px] uppercase tracking-[0.28em] font-medium mb-4"
+          style={{ color: 'var(--color-butter-muted)', opacity: 0.6 }}
+        >
+          {getSeasonLabel(entry.date)}
+        </p>
+
+        {/* 책 커버 + 제목 — 책이 있을 때 */}
+        {entry.bookTitle ? (
+          <div className="flex items-start gap-5 mb-5">
+            {entry.bookCover && (
+              <div
+                className="shrink-0 overflow-hidden"
+                style={{
+                  width: '68px',
+                  aspectRatio: '2/3',
+                  borderRadius: '2px',
+                  boxShadow: '0 4px 18px rgba(0,0,0,0.15)',
+                }}
+              >
+                <BookCoverImage
+                  src={entry.bookCover}
+                  alt={entry.bookTitle}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <div className="pt-1">
+              <h1
+                className="font-serif font-light leading-[1.15] tracking-tight mb-2"
+                style={{ fontSize: 'clamp(1.75rem, 3vw, 2.5rem)', color: 'var(--color-butter-text)' }}
+              >
+                {entry.bookTitle}
+              </h1>
+              {entry.bookAuthor && (
+                <p
+                  className="font-serif italic font-light text-[1rem]"
+                  style={{ color: 'var(--color-butter-muted)' }}
+                >
+                  {entry.bookAuthor}
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* 책이 없을 때 — 첫 줄을 제목처럼 */
+          <h1
+            className="font-serif font-light leading-[1.15] tracking-tight mb-4"
+            style={{ fontSize: 'clamp(1.75rem, 3vw, 2.5rem)', color: 'var(--color-butter-text)' }}
+          >
+            {subtitle || 'A quiet reflection'}
+          </h1>
+        )}
+
+        {/* 서브타이틀 — 책 있을 때만 */}
+        {entry.bookTitle && subtitle && (
+          <p
+            className="font-serif italic text-[1rem] font-light mb-5"
+            style={{ color: 'var(--color-butter-muted)' }}
+          >
+            {subtitle}
+          </p>
+        )}
+
+        {/* 감정 pill들 */}
+        {displayEmotions.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {displayEmotions.map((em) => (
+              <span
+                key={em}
+                className="text-[10px] uppercase tracking-[0.14em] font-semibold px-3 py-1"
+                style={{
+                  background: 'var(--color-butter-accent)',
+                  color: 'var(--color-butter-primary)',
+                  borderRadius: '2px',
+                }}
+              >
+                {em}
+              </span>
+            ))}
+          </div>
+        )}
+      </header>
+
       {editing ? (
         <div className="flex flex-col gap-4">
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full bg-butter-surface px-4 py-3 text-[15px] font-serif leading-relaxed resize-none focus:outline-none min-h-[120px]"
-            style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '2px' }}
+            className="w-full text-[15px] font-serif leading-relaxed resize-none focus:outline-none min-h-[240px] p-4"
+            style={{
+              background: 'var(--color-butter-surface)',
+              border: '1px solid var(--color-butter-rule)',
+              borderRadius: '2px',
+            }}
           />
           <div className="flex gap-2 justify-end">
             <button
               onClick={() => setEditing(false)}
-              className="flex items-center gap-1 px-4 py-2 text-butter-muted hover:text-butter-text text-[11px] font-medium uppercase tracking-[0.14em] transition-all"
-              style={{ border: '1px solid rgba(0,0,0,0.10)', borderRadius: '2px' }}
+              className="flex items-center gap-1 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.14em] transition-all"
+              style={{
+                color: 'var(--color-butter-muted)',
+                border: '1px solid var(--color-butter-rule)',
+                borderRadius: '2px',
+              }}
             >
               <X size={12} /> Cancel
             </button>
@@ -1044,77 +1502,86 @@ const JournalEntryCard = ({ entry, first, onUpdate, onDelete }: JournalEntryCard
         </div>
       ) : (
         <>
-          <div className="flex justify-between items-start mb-5">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest font-medium text-butter-muted/50 mb-1.5">
-                {entry.date}
+          {/* ── 하이라이트 인용 — 디자인의 대형 이탤릭 인용구 ── */}
+          {entry.highlight && (
+            <blockquote
+              className="mb-10"
+              style={{ borderLeft: '2px solid var(--color-butter-primary)', paddingLeft: '1.5rem' }}
+            >
+              <p
+                className="font-serif italic leading-[1.85]"
+                style={{
+                  fontSize: 'clamp(1.1rem, 2vw, 1.35rem)',
+                  color: 'var(--color-butter-text)',
+                  opacity: 0.82,
+                }}
+              >
+                "{entry.highlight}"
               </p>
-              {entry.bookTitle && (
-                <p className="text-[12px] text-butter-primary/80 italic font-light mb-2">
-                  {entry.bookTitle}{entry.bookAuthor ? ` — ${entry.bookAuthor}` : ''}
-                </p>
-              )}
-              {displayEmotions.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {displayEmotions.map((e) => (
-                    <span
-                      key={e}
-                      className="text-[10px] uppercase tracking-[0.1em] font-medium px-2.5 py-0.5"
-                      style={{
-                        border: '1px solid rgba(107,82,0,0.22)',
-                        borderRadius: '2px',
-                        color: 'var(--color-butter-primary)',
-                      }}
-                    >
-                      {e}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2 shrink-0 ml-4">
+            </blockquote>
+          )}
+
+          {/* ── 본문 — 단락 prose ── */}
+          <div className="mb-12">
+            {sections.length > 0 ? (
+              <div className="space-y-6">
+                {sections.map((s) => (
+                  <p
+                    key={s.label}
+                    className="font-serif leading-[1.9] font-light"
+                    style={{ fontSize: '1rem', color: 'var(--color-butter-text)', opacity: 0.82 }}
+                  >
+                    {s.text}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p
+                className="font-serif leading-[1.9] font-light"
+                style={{ fontSize: '1rem', color: 'var(--color-butter-text)', opacity: 0.82 }}
+              >
+                {entry.content}
+              </p>
+            )}
+          </div>
+
+          {/* ── 하단 메타 + 액션 ── */}
+          <footer
+            className="flex items-center justify-between pt-6"
+            style={{ borderTop: '1px solid var(--color-butter-rule)' }}
+          >
+            {/* 좌: Edit / Delete */}
+            <div className="flex items-center gap-5">
               <button
                 onClick={() => setEditing(true)}
-                className="text-butter-muted/40 hover:text-butter-primary transition-colors p-1"
+                className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] transition-colors"
+                style={{ color: 'var(--color-butter-muted)', opacity: 0.6 }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-primary)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.6'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-muted)'; }}
               >
-                <Pencil size={13} />
+                <Pencil size={12} /> Edit Entry
               </button>
               <button
                 onClick={() => onDelete(entry.id).catch((e) => alert(e.message))}
-                className="text-butter-muted/40 hover:text-red-400 transition-colors p-1"
+                className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] transition-colors"
+                style={{ color: 'var(--color-butter-muted)', opacity: 0.4 }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; (e.currentTarget as HTMLElement).style.color = '#f87171'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.4'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-muted)'; }}
               >
-                <Trash2 size={13} />
+                <Trash2 size={12} /> Delete
               </button>
             </div>
-          </div>
 
-          {entry.highlight && (
-            <div
-              className="mb-5 pl-4 py-3 pr-4"
-              style={{ borderLeft: '2px solid rgba(107,82,0,0.18)' }}
+            {/* 우: 날짜 */}
+            <p
+              className="text-[11px] font-light italic"
+              style={{ color: 'var(--color-butter-muted)', opacity: 0.5 }}
             >
-              <p className="text-[14px] font-serif italic text-butter-text/60 leading-[1.8]">
-                "{entry.highlight}"
-              </p>
-            </div>
-          )}
-
-          {sections.length > 0 ? (
-            <div className="space-y-5">
-              {sections.map((s) => (
-                <div key={s.label}>
-                  <p className="text-[9px] uppercase tracking-widest font-medium text-butter-primary/60 mb-1.5">
-                    {s.label}
-                  </p>
-                  <p className="text-[14px] text-butter-muted font-light leading-[1.85]">{s.text}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[15px] text-butter-muted font-light leading-[1.85]">{entry.content}</p>
-          )}
+              {new Date(entry.date).toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+          </footer>
         </>
       )}
-    </article>
+    </motion.article>
   );
 };

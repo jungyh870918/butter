@@ -89,7 +89,7 @@ export const Explore = () => {
               <div
                 className="p-6 mb-8"
                 style={{
-                  background: '#f2ede3',
+                  background: 'var(--color-butter-surface)',
                   borderRadius: '3px',
                 }}
               >
@@ -153,7 +153,7 @@ export const Explore = () => {
             <div
               className="p-5"
               style={{
-                background: '#ffffff',
+                background: 'var(--color-butter-bg)',
                 borderRadius: '3px',
                 boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
               }}
