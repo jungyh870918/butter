@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2 } from 'lucide-react';
 import { JournalEntry, Book } from '../../types';
@@ -903,14 +903,12 @@ const BookContextPanel = ({
           {bookContext.bookId && (
             <>
               <span className="text-butter-muted/25 text-[10px]">·</span>
-              <a
-                href={`/explore/${bookContext.bookId}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to={`/explore/${bookContext.bookId}`}
                 className="text-[10px] uppercase tracking-[0.14em] font-medium text-butter-muted/60 hover:text-butter-primary transition-colors"
               >
                 View Details
-              </a>
+              </Link>
             </>
           )}
         </div>
