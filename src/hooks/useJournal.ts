@@ -9,7 +9,7 @@ import {
 } from '../lib/api';
 import { getWeekdayLabel } from '../lib/format';
 
-export function useJournal(enabled: boolean) {
+export function useJournal(enabled: boolean, bookId?: string) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,11 +17,11 @@ export function useJournal(enabled: boolean) {
   const fetchEntries = useCallback(() => {
     setLoading(true);
     setError('');
-    getJournalEntries()
+    getJournalEntries(bookId ? { bookId } : undefined)
       .then(setEntries)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [bookId]);
 
   useEffect(() => {
     if (enabled) fetchEntries();
@@ -31,27 +31,52 @@ export function useJournal(enabled: boolean) {
     content: string;
     prompt: string;
     mood: string;
+    emotions?: string[];
     intensity: number;
+    bookId?: string | null;
+    bookTitle?: string | null;
+    bookAuthor?: string | null;
+    bookCover?: string | null;
+    highlight?: string | null;
   }): Promise<{ id: string }> => {
     const entry = await createJournalEntry({
       content: payload.content,
       prompt: payload.prompt,
       mood: payload.mood || null,
+      emotions: payload.emotions ?? [],
       intensity: payload.intensity,
+      bookId: payload.bookId ?? null,
+      bookTitle: payload.bookTitle ?? null,
+      bookAuthor: payload.bookAuthor ?? null,
+      bookCover: payload.bookCover ?? null,
+      highlight: payload.highlight ?? null,
     });
-    if (payload.mood) {
+
+    // 감정 로그: emotions 배열이 있으면 각각 기록, 없으면 기존 mood로 fallback
+    const emotionsToLog = (payload.emotions ?? []).length > 0
+      ? payload.emotions!
+      : payload.mood ? [payload.mood] : [];
+
+    for (const emotion of emotionsToLog) {
       await createEmotionLog({
         date: getWeekdayLabel(),
         intensity: payload.intensity,
-        emotion: payload.mood,
+        emotion,
       });
     }
-    return entry; // { id, date, content, ... }
+
+    return entry;
   };
 
   const update = async (
     id: string,
-    payload: { content: string; mood: string; intensity: number },
+    payload: {
+      content: string;
+      mood: string;
+      emotions?: string[];
+      intensity: number;
+      highlight?: string | null;
+    },
   ) => {
     await updateJournalEntry(id, payload);
     setEntries((prev) =>
@@ -66,3 +91,4 @@ export function useJournal(enabled: boolean) {
 
   return { entries, loading, error, create, update, remove, refetch: fetchEntries };
 }
+

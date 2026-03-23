@@ -30,8 +30,16 @@ export interface JournalEntry {
   date: string;
   content: string;
   prompt?: string;
-  mood?: string;
+  mood?: string;           // 기존 단일 mood — 하위 호환
+  emotions: string[];      // 신규 다중 감정 배열
   intensity: number;
+  // book context (soft link)
+  bookId?: string;
+  bookTitle?: string;
+  bookAuthor?: string;
+  bookCover?: string;
+  // guided extras
+  highlight?: string;
 }
 
 export interface EmotionData {

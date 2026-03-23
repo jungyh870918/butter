@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft, Heart, BookOpen, Bookmark,
-  Share2, Link, Check, Copy, MessageSquare
+  Share2, Link, Check, Copy, MessageSquare, PenLine
 } from 'lucide-react';
 import { Book, Reflection } from '../../types';
 import { useBook } from '../../hooks/useBook';
@@ -53,6 +53,7 @@ export const BookDetail = () => {
 };
 
 const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
+  const navigate = useNavigate();
   const [linkOpen, setLinkOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -83,6 +84,21 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
             style={{ background: 'rgba(0,0,0,0.04)' }}>
             <Bookmark size={14} strokeWidth={1.5} />
             Add to Library
+          </button>
+          <button
+            onClick={() => navigate('/journal', {
+              state: {
+                bookId: book.id,
+                bookTitle: book.title,
+                bookAuthor: book.author,
+                bookCover: book.cover,
+              }
+            })}
+            className="w-full flex items-center justify-center gap-2 text-butter-muted py-3 rounded text-[13px] font-medium hover:text-butter-text transition-colors"
+            style={{ background: 'rgba(0,0,0,0.04)' }}
+          >
+            <PenLine size={14} strokeWidth={1.5} />
+            Write in Journal
           </button>
         </div>
 

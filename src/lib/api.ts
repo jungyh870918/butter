@@ -60,13 +60,22 @@ export const createReflection = (payload: {
 
 // ── Journal ────────────────────────────────────────────────────────────────
 
-export const getJournalEntries = () => request<any[]>('/api/journal');
+export const getJournalEntries = (params?: { bookId?: string }) => {
+  const qs = params?.bookId ? `?bookId=${encodeURIComponent(params.bookId)}` : '';
+  return request<any[]>(`/api/journal${qs}`);
+};
 
 export const createJournalEntry = (payload: {
   content: string;
   prompt?: string | null;
   mood?: string | null;
+  emotions?: string[];
   intensity: number;
+  bookId?: string | null;
+  bookTitle?: string | null;
+  bookAuthor?: string | null;
+  bookCover?: string | null;
+  highlight?: string | null;
 }) => request<any>('/api/journal', { method: 'POST', body: JSON.stringify(payload) });
 
 export const updateJournalEntry = (
@@ -75,7 +84,13 @@ export const updateJournalEntry = (
     content: string;
     prompt: string;
     mood: string;
+    emotions: string[];
     intensity: number;
+    bookId: string | null;
+    bookTitle: string | null;
+    bookAuthor: string | null;
+    bookCover: string | null;
+    highlight: string | null;
   }>,
 ) => request<any>(`/api/journal/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 

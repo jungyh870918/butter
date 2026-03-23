@@ -1,201 +1,255 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { TrendingUp, Pencil, Trash2, Check, X, ArrowRight, ArrowLeft } from 'lucide-react';
-import { JournalEntry } from '../../types';
+import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2 } from 'lucide-react';
+import { JournalEntry, Book } from '../../types';
 import { useJournal } from '../../hooks/useJournal';
-import { createReflection } from '../../lib/api';
+import { createReflection, getBooks } from '../../lib/api';
+import { LoadingSpinner, ErrorMessage, EmptyState, BookCoverImage } from '../ui';
 
 const DEMO_USER_ID = 'demo-user-id';
-import { LoadingSpinner, ErrorMessage, EmptyState } from '../ui';
 
-const MOODS = ['Nostalgic', 'Inspired', 'Calm', 'Melancholy', 'Joyful', 'Pensive', 'Anxious', 'Awe'] as const;
+// ── Prompt steps — backend content fields ─────────────────────────────────
+interface Prompt {
+  id: string;
+  label: string;
+  question: string;
+  placeholder: string;
+  hint: string;
+  isHighlight?: boolean;
+  isAtmosphere?: boolean;
+}
 
-// 여러 단계의 질문 정의
-const PROMPTS = [
+const PROMPTS: Prompt[] = [
   {
     id: 'opening',
     label: 'Opening',
     question: 'What were you reading today, and what first impression did it leave on you?',
-    placeholder: 'Describe the book, a scene, a passage — anything that caught your attention first...',
+    placeholder: 'Describe the book, a scene, a passage — anything that caught your attention first…',
+    hint: 'Let the first thing that comes to mind lead you.',
+  },
+  {
+    id: 'highlight',
+    label: 'A Passage',
+    question: 'Is there a sentence or image from the reading that you want to keep?',
+    placeholder: '"The world is not what it is, but what we remember of it."',
+    hint: 'A line, a phrase, a detail. Even a single word.',
+    isHighlight: true,
   },
   {
     id: 'emotion',
     label: 'Emotion',
     question: 'What emotion surfaced most strongly while you read?',
-    placeholder: 'Was it curiosity, unease, longing, joy? Try to name it precisely...',
+    placeholder: 'Was it curiosity, unease, longing, joy? Try to name it precisely…',
+    hint: 'Precision here matters more than being right.',
   },
   {
     id: 'mirror',
     label: 'Reflection',
     question: 'Did anything in the text mirror something in your own life right now?',
     placeholder: 'A character\'s situation, a theme, a single line — what felt personally true?',
+    hint: 'The most honest answer is usually the first one.',
   },
   {
     id: 'linger',
     label: 'Lingering',
     question: 'What single image, sentence, or idea will stay with you after you close the book?',
-    placeholder: 'Something you\'ll still be thinking about tomorrow...',
+    placeholder: 'Something you\'ll still be thinking about tomorrow…',
+    hint: 'What refuses to leave?',
   },
   {
-    id: 'feeling',
-    label: 'Feeling',
-    question: 'How are you feeling right now, at the end of this reading session?',
-    placeholder: 'Capture your mood and the intensity of today\'s experience...',
-    isFinal: true, // 이 스텝에서 mood/intensity 입력
+    id: 'atmosphere',
+    label: 'Atmosphere',
+    question: 'How would you describe the atmosphere of today\'s reading?',
+    placeholder: '',
+    hint: 'Select everything that resonates.',
+    isAtmosphere: true,
   },
+];
+
+const ATMOSPHERES = [
+  'Contemplative', 'Moved', 'Melancholy', 'Nostalgic',
+  'Inspired', 'Unsettled', 'Joyful', 'Awe',
+  'Anxious', 'Pensive', 'Calm',
 ] as const;
 
-type PromptId = typeof PROMPTS[number]['id'];
+type PromptId = 'opening' | 'highlight' | 'emotion' | 'mirror' | 'linger' | 'atmosphere';
 type JournalView = 'write' | 'archive';
 
+// ── Book context type ──────────────────────────────────────────────────────
+interface BookContext {
+  bookId: string | null;
+  bookTitle: string | null;
+  bookAuthor: string | null;
+  bookCover: string | null;
+}
+
+const EMPTY_BOOK: BookContext = {
+  bookId: null,
+  bookTitle: null,
+  bookAuthor: null,
+  bookCover: null,
+};
+
+// ── Journal page ──────────────────────────────────────────────────────────
 export const Journal = () => {
+  const location = useLocation();
+  const bookContext: BookContext = location.state ?? EMPTY_BOOK;
+
   const [view, setView] = useState<JournalView>('write');
   const { entries, loading, error, create, update, remove } = useJournal(view === 'archive');
 
   return (
-    <div className="pt-20 md:pt-24 pb-12 px-4 md:px-6 max-w-5xl mx-auto">
-      <ViewToggle view={view} onToggle={setView} />
+    <div className="min-h-screen bg-butter-bg">
 
-      <AnimatePresence mode="wait">
-        {view === 'write' ? (
-          <WriteView key="write" onCreate={create} onSaved={() => setView('archive')} />
-        ) : (
-          <ArchiveView
-            key="archive"
-            entries={entries}
-            loading={loading}
-            error={error}
-            onUpdate={update}
-            onDelete={remove}
-          />
-        )}
-      </AnimatePresence>
+      {/* ── Page header ── */}
+      <div className="pt-24 pb-8 px-8 md:px-14 max-w-7xl mx-auto">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-butter-muted/70 font-medium mb-4">
+          Daily Practice
+        </p>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <h1 className="text-5xl md:text-[3.75rem] font-serif font-black leading-[1.06] tracking-tight mb-4">
+              Your{' '}
+              <em style={{ fontStyle: 'italic', color: 'var(--color-butter-primary)', fontWeight: 700 }}>
+                journal
+              </em>
+            </h1>
+            <p className="text-butter-muted leading-[1.75] max-w-sm font-light text-[15px]">
+              A private space for slow reading, quiet reflection, and the thoughts books leave behind.
+            </p>
+          </div>
+          <div className="flex gap-7 pb-1 shrink-0">
+            {(['write', 'archive'] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`pb-1.5 text-[11px] uppercase tracking-[0.18em] font-medium transition-all duration-200 ${
+                  view === v ? 'text-butter-text' : 'text-butter-muted hover:text-butter-text'
+                }`}
+                style={view === v ? { borderBottom: '1px solid var(--color-butter-text)' } : {}}
+              >
+                {v === 'write' ? 'Write' : 'Archive'}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }} />
+
+      <div className="px-8 md:px-14 max-w-7xl mx-auto py-14">
+        <AnimatePresence mode="wait">
+          {view === 'write' ? (
+            <WriteView key="write" onCreate={create} onSaved={() => setView('archive')} bookContext={bookContext} />
+          ) : (
+            <ArchiveView
+              key="archive"
+              entries={entries}
+              loading={loading}
+              error={error}
+              onUpdate={update}
+              onDelete={remove}
+            />
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
 
-// ── ViewToggle ─────────────────────────────────────────────────────────────
-
-const ViewToggle = ({ view, onToggle }: { view: JournalView; onToggle: (v: JournalView) => void }) => (
-  <div className="flex justify-center mb-12">
-    <div className="flex gap-1 p-1 rounded-full" style={{background: "rgba(0,0,0,0.05)"}}>
-      {(['write', 'archive'] as const).map((v) => (
-        <button
-          key={v}
-          onClick={() => onToggle(v)}
-          className={`px-5 md:px-8 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${
-            view === v ? 'bg-white shadow-md' : 'text-butter-muted'
-          }`}
-        >
-          {v === 'write' ? 'Daily Reflection' : 'Your Archive'}
-        </button>
-      ))}
-    </div>
-  </div>
-);
-
-// ── WriteView (multi-step) ─────────────────────────────────────────────────
-
-// 답변들을 기반으로 요약문을 생성하는 함수 (현재는 하드코딩)
-function generateSummary(answers: Record<PromptId, string>, mood: string): string {
-  const filledAnswers = PROMPTS.filter((p) => answers[p.id as PromptId].trim());
-  if (filledAnswers.length === 0) return '';
-
-  // 실제 구현 시 AI API 호출로 교체 예정
-  // 현재는 답변 내용을 조합한 템플릿 문장으로 대체
-  const moodPhrase = mood ? `Feeling ${mood.toLowerCase()}, ` : '';
-  const opening = answers.opening.trim();
-  const emotion = answers.emotion.trim();
-  const mirror = answers.mirror.trim();
-  const linger = answers.linger.trim();
-
-  const parts: string[] = [];
-
-  if (opening) parts.push(opening.split('.')[0] + '.');
-  if (emotion) parts.push(`The reading stirred a deep sense of ${emotion.toLowerCase().split(' ').slice(0, 8).join(' ')}.`);
-  if (mirror) parts.push(mirror.split('.')[0] + '.');
-  if (linger) parts.push(`What lingers most: ${linger.split('.')[0].toLowerCase()}.`);
-
-  return moodPhrase + parts.join(' ');
-}
+// ── WriteView ──────────────────────────────────────────────────────────────
 
 interface WriteViewProps {
-  onCreate: (payload: { content: string; prompt: string; mood: string; intensity: number }) => Promise<void>;
+  onCreate: (payload: {
+    content: string;
+    prompt: string;
+    mood: string;
+    emotions: string[];
+    intensity: number;
+    highlight?: string | null;
+    bookId?: string | null;
+    bookTitle?: string | null;
+    bookAuthor?: string | null;
+    bookCover?: string | null;
+  }) => Promise<{ id: string }>;
   onSaved: () => void;
+  bookContext: BookContext;
 }
 
-type WritePhase = 'writing' | 'summary';
+type WritePhase = 'prompts' | 'summary';
 
-const WriteView = ({ onCreate, onSaved }: WriteViewProps) => {
+const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
   const [answers, setAnswers] = useState<Record<PromptId, string>>({
-    opening: '', emotion: '', mirror: '', linger: '', feeling: '',
+    opening: '', highlight: '', emotion: '', mirror: '', linger: '', atmosphere: '',
   });
-  const [mood, setMood] = useState('');
-  const [intensity, setIntensity] = useState(5);
-  const [phase, setPhase] = useState<WritePhase>('writing');
-  const [summary, setSummary] = useState('');
+  const [selectedAtmospheres, setSelectedAtmospheres] = useState<string[]>([]);
+  const [phase, setPhase] = useState<WritePhase>('prompts');
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [direction, setDirection] = useState<1 | -1>(1);
+
+  // activeBook: navigation에서 전달된 bookContext로 초기화, 검색으로 교체 가능
+  const [activeBook, setActiveBook] = useState<BookContext>(bookContext);
 
   const current = PROMPTS[step];
   const isFirst = step === 0;
   const isLast = step === PROMPTS.length - 1;
   const progress = phase === 'summary' ? 100 : ((step + 1) / PROMPTS.length) * 100;
 
-  const goNext = () => {
-    setDirection(1);
-    setStep((s) => s + 1);
-  };
+  const canProceed = current.isAtmosphere
+    ? selectedAtmospheres.length > 0
+    : answers[current.id as PromptId].trim().length > 0;
 
-  const goPrev = () => {
-    setDirection(-1);
-    setStep((s) => s - 1);
-  };
+  const goNext = () => { setDirection(1); setStep((s) => s + 1); };
+  const goPrev = () => { setDirection(-1); setStep((s) => s - 1); };
+  const skipStep = () => { setDirection(1); setStep((s) => s + 1); };
 
-  // Finish 클릭 → 요약 생성 후 요약 화면으로 전환
   const handleFinish = () => {
-    const generated = generateSummary(answers, mood);
-    setSummary(generated);
     setDirection(1);
     setPhase('summary');
   };
 
-  // 요약 화면에서 Save 클릭 → journal 저장 → reflection 저장 → 완료
   const handleSave = async () => {
     setSaving(true);
     try {
+      // content: PROMPTS의 텍스트 답변들을 섹션 형태로 조합
       const journalContent = PROMPTS
-        .filter((p) => answers[p.id as PromptId].trim())
+        .filter((p) => !p.isAtmosphere && answers[p.id as PromptId].trim())
         .map((p) => `[${p.label}]\n${answers[p.id as PromptId].trim()}`)
         .join('\n\n');
 
-      // 1) Journal entry 저장 → 생성된 id 획득
-      const journalEntry = await onCreate({
-        content: journalContent,
-        prompt: PROMPTS[PROMPTS.length - 1].question,
-        mood,
+      const primaryMood = selectedAtmospheres[0] ?? '';
+      const intensity = Math.min(10, Math.max(1, selectedAtmospheres.length * 2 + 3));
+
+      const entry = await onCreate({
+        content: journalContent || answers.opening.trim() || 'A quiet reflection.',
+        prompt: PROMPTS[step]?.question ?? '',
+        mood: primaryMood,
+        emotions: selectedAtmospheres,
         intensity,
+        highlight: answers.highlight.trim() || null,
+        bookId: activeBook.bookId ?? null,
+        bookTitle: activeBook.bookTitle ?? null,
+        bookAuthor: activeBook.bookAuthor ?? null,
+        bookCover: activeBook.bookCover ?? null,
       });
 
-      // 2) 요약을 Reflection으로 저장 (userId, journalEntryId 연결)
       await createReflection({
-        title: `A reflection on: ${answers.opening.trim().split(' ').slice(0, 6).join(' ') || 'my reading'}...`,
-        content: summary,
+        title: `A reflection on: ${answers.opening.trim().split(' ').slice(0, 6).join(' ') || 'my reading'}…`,
+        content: [answers.opening, answers.mirror, answers.linger]
+          .filter(Boolean).join(' ').trim() || answers.opening.trim(),
         author: 'Butter Demo User',
         authorAvatar: 'https://api.dicebear.com/7.x/personas/svg?seed=butter',
-        tags: mood ? [mood] : [],
-        bookId: null,
+        tags: selectedAtmospheres,
+        bookId: activeBook.bookId ?? null,
         userId: DEMO_USER_ID,
-        journalEntryId: journalEntry.id,
+        journalEntryId: entry.id,
       });
 
       setSaveSuccess(true);
-      setTimeout(() => {
-        setSaveSuccess(false);
-        onSaved();
-      }, 1200);
+      setTimeout(() => { setSaveSuccess(false); onSaved(); }, 1200);
     } catch (e: any) {
       alert('Failed to save: ' + e.message);
     } finally {
@@ -203,230 +257,589 @@ const WriteView = ({ onCreate, onSaved }: WriteViewProps) => {
     }
   };
 
-  const canProceed = current.isFinal ? true : answers[current.id as PromptId].trim().length > 0;
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="bg-white rounded-[40px] shadow-2xl border border-butter-accent overflow-hidden"
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.4 }}
     >
-      {/* 진행 바 */}
-      <div className="h-1 bg-butter-accent">
-        <motion.div
-          className="h-full bg-butter-primary"
-          animate={{ width: `${progress}%` }}
-          transition={{ duration: 0.4, ease: 'easeInOut' }}
-        />
-      </div>
+      <div className="flex flex-col lg:flex-row gap-16 xl:gap-24">
 
-      <AnimatePresence mode="wait" custom={direction}>
-        {/* ── Writing phase ── */}
-        {phase === 'writing' && (
-          <motion.div
-            key="writing"
-            custom={direction}
-            variants={{
-              enter: (d: number) => ({ opacity: 0, x: d * 40 }),
-              center: { opacity: 1, x: 0 },
-              exit: (d: number) => ({ opacity: 0, x: d * -40 }),
-            }}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.28, ease: 'easeInOut' }}
-          >
-            {/* 스텝 인디케이터 */}
-            <div className="flex items-center justify-between px-12 pt-8 pb-0">
-              <div className="flex gap-2">
-                {PROMPTS.map((p, i) => (
-                  <div
-                    key={p.id}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      i < step ? 'bg-butter-primary w-6'
-                      : i === step ? 'bg-butter-primary w-10'
-                      : 'bg-butter-accent w-6'
-                    }`}
-                  />
-                ))}
+        {/* ── Left col: book + progress context ── */}
+        <aside className="lg:w-64 xl:w-72 shrink-0">
+          <div className="lg:sticky lg:top-28 space-y-8">
+
+            {/* Book context — search 기능 포함 */}
+            <BookContextPanel
+              bookContext={activeBook}
+              onBookChange={setActiveBook}
+            />
+
+            {/* Progress indicator — 현재 스텝과 전체 흐름 */}
+            {phase === 'prompts' && (
+              <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '1.5rem' }}>
+                <p className="text-[9px] uppercase tracking-[0.25em] font-medium text-butter-muted/60 mb-4">
+                  Progress
+                </p>
+                <div className="space-y-2.5">
+                  {PROMPTS.map((p, i) => {
+                    const done = i < step;
+                    const active = i === step;
+                    const hasAnswer = p.isAtmosphere
+                      ? selectedAtmospheres.length > 0
+                      : answers[p.id as PromptId].trim().length > 0;
+                    return (
+                      <div key={p.id} className="flex items-center gap-3">
+                        <div
+                          className="w-1 h-1 rounded-full shrink-0 transition-all duration-300"
+                          style={{
+                            background: active
+                              ? 'var(--color-butter-primary)'
+                              : done && hasAnswer
+                              ? 'var(--color-butter-primary)'
+                              : 'rgba(0,0,0,0.15)',
+                            width: active ? '6px' : '4px',
+                            height: active ? '6px' : '4px',
+                          }}
+                        />
+                        <span
+                          className="text-[11px] transition-colors duration-200"
+                          style={{
+                            color: active
+                              ? 'var(--color-butter-text)'
+                              : done && hasAnswer
+                              ? 'var(--color-butter-primary)'
+                              : 'var(--color-butter-muted)',
+                            fontWeight: active ? 500 : 400,
+                          }}
+                        >
+                          {p.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <span className="text-[10px] uppercase tracking-widest font-bold text-butter-muted">
-                {step + 1} / {PROMPTS.length}
-              </span>
-            </div>
+            )}
 
-            {/* 질문 + 답변 영역 */}
-            <div className="px-12 py-10 min-h-[420px] flex flex-col">
-              <AnimatePresence mode="wait" custom={direction}>
-                <motion.div
-                  key={step}
-                  custom={direction}
-                  variants={{
-                    enter: (d: number) => ({ opacity: 0, x: d * 30 }),
-                    center: { opacity: 1, x: 0 },
-                    exit: (d: number) => ({ opacity: 0, x: d * -30 }),
-                  }}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ duration: 0.22, ease: 'easeInOut' }}
-                  className="flex flex-col flex-1"
+            {/* Hint for current step */}
+            {phase === 'prompts' && current.hint && (
+              <p className="text-[12px] text-butter-muted/50 font-light italic leading-[1.7]">
+                {current.hint}
+              </p>
+            )}
+          </div>
+        </aside>
+
+        {/* ── Right col: writing area ── */}
+        <main className="flex-1 min-w-0 max-w-2xl">
+
+          <AnimatePresence mode="wait">
+            {phase === 'prompts' && (
+              <motion.div
+                key={`step-${step}`}
+                custom={direction}
+                variants={{
+                  enter: (d: number) => ({ opacity: 0, x: d * 32 }),
+                  center: { opacity: 1, x: 0 },
+                  exit: (d: number) => ({ opacity: 0, x: d * -32 }),
+                }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.26, ease: 'easeInOut' }}
+              >
+                {/* Progress bar */}
+                <div
+                  className="mb-10"
+                  style={{ background: 'rgba(0,0,0,0.06)', height: '1px' }}
                 >
-                  <div className="mb-10">
-                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-butter-primary mb-2 block">
-                      {current.label}
-                    </span>
-                    <h2 className="text-3xl font-serif leading-snug">{current.question}</h2>
-                  </div>
+                  <motion.div
+                    style={{ background: 'var(--color-butter-primary)', height: '1px' }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.4, ease: 'easeInOut' }}
+                  />
+                </div>
 
-                  {!current.isFinal && (
+                {/* Step label + counter */}
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-[10px] uppercase tracking-[0.22em] font-medium text-butter-primary">
+                    {current.label}
+                  </span>
+                  <span className="text-[10px] uppercase tracking-widest font-medium text-butter-muted/50">
+                    {step + 1} / {PROMPTS.length}
+                  </span>
+                </div>
+
+                {/* Question */}
+                <h2 className="text-2xl md:text-[1.75rem] font-serif font-light leading-[1.35] mb-8 text-butter-text">
+                  {current.question}
+                </h2>
+
+                {/* Input area */}
+                {current.isAtmosphere ? (
+                  <div className="mb-10">
+                    <div className="flex flex-wrap gap-2.5">
+                      {ATMOSPHERES.map((a) => {
+                        const active = selectedAtmospheres.includes(a);
+                        return (
+                          <button
+                            key={a}
+                            onClick={() =>
+                              setSelectedAtmospheres((prev) =>
+                                prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]
+                              )
+                            }
+                            className="px-4 py-1.5 text-[12px] font-medium transition-all duration-150"
+                            style={{
+                              borderRadius: '2px',
+                              border: active
+                                ? '1px solid var(--color-butter-primary)'
+                                : '1px solid rgba(0,0,0,0.12)',
+                              background: active ? 'var(--color-butter-primary)' : 'transparent',
+                              color: active ? '#ffffff' : 'var(--color-butter-muted)',
+                            }}
+                          >
+                            {a}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : current.isHighlight ? (
+                  // Highlight input — borderLeft quote style
+                  <div
+                    className="mb-10 relative"
+                    style={{ borderLeft: '2px solid rgba(107,82,0,0.18)' }}
+                  >
+                    <span
+                      className="absolute -top-3 left-4 font-serif text-3xl leading-none select-none"
+                      style={{ color: 'rgba(107,82,0,0.15)' }}
+                    >
+                      "
+                    </span>
                     <textarea
                       autoFocus
                       value={answers[current.id as PromptId]}
-                      onChange={(e) => setAnswers((prev) => ({ ...prev, [current.id]: e.target.value }))}
+                      onChange={(e) =>
+                        setAnswers((prev) => ({ ...prev, [current.id]: e.target.value }))
+                      }
                       placeholder={current.placeholder}
-                      className="flex-1 w-full bg-transparent border-none focus:ring-0 text-xl font-serif leading-relaxed resize-none placeholder:text-butter-accent min-h-[160px]"
+                      rows={4}
+                      className="w-full bg-transparent pl-6 pr-4 pt-4 pb-4 text-[16px] font-serif italic leading-[1.85] resize-none focus:outline-none text-butter-text/80 placeholder:text-butter-muted/25"
                     />
+                  </div>
+                ) : (
+                  // Regular textarea
+                  <textarea
+                    autoFocus
+                    value={answers[current.id as PromptId]}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({ ...prev, [current.id]: e.target.value }))
+                    }
+                    placeholder={current.placeholder}
+                    rows={7}
+                    className="w-full bg-transparent text-[17px] font-serif leading-[1.9] resize-none focus:outline-none text-butter-text/85 placeholder:text-butter-muted/25 mb-10"
+                    style={{ borderBottom: '1px solid rgba(0,0,0,0.07)', paddingBottom: '1.5rem' }}
+                  />
+                )}
+
+                {/* Navigation */}
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={goPrev}
+                    disabled={isFirst}
+                    className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.14em] text-butter-muted hover:text-butter-text transition-colors disabled:opacity-0 disabled:pointer-events-none px-4 py-2"
+                    style={{ border: '1px solid rgba(0,0,0,0.10)', borderRadius: '2px' }}
+                  >
+                    <ArrowLeft size={12} /> Back
+                  </button>
+
+                  <button
+                    onClick={skipStep}
+                    className={`text-[11px] font-medium uppercase tracking-[0.14em] text-butter-muted/50 hover:text-butter-muted transition-colors px-3 py-2 ${
+                      isLast ? 'invisible' : ''
+                    }`}
+                  >
+                    Skip
+                  </button>
+
+                  {isLast ? (
+                    <button
+                      onClick={handleFinish}
+                      disabled={!canProceed}
+                      className="flex items-center gap-2 px-7 py-2.5 bg-butter-primary text-white font-medium uppercase tracking-[0.14em] hover:brightness-110 transition-all text-[11px] disabled:opacity-40"
+                      style={{ borderRadius: '2px' }}
+                    >
+                      Review <ArrowRight size={12} />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={goNext}
+                      disabled={!canProceed}
+                      className="flex items-center gap-2 px-7 py-2.5 bg-butter-primary text-white font-medium uppercase tracking-[0.14em] hover:brightness-110 transition-all text-[11px] disabled:opacity-40"
+                      style={{ borderRadius: '2px' }}
+                    >
+                      Next <ArrowRight size={12} />
+                    </button>
                   )}
-
-                  {current.isFinal && (
-                    <div className="flex flex-col gap-8 flex-1">
-                      <textarea
-                        autoFocus
-                        value={answers[current.id as PromptId]}
-                        onChange={(e) => setAnswers((prev) => ({ ...prev, [current.id]: e.target.value }))}
-                        placeholder={current.placeholder}
-                        className="w-full bg-transparent border-none focus:ring-0 text-xl font-serif leading-relaxed resize-none placeholder:text-butter-accent min-h-[100px]"
-                      />
-                      <div className="grid grid-cols-2 gap-4 mt-auto">
-                        <MoodSelect value={mood} onChange={setMood} />
-                        <IntensitySlider value={intensity} onChange={setIntensity} />
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Bottom navigation */}
-            <div className="px-12 pb-10 pt-4 border-t border-butter-accent flex justify-between items-center">
-              <button
-                onClick={goPrev}
-                disabled={isFirst}
-                className="flex items-center gap-2 px-8 py-3 rounded-full border border-butter-accent text-butter-muted hover:bg-butter-accent transition-all text-xs font-bold uppercase tracking-widest disabled:opacity-0 disabled:pointer-events-none"
-              >
-                <ArrowLeft size={14} /> Back
-              </button>
-
-              <button
-                onClick={goNext}
-                className={`flex items-center gap-2 px-5 py-2 rounded-full border border-butter-accent text-butter-muted hover:bg-butter-accent hover:text-butter-text transition-all text-xs font-bold uppercase tracking-widest ${
-                  isLast ? 'invisible' : ''
-                }`}
-              >
-                Skip
-              </button>
-
-              {isLast ? (
-                <button
-                  onClick={handleFinish}
-                  className="flex items-center gap-2 px-8 py-3 rounded-full bg-butter-primary text-white font-bold uppercase tracking-widest shadow-lg hover:brightness-110 transition-all text-xs"
-                >
-                  Finish <ArrowRight size={14} />
-                </button>
-              ) : (
-                <button
-                  onClick={goNext}
-                  disabled={!canProceed}
-                  className="flex items-center gap-2 px-8 py-3 rounded-full bg-butter-primary text-white font-bold uppercase tracking-widest shadow-lg hover:brightness-110 transition-all text-xs disabled:opacity-40"
-                >
-                  Next <ArrowRight size={14} />
-                </button>
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {/* ── Summary phase ── */}
-        {phase === 'summary' && (
-          <motion.div
-            key="summary"
-            custom={1}
-            variants={{
-              enter: (d: number) => ({ opacity: 0, x: d * 40 }),
-              center: { opacity: 1, x: 0 },
-              exit: (d: number) => ({ opacity: 0, x: d * -40 }),
-            }}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.32, ease: 'easeInOut' }}
-          >
-            {/* 헤더 */}
-            <div className="px-12 pt-10 pb-0">
-              <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-butter-primary mb-2 block">
-                Your Reflection
-              </span>
-              <h2 className="text-3xl font-serif leading-snug mb-1">Here's what emerged from today's reading.</h2>
-              <p className="text-sm text-butter-muted font-light">
-                We've distilled your responses into a single reflection. Review it before saving.
-              </p>
-            </div>
-
-            {/* 요약 카드 */}
-            <div className="px-12 py-8 min-h-[280px]">
-              <div className="bg-butter-accent/30 border border-butter-accent rounded-3xl px-8 py-7 relative">
-                {/* 인용 장식 */}
-                <span className="absolute top-4 left-6 text-4xl text-butter-primary/20 font-serif leading-none select-none">"</span>
-                <p className="text-xl font-serif italic leading-relaxed text-butter-text pt-4 pl-3">
-                  {summary || 'No content to summarize — try filling in a few prompts.'}
-                </p>
-                <span className="absolute bottom-4 right-6 text-4xl text-butter-primary/20 font-serif leading-none select-none rotate-180">"</span>
-              </div>
-
-              {/* 메타 정보 */}
-              {mood && (
-                <div className="flex items-center gap-3 mt-5 px-1">
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-butter-muted">Mood</span>
-                  <span className="text-xs bg-butter-primary/10 text-butter-primary px-3 py-1 rounded-full font-bold">{mood}</span>
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-butter-muted ml-2">Intensity</span>
-                  <span className="text-xs bg-butter-primary/10 text-butter-primary px-3 py-1 rounded-full font-bold">{intensity} / 10</span>
                 </div>
-              )}
+              </motion.div>
+            )}
 
-              <p className="text-xs text-butter-muted mt-5 px-1 font-light">
-                This summary will also be saved as a community reflection, visible on the Home feed.
-              </p>
-            </div>
-
-            {/* 하단 버튼 */}
-            <div className="px-12 pb-10 pt-4 border-t border-butter-accent flex justify-between items-center">
-              <button
-                onClick={() => { setDirection(-1); setPhase('writing'); }}
-                className="flex items-center gap-2 px-8 py-3 rounded-full border border-butter-accent text-butter-muted hover:bg-butter-accent transition-all text-xs font-bold uppercase tracking-widest"
+            {phase === 'summary' && (
+              <motion.div
+                key="summary"
+                custom={1}
+                variants={{
+                  enter: () => ({ opacity: 0, x: 32 }),
+                  center: { opacity: 1, x: 0 },
+                  exit: () => ({ opacity: 0, x: -32 }),
+                }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
               >
-                <ArrowLeft size={14} /> Edit
-              </button>
+                {/* Summary header */}
+                <div className="mb-10" style={{ background: 'var(--color-butter-primary)', height: '1px' }} />
+                <span className="text-[10px] uppercase tracking-[0.22em] font-medium text-butter-primary mb-4 block">
+                  Your Reflection
+                </span>
+                <h2 className="text-2xl md:text-[1.75rem] font-serif font-light leading-[1.35] mb-2 text-butter-text">
+                  Here's what emerged from today's reading.
+                </h2>
+                <p className="text-[13px] text-butter-muted font-light leading-[1.7] mb-10">
+                  Review your responses before saving to your private archive.
+                </p>
 
-              <div /> {/* spacer */}
+                {/* Answers review */}
+                <div className="space-y-8 mb-10">
+                  {PROMPTS.filter((p) => !p.isAtmosphere).map((p) => {
+                    const val = answers[p.id as PromptId].trim();
+                    if (!val) return null;
+                    return (
+                      <div
+                        key={p.id}
+                        style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '1.5rem' }}
+                      >
+                        <p className="text-[9px] uppercase tracking-[0.25em] font-medium text-butter-primary/70 mb-2">
+                          {p.label}
+                        </p>
+                        {p.isHighlight ? (
+                          <p className="text-[15px] font-serif italic text-butter-text/70 leading-[1.85]">
+                            "{val}"
+                          </p>
+                        ) : (
+                          <p className="text-[15px] text-butter-text/80 font-light leading-[1.85]">{val}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
 
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className={`flex items-center gap-2 px-8 py-3 rounded-full font-bold uppercase tracking-widest shadow-lg transition-all text-xs ${
-                  saveSuccess
-                    ? 'bg-green-500 text-white'
-                    : 'bg-butter-primary text-white hover:brightness-110'
-                } disabled:opacity-50`}
-              >
-                {saveSuccess ? <><Check size={14} /> Saved!</> : saving ? 'Saving...' : <><Check size={14} /> Save</>}
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                {/* Atmosphere summary */}
+                {selectedAtmospheres.length > 0 && (
+                  <div
+                    className="mb-10"
+                    style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '1.5rem' }}
+                  >
+                    <p className="text-[9px] uppercase tracking-[0.25em] font-medium text-butter-primary/70 mb-3">
+                      Atmosphere
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedAtmospheres.map((a) => (
+                        <span
+                          key={a}
+                          className="text-[11px] font-medium px-3 py-1 uppercase tracking-[0.1em]"
+                          style={{
+                            border: '1px solid rgba(107,82,0,0.30)',
+                            borderRadius: '2px',
+                            color: 'var(--color-butter-primary)',
+                          }}
+                        >
+                          {a}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Save CTA */}
+                <div
+                  className="flex items-center justify-between pt-6"
+                  style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}
+                >
+                  <button
+                    onClick={() => { setDirection(-1); setPhase('prompts'); setStep(PROMPTS.length - 1); }}
+                    className="flex items-center gap-2 px-5 py-2.5 text-butter-muted hover:text-butter-text text-[11px] font-medium uppercase tracking-[0.14em] transition-colors"
+                    style={{ border: '1px solid rgba(0,0,0,0.10)', borderRadius: '2px' }}
+                  >
+                    <ArrowLeft size={12} /> Edit
+                  </button>
+
+                  <div className="text-right">
+                    <button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className={`flex items-center gap-2.5 px-8 py-3 font-medium uppercase tracking-[0.14em] text-[11px] transition-all disabled:opacity-50 ${
+                        saveSuccess ? 'bg-green-600 text-white' : 'bg-butter-primary text-white hover:brightness-110'
+                      }`}
+                      style={{ borderRadius: '2px' }}
+                    >
+                      {saveSuccess ? (
+                        <><Check size={12} /> Saved</>
+                      ) : saving ? 'Saving…' : (
+                        <><span style={{ fontSize: '14px' }}>📖</span> Save Reflection</>
+                      )}
+                    </button>
+                    <p className="text-[10px] text-butter-muted/40 mt-2 font-light italic">
+                      Added to your private journal archive.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
+      </div>
     </motion.div>
+  );
+};
+
+// ── BookContextPanel — with inline book search ─────────────────────────────
+
+const BookContextPanel = ({
+  bookContext,
+  onBookChange,
+}: {
+  bookContext: BookContext;
+  onBookChange: (book: BookContext) => void;
+}) => {
+  const hasBook = !!(bookContext.bookTitle && bookContext.bookAuthor);
+  const [searching, setSearching] = useState(false);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Book[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openSearch = () => {
+    setSearching(true);
+    setQuery('');
+    setResults([]);
+    setSearchError('');
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  const closeSearch = () => {
+    setSearching(false);
+    setQuery('');
+    setResults([]);
+    setSearchError('');
+  };
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!value.trim()) { setResults([]); return; }
+    debounceRef.current = setTimeout(async () => {
+      setSearchLoading(true);
+      setSearchError('');
+      try {
+        const books = await getBooks({ search: value.trim() });
+        setResults(books.slice(0, 6));
+      } catch {
+        setSearchError('Search failed. Please try again.');
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 400);
+  };
+
+  const handleSelect = (book: Book) => {
+    onBookChange({
+      bookId: book.id,
+      bookTitle: book.title,
+      bookAuthor: book.author,
+      bookCover: book.cover,
+    });
+    closeSearch();
+  };
+
+  const handleClear = () => {
+    onBookChange({ bookId: null, bookTitle: null, bookAuthor: null, bookCover: null });
+  };
+
+  // ── 검색 모드 ──
+  if (searching) {
+    return (
+      <div>
+        <p className="text-[9px] uppercase tracking-[0.28em] font-medium text-butter-muted/60 mb-4">
+          Currently Reflecting On
+        </p>
+        <div
+          className="flex items-center gap-2 px-3 py-2.5 mb-3"
+          style={{ border: '1px solid rgba(0,0,0,0.12)', borderRadius: '2px' }}
+        >
+          <Search size={12} className="text-butter-muted/50 shrink-0" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => handleQueryChange(e.target.value)}
+            placeholder="Search by title or author…"
+            className="flex-1 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/35 font-light"
+          />
+          {searchLoading && <Loader2 size={12} className="text-butter-muted/50 animate-spin shrink-0" />}
+          <button onClick={closeSearch} className="text-butter-muted/40 hover:text-butter-muted transition-colors shrink-0">
+            <X size={13} />
+          </button>
+        </div>
+
+        {searchError && (
+          <p className="text-[11px] text-red-400 font-light mb-2">{searchError}</p>
+        )}
+
+        {!searchLoading && results.length > 0 && (
+          <div className="space-y-0.5">
+            {results.map((book) => (
+              <button
+                key={book.id}
+                onClick={() => handleSelect(book)}
+                className="w-full flex items-center gap-3 px-2 py-2 text-left transition-colors hover:bg-butter-surface group"
+                style={{ borderRadius: '2px' }}
+              >
+                <div
+                  className="shrink-0 overflow-hidden"
+                  style={{ width: '28px', aspectRatio: '2/3', borderRadius: '1px', background: 'var(--color-butter-accent)' }}
+                >
+                  <BookCoverImage
+                    src={book.cover}
+                    alt={book.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-medium text-butter-text leading-snug line-clamp-1 group-hover:text-butter-primary transition-colors">
+                    {book.title}
+                  </p>
+                  <p className="text-[11px] text-butter-muted font-light italic line-clamp-1">
+                    {book.author}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!searchLoading && query.trim() && results.length === 0 && !searchError && (
+          <p className="text-[12px] text-butter-muted/50 font-light italic mt-2">
+            No books found for "{query}"
+          </p>
+        )}
+
+        {!query.trim() && (
+          <p className="text-[11px] text-butter-muted/40 font-light italic leading-[1.6] mt-2">
+            Type a title or author name to search.
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // ── 책이 선택된 상태 ──
+  if (hasBook) {
+    return (
+      <div>
+        <p className="text-[9px] uppercase tracking-[0.28em] font-medium text-butter-muted/60 mb-4">
+          Currently Reflecting On
+        </p>
+        <div className="flex gap-4 items-start mb-4">
+          <div
+            className="shrink-0 overflow-hidden"
+            style={{
+              width: '88px',
+              aspectRatio: '2/3',
+              boxShadow: '0 6px 24px rgba(0,0,0,0.15)',
+              borderRadius: '2px',
+            }}
+          >
+            <BookCoverImage
+              src={bookContext.bookCover ?? ''}
+              alt={bookContext.bookTitle ?? ''}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="pt-0.5 min-w-0">
+            <h2
+              className="font-serif italic font-light leading-[1.2] mb-2 text-butter-text"
+              style={{ fontSize: '1.35rem' }}
+            >
+              {bookContext.bookTitle}
+            </h2>
+            <p className="text-[13px] text-butter-muted font-light tracking-wide">
+              {bookContext.bookAuthor}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3 items-center">
+          <button
+            onClick={openSearch}
+            className="text-[10px] uppercase tracking-[0.14em] font-medium text-butter-muted/60 hover:text-butter-primary transition-colors"
+          >
+            Change
+          </button>
+          <span className="text-butter-muted/25 text-[10px]">·</span>
+          <button
+            onClick={handleClear}
+            className="text-[10px] uppercase tracking-[0.14em] font-medium text-butter-muted/40 hover:text-red-400 transition-colors"
+          >
+            Remove
+          </button>
+          {bookContext.bookId && (
+            <>
+              <span className="text-butter-muted/25 text-[10px]">·</span>
+              <a
+                href={`/explore/${bookContext.bookId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] uppercase tracking-[0.14em] font-medium text-butter-muted/60 hover:text-butter-primary transition-colors"
+              >
+                View Details
+              </a>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── 책이 없는 상태 — 검색 유도 ──
+  return (
+    <div>
+      <p className="text-[9px] uppercase tracking-[0.28em] font-medium text-butter-muted/60 mb-4">
+        Currently Reflecting On
+      </p>
+      <button
+        onClick={openSearch}
+        className="w-full flex items-center gap-3 p-4 text-left transition-all group"
+        style={{ background: '#f2ede3', borderRadius: '3px' }}
+      >
+        <BookOpen size={13} className="text-butter-primary/50 shrink-0" />
+        <div>
+          <p className="text-[12px] font-medium text-butter-muted group-hover:text-butter-primary transition-colors">
+            Link a book
+          </p>
+          <p className="text-[11px] text-butter-muted/60 font-light mt-0.5">
+            Search to connect this entry to a book
+          </p>
+        </div>
+        <Search size={12} className="text-butter-muted/30 shrink-0 ml-auto group-hover:text-butter-primary/50 transition-colors" />
+      </button>
+    </div>
   );
 };
 
@@ -442,18 +855,24 @@ interface ArchiveViewProps {
 
 const ArchiveView = ({ entries, loading, error, onUpdate, onDelete }: ArchiveViewProps) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
+    initial={{ opacity: 0, y: 16 }}
     animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -20 }}
-    className="grid gap-6"
+    exit={{ opacity: 0, y: -12 }}
+    className="max-w-2xl"
   >
     {loading && <LoadingSpinner />}
     {!loading && error && <ErrorMessage message={error} />}
     {!loading && !error && entries.length === 0 && (
-      <EmptyState message="No journal entries yet — write your first reflection!" />
+      <EmptyState message="No journal entries yet — write your first reflection." />
     )}
-    {!loading && !error && entries.map((entry) => (
-      <JournalEntryCard key={entry.id} entry={entry} onUpdate={onUpdate} onDelete={onDelete} />
+    {!loading && !error && entries.map((entry, i) => (
+      <JournalEntryCard
+        key={entry.id}
+        entry={entry}
+        onUpdate={onUpdate}
+        onDelete={onDelete}
+        first={i === 0}
+      />
     ))}
   </motion.div>
 );
@@ -462,17 +881,17 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete }: ArchiveVie
 
 interface JournalEntryCardProps {
   entry: JournalEntry;
+  first: boolean;
   onUpdate: (id: string, payload: { content: string; mood: string; intensity: number }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
 
-const JournalEntryCard = ({ entry, onUpdate, onDelete }: JournalEntryCardProps) => {
+const JournalEntryCard = ({ entry, first, onUpdate, onDelete }: JournalEntryCardProps) => {
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(entry.content);
   const [editMood, setEditMood] = useState(entry.mood || '');
   const [editIntensity, setEditIntensity] = useState(entry.intensity);
 
-  // content에서 섹션 파싱 ([Label]\n내용 형태)
   const sections = entry.content
     .split(/\n\n(?=\[)/)
     .map((block) => {
@@ -480,6 +899,10 @@ const JournalEntryCard = ({ entry, onUpdate, onDelete }: JournalEntryCardProps) 
       return match ? { label: match[1], text: match[2] } : null;
     })
     .filter(Boolean) as { label: string; text: string }[];
+
+  const displayEmotions = (entry.emotions ?? []).length > 0
+    ? entry.emotions
+    : entry.mood ? [entry.mood] : [];
 
   const handleUpdate = async () => {
     try {
@@ -491,100 +914,108 @@ const JournalEntryCard = ({ entry, onUpdate, onDelete }: JournalEntryCardProps) 
   };
 
   return (
-    <div className="py-6">
+    <article
+      className="py-10"
+      style={{ borderTop: first ? 'none' : '1px solid rgba(0,0,0,0.06)' }}
+    >
       {editing ? (
         <div className="flex flex-col gap-4">
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full bg-butter-accent/20 border border-butter-accent rounded-2xl px-4 py-3 text-base font-serif leading-relaxed resize-none focus:ring-0 focus:border-butter-primary min-h-[120px]"
+            className="w-full bg-butter-surface px-4 py-3 text-[15px] font-serif leading-relaxed resize-none focus:outline-none min-h-[120px]"
+            style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '2px' }}
           />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-            <MoodSelect value={editMood} onChange={setEditMood} />
-            <IntensitySlider value={editIntensity} onChange={setEditIntensity} />
-          </div>
           <div className="flex gap-2 justify-end">
             <button
               onClick={() => setEditing(false)}
-              className="flex items-center gap-1 px-4 py-2 rounded-full border border-butter-accent text-butter-muted hover:bg-butter-accent text-xs font-bold uppercase tracking-widest transition-all"
+              className="flex items-center gap-1 px-4 py-2 text-butter-muted hover:text-butter-text text-[11px] font-medium uppercase tracking-[0.14em] transition-all"
+              style={{ border: '1px solid rgba(0,0,0,0.10)', borderRadius: '2px' }}
             >
-              <X size={14} /> Cancel
+              <X size={12} /> Cancel
             </button>
             <button
               onClick={handleUpdate}
-              className="flex items-center gap-1 px-4 py-2 rounded-full bg-butter-primary text-white text-xs font-bold uppercase tracking-widest hover:brightness-110 transition-all"
+              className="flex items-center gap-1 px-4 py-2 bg-butter-primary text-white text-[11px] font-medium uppercase tracking-[0.14em] hover:brightness-110 transition-all"
+              style={{ borderRadius: '2px' }}
             >
-              <Check size={14} /> Save
+              <Check size={12} /> Save
             </button>
           </div>
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap gap-2 justify-between items-start mb-4 md:mb-5">
+          <div className="flex justify-between items-start mb-5">
             <div>
-              <p className="text-[10px] uppercase tracking-widest font-bold text-butter-muted mb-1">
+              <p className="text-[10px] uppercase tracking-widest font-medium text-butter-muted/50 mb-1.5">
                 {entry.date}
               </p>
-              <h3 className="text-xl font-serif">{entry.mood || 'Reflection'}</h3>
+              {entry.bookTitle && (
+                <p className="text-[12px] text-butter-primary/80 italic font-light mb-2">
+                  {entry.bookTitle}{entry.bookAuthor ? ` — ${entry.bookAuthor}` : ''}
+                </p>
+              )}
+              {displayEmotions.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {displayEmotions.map((e) => (
+                    <span
+                      key={e}
+                      className="text-[10px] uppercase tracking-[0.1em] font-medium px-2.5 py-0.5"
+                      style={{
+                        border: '1px solid rgba(107,82,0,0.22)',
+                        borderRadius: '2px',
+                        color: 'var(--color-butter-primary)',
+                      }}
+                    >
+                      {e}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-butter-primary">
-                <TrendingUp size={14} />
-                <span className="text-xs font-bold">Intensity: {entry.intensity}</span>
-              </div>
-              <button onClick={() => setEditing(true)} className="text-butter-muted hover:text-butter-primary transition-colors p-1">
-                <Pencil size={15} />
+            <div className="flex items-center gap-2 shrink-0 ml-4">
+              <button
+                onClick={() => setEditing(true)}
+                className="text-butter-muted/40 hover:text-butter-primary transition-colors p-1"
+              >
+                <Pencil size={13} />
               </button>
-              <button onClick={() => onDelete(entry.id).catch((e) => alert(e.message))} className="text-butter-muted hover:text-red-400 transition-colors p-1">
-                <Trash2 size={15} />
+              <button
+                onClick={() => onDelete(entry.id).catch((e) => alert(e.message))}
+                className="text-butter-muted/40 hover:text-red-400 transition-colors p-1"
+              >
+                <Trash2 size={13} />
               </button>
             </div>
           </div>
 
-          {/* 섹션 구조가 있으면 섹션별로, 없으면 그냥 텍스트로 */}
+          {entry.highlight && (
+            <div
+              className="mb-5 pl-4 py-3 pr-4"
+              style={{ borderLeft: '2px solid rgba(107,82,0,0.18)' }}
+            >
+              <p className="text-[14px] font-serif italic text-butter-text/60 leading-[1.8]">
+                "{entry.highlight}"
+              </p>
+            </div>
+          )}
+
           {sections.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-5">
               {sections.map((s) => (
                 <div key={s.label}>
-                  <p className="text-[9px] uppercase tracking-widest font-bold text-butter-primary mb-1">{s.label}</p>
-                  <p className="text-butter-muted font-light leading-relaxed text-sm">{s.text}</p>
+                  <p className="text-[9px] uppercase tracking-widest font-medium text-butter-primary/60 mb-1.5">
+                    {s.label}
+                  </p>
+                  <p className="text-[14px] text-butter-muted font-light leading-[1.85]">{s.text}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-butter-muted font-light leading-relaxed">{entry.content}</p>
+            <p className="text-[15px] text-butter-muted font-light leading-[1.85]">{entry.content}</p>
           )}
         </>
       )}
-    </div>
+    </article>
   );
 };
-
-// ── Shared form controls ───────────────────────────────────────────────────
-
-const MoodSelect = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
-  <div>
-    <label className="text-[10px] uppercase tracking-widest font-bold text-butter-muted mb-2 block">Mood</label>
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full bg-butter-accent/30 border border-butter-accent rounded-xl px-3 py-2 text-sm font-serif focus:ring-0 focus:border-butter-primary"
-    >
-      <option value="">— Select a mood —</option>
-      {MOODS.map((m) => <option key={m} value={m}>{m}</option>)}
-    </select>
-  </div>
-);
-
-const IntensitySlider = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (
-  <div>
-    <label className="text-[10px] uppercase tracking-widest font-bold text-butter-muted mb-2 block">
-      Intensity: {value}
-    </label>
-    <input
-      type="range" min={1} max={10} value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
-      className="w-full accent-butter-primary mt-3"
-    />
-  </div>
-);
