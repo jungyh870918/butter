@@ -53,3 +53,19 @@ export interface EmotionSummary {
   totalEntries: number;
   avgIntensity: number;
 }
+
+export interface UserProfile {
+  id: string;
+  userId: string;
+  readingVolumeLevel: 'low' | 'mid' | 'high';
+  recentEmotions: string[];
+  dominantThemes: string[];
+  writingStyleSignal: 'introspective' | 'factual' | 'emotional';
+  notableFragments: string[];
+  recentBookCategories: string[];
+  sourceEntryCount: number;
+  profileVersion: number;
+  promptVersion: string;
+  generatedAt: string;
+  updatedAt: string;
+}

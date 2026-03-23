@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id             String         @id @default(cuid())
+  name           String
+  avatarUrl      String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  journalEntries JournalEntry[]
+  emotionLogs    EmotionLog[]
+  reflections    Reflection[]
+}
+
+model Book {
+  id                String       @id @default(cuid())
+  title             String
+  author            String
+  cover             String
+  description       String
+  tags              String[]
+  rating            Float
+  historicalContext String?
+  quote             String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  reflections       Reflection[]
+}
+
+model Reflection {
+  id             String        @id @default(cuid())
+  title          String
+  content        String
+  author         String
+  authorAvatar   String
+  date           DateTime      @default(now())
+  tags           String[]
+  image          String?
+
+  // Relations
+  bookId         String?
+  book           Book?         @relation(fields: [bookId], references: [id], onDelete: SetNull)
+
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  journalEntryId String?       @unique
+  journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model JournalEntry {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  date        DateTime    @default(now())
+  content     String
+  prompt      String?
+  mood        String?     // 기존 단일 mood — 하위 호환 유지
+  emotions    String[]    @default([]) // 가이드된 다중 감정 선택 (신규)
+  intensity   Int
+  // ── Book context (soft link — Google Books ID, Prisma FK 없음) ──
+  bookId      String?     // Google Books volume ID
+  bookTitle   String?     // 비정규화 스냅샷
+  bookAuthor  String?     // 비정규화 스냅샷
+  bookCover   String?     // 커버 URL 스냅샷
+  // ── Guided reflection extras ──
+  highlight   String?     // 인상적 구절 / memorable passage
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  reflection  Reflection? // 1:1 역방향
+}
+
+model EmotionLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  dateLabel String
+  intensity Int
+  emotion   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserProfile {
+  id                   String   @id @default(cuid())
+  userId               String   @unique          // User당 1개, upsert로 갱신
+  // ── 추출된 프로파일 필드 ──
+  readingVolumeLevel   String   @default("low")  // low | mid | high
+  recentEmotions       String[] @default([])
+  dominantThemes       String[] @default([])
+  writingStyleSignal   String   @default("introspective") // introspective | factual | emotional
+  notableFragments     String[] @default([])
+  recentBookCategories String[] @default([])
+  sourceEntryCount     Int      @default(0)
+  // ── 버전 / 메타 ──
+  profileVersion       Int      @default(1)      // 갱신마다 +1
+  promptVersion        String   @default("1.0")  // 프롬프트 변경 추적
+  generatedAt          DateTime @default(now())  // 마지막 GPT 생성 시각
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}

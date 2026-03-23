@@ -1,0 +1,214 @@
+# @baseUrl = http://localhost:4000
+@baseUrl = https://butter-backend-production.up.railway.app
+################################
+### 📚 BOOKS API
+################################
+# GET /api/books              → Google Books 기본 목록 (literary fiction classics)
+# GET /api/books?search=      → 검색어로 Google Books 검색
+# GET /api/books?tag=         → 태그로 Google Books 검색 (subject:tag)
+# GET /api/books/:id          → Prisma DB 우선, 없으면 Google Books volume id로 조회
+# GET /api/books/:id/reflections → 해당 책의 리플렉션 목록
+
+### GET 기본 도서 목록
+GET {{baseUrl}}/api/books
+
+###
+
+### GET 검색어로 도서 검색
+GET {{baseUrl}}/api/books?search=the great gatsby
+
+###
+
+### GET 태그로 도서 검색
+GET {{baseUrl}}/api/books?tag=fiction
+
+###
+
+### GET 도서 상세 — Prisma 시드 데이터
+GET {{baseUrl}}/api/books/book-1
+
+###
+
+### GET 도서 상세 — Google Books volume id (위 검색 결과의 id 복사해서 사용)
+GET {{baseUrl}}/api/books/YkpEAAAAMAAJ
+
+###
+
+### GET 특정 책의 리플렉션 목록
+GET {{baseUrl}}/api/books/book-1/reflections
+
+
+################################
+### 📖 REFLECTIONS API
+################################
+# GET    /api/reflections                → 목록 (bookId, userId, journalEntryId, limit 필터 가능)
+# GET    /api/reflections/:id           → 단건 조회
+# POST   /api/reflections               → 생성 (title, content, author 필수)
+# PATCH  /api/reflections/:id          → 수정 (title, content, tags 변경 가능)
+# DELETE /api/reflections/:id          → 삭제
+
+### GET 전체 리플렉션 목록
+GET {{baseUrl}}/api/reflections
+
+###
+
+### GET bookId 필터
+GET {{baseUrl}}/api/reflections?bookId=book-1
+
+###
+
+### GET 최신 5개만
+GET {{baseUrl}}/api/reflections?limit=5
+
+###
+
+### GET 단건 조회 (POST 응답의 id 복사)
+GET {{baseUrl}}/api/reflections/REFLECTION_ID_HERE
+
+###
+
+### POST 리플렉션 생성 — 필수 필드만
+POST {{baseUrl}}/api/reflections
+Content-Type: application/json
+
+{
+  "title": "첫 번째 리플렉션",
+  "content": "이 책을 읽으며 많은 것을 느꼈다. 특히 주인공의 내면 변화가 인상적이었다.",
+  "author": "데모 유저"
+}
+
+###
+
+### POST 리플렉션 생성 — 전체 필드 (bookId는 Prisma에 있는 책만 가능)
+POST {{baseUrl}}/api/reflections
+Content-Type: application/json
+
+{
+  "title": "위대한 개츠비 감상",
+  "content": "아메리칸 드림의 허상을 탁월하게 묘사한 작품이다.",
+  "author": "데모 유저",
+  "authorAvatar": "https://api.dicebear.com/7.x/personas/svg?seed=demo",
+  "tags": ["classics", "american-literature"],
+  "bookId": "book-1"
+}
+
+###
+
+### PATCH 리플렉션 수정 (POST 응답의 id 복사)
+PATCH {{baseUrl}}/api/reflections/REFLECTION_ID_HERE
+Content-Type: application/json
+
+{
+  "title": "수정된 제목",
+  "content": "수정된 내용입니다.",
+  "tags": ["updated", "classics"]
+}
+
+###
+
+### DELETE 리플렉션 삭제 (POST 응답의 id 복사)
+DELETE {{baseUrl}}/api/reflections/REFLECTION_ID_HERE
+
+
+################################
+### 📝 JOURNAL API
+################################
+# GET    /api/journal       → DEMO_USER_ID의 전체 일지 목록
+# POST   /api/journal       → 생성 (content 필수, intensity 1~10 필수)
+# PATCH  /api/journal/:id   → 수정 (content, mood, intensity 변경 가능)
+# DELETE /api/journal/:id   → 삭제
+
+### GET 전체 저널 목록
+GET {{baseUrl}}/api/journal
+
+###
+
+### POST 저널 생성 — 필수 필드만
+POST {{baseUrl}}/api/journal
+Content-Type: application/json
+
+{
+  "content": "오늘은 책을 읽으며 많은 생각을 했다.",
+  "intensity": 7
+}
+
+###
+
+### POST 저널 생성 — 전체 필드
+POST {{baseUrl}}/api/journal
+Content-Type: application/json
+
+{
+  "content": "오늘 읽은 챕터에서 주인공의 선택이 인상적이었다. 나라면 어떻게 했을까?",
+  "prompt": "오늘 가장 인상 깊었던 장면은?",
+  "mood": "contemplative",
+  "intensity": 8
+}
+
+###
+
+### PATCH 저널 수정 (POST 응답의 id 복사)
+PATCH {{baseUrl}}/api/journal/JOURNAL_ID_HERE
+Content-Type: application/json
+
+{
+  "content": "수정된 저널 내용입니다.",
+  "mood": "peaceful",
+  "intensity": 6
+}
+
+###
+
+### DELETE 저널 삭제 (POST 응답의 id 복사)
+DELETE {{baseUrl}}/api/journal/JOURNAL_ID_HERE
+
+
+################################
+### 😊 EMOTIONS API
+################################
+# GET  /api/emotions         → DEMO_USER_ID의 전체 감정 로그
+# GET  /api/emotions/summary → 감정 통계 (상위 감정, 평균/최대 강도, 총 횟수)
+# POST /api/emotions         → 감정 기록 (date YYYY-MM-DD, intensity 1~10, emotion 필수)
+
+### GET 감정 로그 전체
+GET {{baseUrl}}/api/emotions
+
+###
+
+### GET 감정 통계 요약
+GET {{baseUrl}}/api/emotions/summary
+
+###
+
+### POST 감정 기록
+POST {{baseUrl}}/api/emotions
+Content-Type: application/json
+
+{
+  "date": "2026-03-20",
+  "intensity": 8,
+  "emotion": "joy"
+}
+
+###
+
+### POST 감정 기록 추가
+POST {{baseUrl}}/api/emotions
+Content-Type: application/json
+
+{
+  "date": "2026-03-19",
+  "intensity": 5,
+  "emotion": "nostalgia"
+}
+
+###
+
+POST {{baseUrl}}/api/emotions
+Content-Type: application/json
+
+{
+  "date": "2026-03-18",
+  "intensity": 6,
+  "emotion": "gratitude"
+}

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2 } from 'lucide-react';
@@ -6,6 +6,7 @@ import { JournalEntry, Book } from '../../types';
 import { useJournal } from '../../hooks/useJournal';
 import { createReflection, getBooks } from '../../lib/api';
 import { LoadingSpinner, ErrorMessage, EmptyState, BookCoverImage } from '../ui';
+import { getReflectionQuestions } from '../../lib/api';
 
 const DEMO_USER_ID = 'demo-user-id';
 
@@ -193,6 +194,44 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   // activeBook: navigation에서 전달된 bookContext로 초기화, 검색으로 교체 가능
   const [activeBook, setActiveBook] = useState<BookContext>(bookContext);
 
+  // ── GPT 질문 state ──
+  const [gptQuestions, setGptQuestions] = useState<string[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+
+  // 책이 변경될 때마다 GPT 질문 fetch
+  const handleBookChange = (book: BookContext) => {
+    setActiveBook(book);
+    // 책이 선택된 경우에만 질문 요청
+    if (book.bookTitle && book.bookAuthor) {
+      setGptQuestions([]);
+      setQuestionsLoading(true);
+      getReflectionQuestions({
+        bookTitle: book.bookTitle,
+        bookAuthor: book.bookAuthor,
+      })
+        .then((res) => setGptQuestions(res.questions))
+        .catch(() => setGptQuestions([]))  // 실패해도 조용히 — 기능 저하 없음
+        .finally(() => setQuestionsLoading(false));
+    } else {
+      setGptQuestions([]);
+    }
+  };
+
+  // BookDetail에서 책과 함께 진입한 경우 초기 질문 자동 fetch
+  useEffect(() => {
+    if (bookContext.bookTitle && bookContext.bookAuthor) {
+      setQuestionsLoading(true);
+      getReflectionQuestions({
+        bookTitle: bookContext.bookTitle,
+        bookAuthor: bookContext.bookAuthor,
+      })
+        .then((res) => setGptQuestions(res.questions))
+        .catch(() => setGptQuestions([]))
+        .finally(() => setQuestionsLoading(false));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 마운트 시 1회만
+
   const current = PROMPTS[step];
   const isFirst = step === 0;
   const isLast = step === PROMPTS.length - 1;
@@ -273,8 +312,16 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
             {/* Book context — search 기능 포함 */}
             <BookContextPanel
               bookContext={activeBook}
-              onBookChange={setActiveBook}
+              onBookChange={handleBookChange}
             />
+
+            {/* GPT 질문 — 책이 선택됐을 때 좌측 패널에 표시 */}
+            {phase === 'prompts' && (activeBook.bookTitle) && (
+              <GptQuestionsPanel
+                questions={gptQuestions}
+                loading={questionsLoading}
+              />
+            )}
 
             {/* Progress indicator — 현재 스텝과 전체 흐름 */}
             {phase === 'prompts' && (
@@ -608,6 +655,51 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   );
 };
 
+// ── GptQuestionsPanel ──────────────────────────────────────────────────────
+// 책이 선택됐을 때 좌측 패널에 표시되는 GPT 생성 질문 힌트
+
+const GptQuestionsPanel = ({
+  questions,
+  loading,
+}: {
+  questions: string[];
+  loading: boolean;
+}) => {
+  if (!loading && questions.length === 0) return null;
+
+  return (
+    <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '1.5rem' }}>
+      <p className="text-[9px] uppercase tracking-[0.25em] font-semibold text-butter-muted/50 mb-4">
+        Questions to Consider
+      </p>
+
+      {loading ? (
+        <div className="space-y-2.5">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-3 rounded-sm animate-pulse"
+              style={{ background: 'rgba(0,0,0,0.06)', width: `${70 + i * 8}%` }}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {questions.map((q, i) => (
+            <p
+              key={i}
+              className="text-[12px] text-butter-muted font-light leading-[1.7] italic"
+              style={{ color: 'var(--color-butter-muted)' }}
+            >
+              — {q}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── BookContextPanel — with inline book search ─────────────────────────────
 
 const BookContextPanel = ({
@@ -644,7 +736,10 @@ const BookContextPanel = ({
   const handleQueryChange = (value: string) => {
     setQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!value.trim()) { setResults([]); return; }
+    if (!value.trim() || value.trim().length < 3) {
+      setResults([]);
+      return;
+    }
     debounceRef.current = setTimeout(async () => {
       setSearchLoading(true);
       setSearchError('');
@@ -744,6 +839,12 @@ const BookContextPanel = ({
         {!query.trim() && (
           <p className="text-[11px] text-butter-muted/40 font-light italic leading-[1.6] mt-2">
             Type a title or author name to search.
+          </p>
+        )}
+
+        {query.trim().length > 0 && query.trim().length < 3 && (
+          <p className="text-[11px] text-butter-muted/40 font-light italic leading-[1.6] mt-2">
+            Keep typing…
           </p>
         )}
       </div>

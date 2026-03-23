@@ -97,6 +97,24 @@ export const updateJournalEntry = (
 export const deleteJournalEntry = (id: string) =>
   request<any>(`/api/journal/${id}`, { method: 'DELETE' });
 
+// ── Insights (GPT pipeline) ────────────────────────────────────────────────
+
+export const getUserProfile = () =>
+  request<any>('/api/insights/profile');
+
+export const refreshUserProfile = () =>
+  request<any>('/api/insights/profile', { method: 'POST' });
+
+export const getReflectionQuestions = (payload: {
+  bookTitle: string;
+  bookAuthor: string;
+  bookDescription?: string;
+  bookTags?: string[];
+}) => request<{ questions: string[]; meta: { profileUsed: boolean; readingVolumeLevel: string; sourceEntryCount: number } }>(
+  '/api/insights/questions',
+  { method: 'POST', body: JSON.stringify(payload) }
+);
+
 // ── Emotions ───────────────────────────────────────────────────────────────
 
 export const getEmotions = () => request<any[]>('/api/emotions');
