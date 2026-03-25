@@ -8,9 +8,14 @@ export interface Book {
   rating: number;
   publishedDate?: string;
   pageCount?: number;
+  // EN enrichment
   historicalContext?: string;
   quote?: string;
   authorNote?: string;
+  // KO enrichment
+  quoteKo?: string;
+  authorNoteKo?: string;
+  historicalContextKo?: string;
 }
 
 export interface Reflection {

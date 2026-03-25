@@ -1,6 +1,6 @@
 import { useLocale } from '../../hooks/useLocale';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { Book } from '../../types';
@@ -12,7 +12,7 @@ const CATEGORIES = ['All', 'Fiction', 'Poetry', 'Philosophy', 'Sci-Fi', 'Histori
 
 export const Explore = () => {
   const [filter, setFilter] = useState('All');
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const CATEGORY_LABELS: Record<string, string> = {
     'All': t('explore.cat.all'),
     'Fiction': t('explore.cat.fiction'),
@@ -22,7 +22,22 @@ export const Explore = () => {
     'Historical': t('explore.cat.historical'),
   };
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { books, loading, error } = useBooks(filter);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') ?? '';
+
+  // 검색 쿼리가 바뀌면 카테고리 필터 초기화
+  useEffect(() => {
+    if (searchQuery) setFilter('All');
+  }, [searchQuery]);
+
+  // 검색 지우기
+  const clearSearch = () => setSearchParams({});
+
+  const { books, loading, error } = useBooks(
+    searchQuery ? undefined : filter,
+    searchQuery || undefined,
+    locale          // 현재 언어 설정 → 백엔드 langRestrict로 전달
+  );
   const navigate = useNavigate();
 
   const handleSelectBook = (book: Book) => navigate(`/explore/${book.id}`);
@@ -47,11 +62,43 @@ export const Explore = () => {
         </p>
       </div>
 
+      {/* ── 검색 결과 배너 ── */}
+      {searchQuery && (
+        <div className="px-8 md:px-14 max-w-7xl mx-auto pb-2">
+          <div className="flex items-center gap-3 py-3" style={{ borderTop: '1px solid var(--color-butter-rule)' }}>
+            <p className="text-[13px] font-light" style={{ color: 'var(--color-butter-text)' }}>
+              {loading
+                ? (t('nav.search.placeholder'))
+                : `${books.length} ${books.length === 1 ? 'result' : 'results'} for`}{' '}
+              {!loading && (
+                <em className="font-serif italic" style={{ color: 'var(--color-butter-primary)' }}>
+                  "{searchQuery}"
+                </em>
+              )}
+            </p>
+            <button
+              onClick={clearSearch}
+              className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.1em] transition-colors hover:text-butter-text"
+              style={{ color: 'var(--color-butter-muted)', opacity: 0.7 }}
+            >
+              <X size={11} />
+              {t('explore.cat.all')}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="px-8 md:px-14 max-w-7xl mx-auto">
 
         {/* ── 카테고리 필터 ── */}
-        <div className="flex items-center gap-1 mb-10 overflow-x-auto pb-1 scrollbar-hide pt-6"
-          style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}>
+        <div
+          className="flex items-center gap-1 mb-10 overflow-x-auto pb-1 scrollbar-hide pt-6 transition-opacity duration-200"
+          style={{
+            borderTop: '1px solid rgba(0,0,0,0.07)',
+            opacity: searchQuery ? 0.35 : 1,
+            pointerEvents: searchQuery ? 'none' : 'auto',
+          }}
+        >
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
@@ -138,7 +185,7 @@ export const Explore = () => {
               <input
                 type="email"
                 {...{placeholder: t('explore.journal.email')}}
-                className="w-full px-0 py-2 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/40 transition-colors"
+                className="w-full px-0 py-2 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/55 transition-colors"
                 style={{ borderBottom: '1px solid rgba(0,0,0,0.10)' }}
               />
               <button

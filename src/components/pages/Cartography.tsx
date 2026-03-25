@@ -151,11 +151,11 @@ const LexiconCloud = ({ emotions, summary }: LexiconCloudProps) => {
   return (
     <div className="bg-butter-primary text-white p-8 md:p-12 rounded-2xl overflow-hidden relative">
       <div className="relative z-10">
-        <h3 className="text-sm font-bold uppercase tracking-[0.3em] mb-8 opacity-60">
+        <h3 className="text-sm font-bold uppercase tracking-[0.3em] mb-8 opacity-75">
           Lexicon of Feelings
         </h3>
         {lexicon.length === 0 ? (
-          <p className="opacity-60 font-serif italic text-xl">
+          <p className="opacity-75 font-serif italic text-xl">
             Save journal entries with a mood to build your lexicon.
           </p>
         ) : (

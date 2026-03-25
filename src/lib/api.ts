@@ -2,9 +2,15 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   'http://localhost:4000';
 
+const TOKEN_KEY = 'butter-token';
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = localStorage.getItem(TOKEN_KEY);
   const res = await fetch(`${API_BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     ...options,
   });
   if (!res.ok) {
@@ -15,7 +21,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 // ── Books ──────────────────────────────────────────────────────────────────
 
-export const getBooks = (params?: { tag?: string; search?: string }) => {
+export const getBooks = (params?: { tag?: string; search?: string; lang?: string }) => {
   const qs = params
     ? '?' +
       new URLSearchParams(
@@ -110,7 +116,11 @@ export const getReflectionQuestions = (payload: {
   bookAuthor: string;
   bookDescription?: string;
   bookTags?: string[];
-}) => request<{ questions: string[]; meta: { profileUsed: boolean; readingVolumeLevel: string; sourceEntryCount: number } }>(
+}) => request<{
+  questions: string[];
+  questionsKo: string[];
+  meta: { profileUsed: boolean; readingVolumeLevel: string; sourceEntryCount: number };
+}>(
   '/api/insights/questions',
   { method: 'POST', body: JSON.stringify(payload) }
 );

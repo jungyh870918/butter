@@ -1,13 +1,25 @@
+import { useState, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { AvatarImage } from '../ui';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useTheme, THEMES } from '../../hooks/useTheme';
 import { useLocale } from '../../hooks/useLocale';
+import { useAuth } from '../../hooks/useAuth';
 
 export const Navbar = () => {
   const navigate = useNavigate();
   const { themeId, setTheme } = useTheme();
   const { locale, setLocale, t } = useLocale();
+  const { user, logout } = useAuth();
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const mobileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   const cycleTheme = () => {
     const idx = THEMES.findIndex((t) => t.id === themeId);
@@ -24,6 +36,28 @@ export const Navbar = () => {
     { path: '/journal', label: t('nav.journal') },
     { path: '/cartography', label: t('nav.map') },
   ] as const;
+
+  // 검색 실행
+  const submitSearch = (q: string) => {
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    setSearchQuery('');
+    setMobileSearchOpen(false);
+    navigate(`/explore?q=${encodeURIComponent(trimmed)}`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') submitSearch(searchQuery);
+    if (e.key === 'Escape') {
+      setSearchQuery('');
+      (e.target as HTMLInputElement).blur();
+    }
+  };
+
+  const openMobileSearch = () => {
+    setMobileSearchOpen(true);
+    setTimeout(() => mobileInputRef.current?.focus(), 50);
+  };
 
   return (
     <>
@@ -61,14 +95,27 @@ export const Navbar = () => {
         </div>
 
         <div className="ml-auto flex items-center gap-5">
+          {/* 검색창 */}
           <div className="relative flex items-center">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-butter-muted/60 pointer-events-none" />
             <input
+              ref={inputRef}
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder={t('nav.search.placeholder')}
-              className="pl-8 pr-3 py-1.5 text-[12px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/50 w-40 focus:w-52 transition-all duration-300 rounded-sm"
+              className="pl-8 pr-7 py-1.5 text-[12px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/50 w-40 focus:w-56 transition-all duration-300 rounded-sm"
               style={{ border: '1px solid var(--color-butter-rule)' }}
             />
+            {searchQuery && (
+              <button
+                onClick={() => { setSearchQuery(''); inputRef.current?.focus(); }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-butter-muted/50 hover:text-butter-muted transition-colors"
+              >
+                <X size={11} />
+              </button>
+            )}
           </div>
 
           {/* 언어 토글 */}
@@ -77,14 +124,11 @@ export const Navbar = () => {
             title={locale === 'en' ? '한국어로 전환' : 'Switch to English'}
             className="transition-all duration-200 hover:opacity-80"
             style={{
-              fontSize: '11px',
-              fontWeight: 500,
-              letterSpacing: '0.08em',
+              fontSize: '11px', fontWeight: 500, letterSpacing: '0.08em',
               color: 'var(--color-butter-muted)',
               padding: '2px 6px',
               border: '1px solid var(--color-butter-rule)',
-              borderRadius: '2px',
-              lineHeight: 1.6,
+              borderRadius: '2px', lineHeight: 1.6,
             }}
           >
             {locale === 'en' ? '한' : 'EN'}
@@ -100,41 +144,107 @@ export const Navbar = () => {
             {currentTheme.emoji}
           </button>
 
-          <div className="w-7 h-7 rounded-full overflow-hidden" style={{ opacity: 0.82 }}>
-            <AvatarImage src="https://i.pravatar.cc/150?u=user" alt="User" className="w-full h-full object-cover" />
-          </div>
+          {/* 유저 + 로그아웃 */}
+          {user && (
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-medium" style={{ color: 'var(--color-butter-muted)', opacity: 0.7 }}>
+                {user.username}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="transition-opacity hover:opacity-100"
+                title={locale === 'ko' ? '로그아웃' : 'Sign out'}
+                style={{
+                  fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em',
+                  color: 'var(--color-butter-muted)', opacity: 0.45,
+                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                }}
+              >
+                {locale === 'ko' ? '로그아웃' : 'Sign out'}
+              </button>
+            </div>
+          )}
         </div>
       </nav>
 
       {/* ── 모바일 상단 ── */}
       <div
-        className="md:hidden fixed top-0 left-0 right-0 z-50 bg-butter-bg/95 backdrop-blur-sm px-5 py-3.5 flex justify-between items-center"
+        className="md:hidden fixed top-0 left-0 right-0 z-50 bg-butter-bg/95 backdrop-blur-sm"
         style={{ boxShadow: '0 1px 0 var(--color-butter-rule)' }}
       >
-        <div className="flex items-center cursor-pointer" onClick={() => navigate('/')}>
-          <span className="font-serif text-base font-bold italic tracking-tight text-butter-text">Butter</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setLocale(locale === 'en' ? 'ko' : 'en')}
-            style={{
-              fontSize: '11px', fontWeight: 500, letterSpacing: '0.08em',
-              color: 'var(--color-butter-muted)',
-              padding: '2px 5px',
-              border: '1px solid var(--color-butter-rule)',
-              borderRadius: '2px', lineHeight: 1.6,
-            }}
-          >
-            {locale === 'en' ? '한' : 'EN'}
-          </button>
-          <button onClick={cycleTheme} style={{ fontSize: '16px', lineHeight: 1 }}>
-            {currentTheme.emoji}
-          </button>
-          <Search size={16} className="text-butter-muted" />
-          <div className="w-7 h-7 rounded-full overflow-hidden" style={{ opacity: 0.82 }}>
-            <AvatarImage src="https://i.pravatar.cc/150?u=user" alt="User" className="w-full h-full object-cover" />
+        {/* 기본 헤더 */}
+        <div className="px-5 py-3.5 flex justify-between items-center">
+          <div className="flex items-center cursor-pointer" onClick={() => navigate('/')}>
+            <span className="font-serif text-base font-bold italic tracking-tight text-butter-text">Butter</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setLocale(locale === 'en' ? 'ko' : 'en')}
+              style={{
+                fontSize: '11px', fontWeight: 500, letterSpacing: '0.08em',
+                color: 'var(--color-butter-muted)',
+                padding: '2px 5px',
+                border: '1px solid var(--color-butter-rule)',
+                borderRadius: '2px', lineHeight: 1.6,
+              }}
+            >
+              {locale === 'en' ? '한' : 'EN'}
+            </button>
+            <button onClick={cycleTheme} style={{ fontSize: '16px', lineHeight: 1 }}>
+              {currentTheme.emoji}
+            </button>
+            {/* 모바일 검색 아이콘 — 클릭하면 검색창 열림 */}
+            <button onClick={openMobileSearch} className="text-butter-muted hover:text-butter-text transition-colors">
+              <Search size={16} />
+            </button>
+            {user && (
+              <button
+                onClick={handleLogout}
+                style={{
+                  fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em',
+                  color: 'var(--color-butter-muted)', opacity: 0.5,
+                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                }}
+              >
+                {locale === 'ko' ? '로그아웃' : 'Sign out'}
+              </button>
+            )}
           </div>
         </div>
+
+        {/* 모바일 검색 확장 바 */}
+        {mobileSearchOpen && (
+          <div
+            className="px-5 pb-3 flex items-center gap-2"
+            style={{ borderTop: '1px solid var(--color-butter-rule)' }}
+          >
+            <Search size={13} className="text-butter-muted/60 shrink-0" />
+            <input
+              ref={mobileInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={t('nav.search.placeholder')}
+              className="flex-1 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/50 py-1.5"
+            />
+            {searchQuery ? (
+              <button
+                onClick={() => submitSearch(searchQuery)}
+                className="text-[11px] font-medium uppercase tracking-[0.1em] text-butter-primary"
+              >
+                {locale === 'ko' ? '검색' : 'Go'}
+              </button>
+            ) : (
+              <button
+                onClick={() => setMobileSearchOpen(false)}
+                className="text-butter-muted/60 hover:text-butter-muted transition-colors"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── 모바일 하단 탭 ── */}

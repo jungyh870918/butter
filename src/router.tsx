@@ -1,5 +1,7 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { RootLayout } from './components/layout/RootLayout';
+import { ProtectedRoute } from './components/layout/ProtectedRoute';
+import { Login } from './components/pages/Login';
 import { Home } from './components/pages/Home';
 import { Explore } from './components/pages/Explore';
 import { BookDetail } from './components/pages/BookDetail';
@@ -10,13 +12,20 @@ import { NotFound } from './components/pages/NotFound';
 
 export const router = createBrowserRouter([
   {
-    // 공유 카드 — Navbar/Footer 없는 독립 레이아웃
+    path: '/login',
+    element: <Login />,
+  },
+  {
     path: '/share/:bookId',
     element: <ShareCard />,
   },
   {
     path: '/',
-    element: <RootLayout />,
+    element: (
+      <ProtectedRoute>
+        <RootLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Home /> },
       { path: 'explore', element: <Explore /> },

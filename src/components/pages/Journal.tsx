@@ -166,26 +166,31 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   // activeBook: navigation에서 전달된 bookContext로 초기화, 검색으로 교체 가능
   const [activeBook, setActiveBook] = useState<BookContext>(bookContext);
 
-  // ── GPT 질문 state ──
-  const [gptQuestions, setGptQuestions] = useState<string[]>([]);
+  // ── GPT 질문 state (EN + KO 분리 보관) ──
+  const [gptQuestions, setGptQuestions]     = useState<string[]>([]);
+  const [gptQuestionsKo, setGptQuestionsKo] = useState<string[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(false);
 
   // 책이 변경될 때마다 GPT 질문 fetch
   const handleBookChange = (book: BookContext) => {
     setActiveBook(book);
-    // 책이 선택된 경우에만 질문 요청
     if (book.bookTitle && book.bookAuthor) {
       setGptQuestions([]);
+      setGptQuestionsKo([]);
       setQuestionsLoading(true);
       getReflectionQuestions({
         bookTitle: book.bookTitle,
         bookAuthor: book.bookAuthor,
       })
-        .then((res) => setGptQuestions(res.questions))
-        .catch(() => setGptQuestions([]))  // 실패해도 조용히 — 기능 저하 없음
+        .then((res) => {
+          setGptQuestions(res.questions);
+          setGptQuestionsKo(res.questionsKo ?? []);
+        })
+        .catch(() => { setGptQuestions([]); setGptQuestionsKo([]); })
         .finally(() => setQuestionsLoading(false));
     } else {
       setGptQuestions([]);
+      setGptQuestionsKo([]);
     }
   };
 
@@ -197,8 +202,11 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
         bookTitle: bookContext.bookTitle,
         bookAuthor: bookContext.bookAuthor,
       })
-        .then((res) => setGptQuestions(res.questions))
-        .catch(() => setGptQuestions([]))
+        .then((res) => {
+          setGptQuestions(res.questions);
+          setGptQuestionsKo(res.questionsKo ?? []);
+        })
+        .catch(() => { setGptQuestions([]); setGptQuestionsKo([]); })
         .finally(() => setQuestionsLoading(false));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -291,6 +299,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
             {phase === 'prompts' && (activeBook.bookTitle) && (
               <GptQuestionsPanel
                 questions={gptQuestions}
+                questionsKo={gptQuestionsKo}
                 loading={questionsLoading}
               />
             )}
@@ -344,7 +353,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
 
             {/* Hint for current step */}
             {phase === 'prompts' && current.hint && (
-              <p className="text-[12px] text-butter-muted/50 font-light italic leading-[1.7]">
+              <p className="text-[12px] text-butter-muted/65 font-light italic leading-[1.7]">
                 {current.hint}
               </p>
             )}
@@ -386,7 +395,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                   <span className="text-[10px] uppercase tracking-[0.22em] font-medium text-butter-primary">
                     {current.label}
                   </span>
-                  <span className="text-[10px] uppercase tracking-widest font-medium text-butter-muted/50">
+                  <span className="text-[10px] uppercase tracking-widest font-medium text-butter-muted/65">
                     {step + 1} / {PROMPTS.length}
                   </span>
                 </div>
@@ -446,7 +455,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                       }
                       placeholder={current.placeholder}
                       rows={4}
-                      className="w-full bg-transparent pl-6 pr-4 pt-4 pb-4 text-[16px] font-serif italic leading-[1.85] resize-none focus:outline-none text-butter-text/80 placeholder:text-butter-muted/25"
+                      className="w-full bg-transparent pl-6 pr-4 pt-4 pb-4 text-[16px] font-serif italic leading-[1.85] resize-none focus:outline-none text-butter-text/80 placeholder:text-butter-muted/55"
                     />
                   </div>
                 ) : (
@@ -459,7 +468,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                     }
                     placeholder={current.placeholder}
                     rows={7}
-                    className="w-full bg-transparent text-[17px] font-serif leading-[1.9] resize-none focus:outline-none text-butter-text/85 placeholder:text-butter-muted/25 mb-10"
+                    className="w-full bg-transparent text-[17px] font-serif leading-[1.9] resize-none focus:outline-none text-butter-text/85 placeholder:text-butter-muted/55 mb-10"
                     style={{ borderBottom: '1px solid rgba(0,0,0,0.07)', paddingBottom: '1.5rem' }}
                   />
                 )}
@@ -477,7 +486,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
 
                   <button
                     onClick={skipStep}
-                    className={`text-[11px] font-medium uppercase tracking-[0.14em] text-butter-muted/50 hover:text-butter-muted transition-colors px-3 py-2 ${
+                    className={`text-[11px] font-medium uppercase tracking-[0.14em] text-butter-muted/65 hover:text-butter-muted transition-colors px-3 py-2 ${
                       isLast ? 'invisible' : ''
                     }`}
                   >
@@ -613,7 +622,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                         <><span style={{ fontSize: '14px' }}>📖</span> {t('journal.save')}</>
                       )}
                     </button>
-                    <p className="text-[10px] text-butter-muted/40 mt-2 font-light italic">
+                    <p className="text-[10px] text-butter-muted/55 mt-2 font-light italic">
                       {t('journal.archive.note')}
                     </p>
                   </div>
@@ -632,17 +641,23 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
 
 const GptQuestionsPanel = ({
   questions,
+  questionsKo,
   loading,
 }: {
   questions: string[];
+  questionsKo: string[];
   loading: boolean;
 }) => {
-  const { t } = useLocale();
-  if (!loading && questions.length === 0) return null;
+  const { locale, t } = useLocale();
+
+  // locale에 맞는 질문 선택 — KO 번역이 없으면 EN fallback
+  const displayQuestions = locale === 'ko' && questionsKo.length > 0 ? questionsKo : questions;
+
+  if (!loading && displayQuestions.length === 0) return null;
 
   return (
     <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '1.5rem' }}>
-      <p className="text-[9px] uppercase tracking-[0.25em] font-semibold text-butter-muted/50 mb-4">
+      <p className="text-[9px] uppercase tracking-[0.25em] font-semibold text-butter-muted/65 mb-4">
         {t('journal.questions.label')}
       </p>
 
@@ -658,7 +673,7 @@ const GptQuestionsPanel = ({
         </div>
       ) : (
         <div className="space-y-4">
-          {questions.map((q, i) => (
+          {displayQuestions.map((q, i) => (
             <p
               key={i}
               className="text-[12px] text-butter-muted font-light leading-[1.7] italic"
@@ -682,7 +697,7 @@ const BookContextPanel = ({
   bookContext: BookContext;
   onBookChange: (book: BookContext) => void;
 }) => {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const hasBook = !!(bookContext.bookTitle && bookContext.bookAuthor);
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState('');
@@ -718,7 +733,7 @@ const BookContextPanel = ({
       setSearchLoading(true);
       setSearchError('');
       try {
-        const books = await getBooks({ search: value.trim() });
+        const books = await getBooks({ search: value.trim(), lang: locale });
         setResults(books.slice(0, 6));
       } catch {
         setSearchError(t('journal.book.searchfail'));
@@ -764,7 +779,7 @@ const BookContextPanel = ({
               border: '1px solid var(--color-butter-rule)',
             }}
           >
-            <Search size={12} className="text-butter-muted/50 shrink-0" />
+            <Search size={12} className="text-butter-muted/65 shrink-0" />
             <input
               ref={inputRef}
               type="text"
@@ -773,20 +788,20 @@ const BookContextPanel = ({
               {...{placeholder: t('journal.book.search')}}
               className="flex-1 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/35 font-light"
             />
-            {searchLoading && <Loader2 size={12} className="text-butter-muted/50 animate-spin shrink-0" />}
-            <button onClick={closeSearch} className="text-butter-muted/40 hover:text-butter-muted transition-colors shrink-0">
+            {searchLoading && <Loader2 size={12} className="text-butter-muted/65 animate-spin shrink-0" />}
+            <button onClick={closeSearch} className="text-butter-muted/55 hover:text-butter-muted transition-colors shrink-0">
               <X size={13} />
             </button>
           </div>
 
           {/* 안내 문구 */}
           {!query.trim() && (
-            <p className="text-[11px] text-butter-muted/50 font-light italic leading-[1.6]">
+            <p className="text-[11px] text-butter-muted/65 font-light italic leading-[1.6]">
               {t('journal.book.typing')}
             </p>
           )}
           {query.trim().length > 0 && query.trim().length < 3 && (
-            <p className="text-[11px] text-butter-muted/50 font-light italic leading-[1.6]">
+            <p className="text-[11px] text-butter-muted/65 font-light italic leading-[1.6]">
               {t('journal.book.keeptyping')}
             </p>
           )}
@@ -830,7 +845,7 @@ const BookContextPanel = ({
           )}
 
           {!searchLoading && query.trim().length >= 3 && results.length === 0 && !searchError && (
-            <p className="text-[12px] text-butter-muted/50 font-light italic">
+            <p className="text-[12px] text-butter-muted/65 font-light italic">
               {t('journal.book.noresult')} \"{query}\"
             </p>
           )}
@@ -884,7 +899,7 @@ const BookContextPanel = ({
           <span className="text-butter-muted/25 text-[10px]">·</span>
           <button
             onClick={handleClear}
-            className="text-[10px] uppercase tracking-[0.14em] font-medium text-butter-muted/40 hover:text-red-400 transition-colors"
+            className="text-[10px] uppercase tracking-[0.14em] font-medium text-butter-muted/55 hover:text-red-400 transition-colors"
           >
             {t('journal.book.remove')}
           </button>
@@ -924,7 +939,7 @@ const BookContextPanel = ({
             {t('journal.book.link.desc')}
           </p>
         </div>
-        <Search size={12} className="text-butter-muted/30 shrink-0 ml-auto group-hover:text-butter-primary/50 transition-colors" />
+        <Search size={12} className="text-butter-muted/45 shrink-0 ml-auto group-hover:text-butter-primary/50 transition-colors" />
       </button>
     </div>
   );
@@ -1075,6 +1090,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
             <ArchiveDetailView
               key={selectedEntry.id}
               entry={selectedEntry}
+              allEntries={entries}
               onUpdate={onUpdate}
               onDelete={async (id) => {
                 await onDelete(id).catch(() => {});
@@ -1141,7 +1157,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
               <div
                 key={d}
                 className="text-center text-[10px] font-medium uppercase tracking-[0.08em] py-1"
-                style={{ color: 'var(--color-butter-muted)', opacity: 0.5 }}
+                style={{ color: 'var(--color-butter-muted)', opacity: 0.65 }}
               >
                 {d}
               </div>
@@ -1200,6 +1216,23 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
             })}
           </div>
         </div>
+
+        {/* ── [1] Accumulation text ── */}
+        {entries.length >= 3 && (
+          <p
+            className="font-serif italic font-light mb-6"
+            style={{
+              fontSize: '11px',
+              lineHeight: 1.7,
+              color: 'var(--color-butter-muted)',
+              opacity: 0.6,
+            }}
+          >
+            {locale === 'ko'
+              ? `${entries.length}개의 기록이 조용히 쌓이고 있습니다.`
+              : `You've been quietly building a record of your reading.`}
+          </p>
+        )}
 
         {/* ── {t('archive.recent')} ── */}
         <div className="mb-6">
@@ -1305,11 +1338,19 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
           {firstEntryDate && (
             <p
               className="text-center text-[11px] font-light italic mt-3"
-              style={{ color: 'var(--color-butter-muted)', opacity: 0.5 }}
+              style={{ color: 'var(--color-butter-muted)', opacity: 0.65 }}
             >
               {entries.length} {t('archive.entries')} {t('archive.since')} {firstEntryDate}
             </p>
           )}
+
+          {/* ── [3] Soft CTA ── */}
+          <p
+            className="text-center font-serif italic font-light mt-4"
+            style={{ fontSize: '12px', color: 'var(--color-butter-muted)', opacity: 0.6 }}
+          >
+            {locale === 'ko' ? '짧은 메모도 괜찮습니다.' : 'Even a small note counts.'}
+          </p>
         </div>
       </aside>
     </motion.div>
@@ -1320,17 +1361,42 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
 
 interface ArchiveDetailViewProps {
   entry: JournalEntry;
+  allEntries: JournalEntry[];
   onUpdate: (id: string, payload: { content: string; mood: string; intensity: number }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onSwitchToWrite: () => void;
 }
 
-const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: ArchiveDetailViewProps) => {
+const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWrite }: ArchiveDetailViewProps) => {
   const { locale, t } = useLocale();
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(entry.content);
   const [editMood, setEditMood] = useState(entry.mood || '');
   const [editIntensity, setEditIntensity] = useState(entry.intensity);
+
+  // [4] 이 책에 연결된 엔트리 수
+  const bookEntryCount = entry.bookId
+    ? allEntries.filter((e) => e.bookId === entry.bookId && e.id !== entry.id).length
+    : 0;
+
+  // [2] 약 한 달 전 비슷한 감정의 엔트리 찾기
+  const entryDate = new Date(entry.date);
+  const oneMonthAgo = new Date(entryDate);
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  const twoMonthsAgo = new Date(entryDate);
+  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+  const currentEmotions = new Set(entry.emotions ?? []);
+  const similarEntry = allEntries.find((e) => {
+    if (e.id === entry.id) return false;
+    const d = new Date(e.date);
+    if (d > twoMonthsAgo && d < oneMonthAgo) {
+      // 감정이 겹치거나, 같은 책이거나
+      const sharedEmotion = (e.emotions ?? []).some((em) => currentEmotions.has(em));
+      const sameBook = e.bookId && e.bookId === entry.bookId;
+      return sharedEmotion || sameBook;
+    }
+    return false;
+  }) ?? null;
 
   useEffect(() => {
     setEditContent(entry.content);
@@ -1418,6 +1484,17 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
                   style={{ fontSize: '1rem', color: 'var(--color-butter-muted)', opacity: 0.75 }}
                 >
                   {t('common.by')} {entry.bookAuthor}
+                </p>
+              )}
+              {/* [4] Book-level accumulation */}
+              {bookEntryCount > 0 && (
+                <p
+                  className="font-light mt-2"
+                  style={{ fontSize: '11px', color: 'var(--color-butter-muted)', opacity: 0.6 }}
+                >
+                  {locale === 'ko'
+                    ? `이 책에 대한 메모 ${bookEntryCount}개 더`
+                    : `${bookEntryCount} more ${bookEntryCount === 1 ? 'note' : 'notes'} for this book`}
                 </p>
               )}
             </div>
@@ -1555,6 +1632,34 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
             )}
           </div>
 
+          {/* ── [2] Reflection revisit link ── */}
+          {similarEntry && (
+            <p
+              className="font-serif italic font-light mb-10 -mt-6"
+              style={{ fontSize: '12px', color: 'var(--color-butter-muted)', opacity: 0.45 }}
+            >
+              {locale === 'ko' ? '한 달 전에도 비슷한 내용을 썼습니다 —' : 'From a month ago, you wrote something similar —'}{' '}
+              <button
+                onClick={() => {/* 외부에서 selectedId를 바꿀 수 없으므로 향후 확장용 no-op */}}
+                className="font-serif italic underline underline-offset-2 transition-opacity"
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--color-butter-primary)',
+                  opacity: 0.6,
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'default',
+                  textDecorationColor: 'var(--color-butter-primary)',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
+              >
+                {similarEntry.bookTitle ?? getEntrySubtitle(similarEntry) ?? (locale === 'ko' ? '그 메모' : 'that note')}
+              </button>
+            </p>
+          )}
+
           {/* ── 하단 메타 + 액션 ── */}
           <footer
             className="flex items-center justify-between pt-8"
@@ -1574,9 +1679,9 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
               <button
                 onClick={() => onDelete(entry.id).catch((e) => alert(e.message))}
                 className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] transition-colors"
-                style={{ color: 'var(--color-butter-muted)', opacity: 0.4 }}
+                style={{ color: 'var(--color-butter-muted)', opacity: 0.6 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; (e.currentTarget as HTMLElement).style.color = '#f87171'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.4'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-muted)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.6'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-muted)'; }}
               >
                 <Trash2 size={12} /> {t('archive.delete')}
               </button>
@@ -1589,7 +1694,7 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
                 fontSize: '11px',
                 letterSpacing: '0.02em',
                 color: 'var(--color-butter-muted)',
-                opacity: 0.38,
+                opacity: 0.55,
               }}
             >
               {new Date(entry.date).toLocaleString(locale === 'ko' ? 'ko-KR' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

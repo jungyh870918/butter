@@ -8,6 +8,7 @@ import {
   type Locale,
   STORAGE_KEY,
 } from './hooks/useLocale';
+import { AuthProvider } from './hooks/useAuth';
 
 export default function App() {
   const [locale, setLocaleState] = useState<Locale>(initLocale);
@@ -18,8 +19,10 @@ export default function App() {
   };
 
   return (
-    <LocaleContext.Provider value={{ locale, setLocale, t: createT(locale) }}>
-      <RouterProvider router={router} />
-    </LocaleContext.Provider>
+    <AuthProvider>
+      <LocaleContext.Provider value={{ locale, setLocale, t: createT(locale) }}>
+        <RouterProvider router={router} />
+      </LocaleContext.Provider>
+    </AuthProvider>
   );
 }

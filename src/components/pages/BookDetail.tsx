@@ -191,13 +191,19 @@ const DESCRIPTION_LIMIT = 500;
 const RightColumn = ({ book, reflections, refLoading, refError }: {
   book: Book; reflections: Reflection[]; refLoading: boolean; refError: string;
 }) => {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const [descExpanded, setDescExpanded] = useState(false);
   const description = book.description || '';
   const isTruncated = description.length > DESCRIPTION_LIMIT;
   const displayedDescription = isTruncated && !descExpanded
     ? description.slice(0, DESCRIPTION_LIMIT).trimEnd() + '…'
     : description;
+
+  // locale에 따라 EN/KO 필드 자동 선택
+  // KO 필드가 없으면 EN fallback
+  const quote             = (locale === 'ko' && book.quoteKo)             ? book.quoteKo             : book.quote;
+  const authorNote        = (locale === 'ko' && book.authorNoteKo)        ? book.authorNoteKo        : book.authorNote;
+  const historicalContext = (locale === 'ko' && book.historicalContextKo) ? book.historicalContextKo : book.historicalContext;
 
   return (
     <div className="flex-1 min-w-0">
@@ -236,13 +242,13 @@ const RightColumn = ({ book, reflections, refLoading, refError }: {
       </div>
 
       {/* {t('book.author_note')} (quote) */}
-      {book.quote && (
+      {quote && (
         <div className="mb-12 relative pl-6" style={{ borderLeft: '2px solid rgba(107,82,0,0.3)' }}>
           <p className="text-[10px] uppercase tracking-[0.25em] font-semibold text-butter-primary/80 mb-4">
-            Author's Note
+            {t('book.author_note')}
           </p>
           <blockquote className="text-xl md:text-2xl font-serif italic leading-relaxed text-butter-text/80 font-light mb-6">
-            "{book.quote}"
+            "{quote}"
           </blockquote>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full overflow-hidden shrink-0"
@@ -255,8 +261,8 @@ const RightColumn = ({ book, reflections, refLoading, refError }: {
             </div>
             <div>
               <p className="text-[13px] font-medium">{book.author}</p>
-              {book.authorNote && (
-                <p className="text-[11px] text-butter-muted italic font-light line-clamp-1">{book.authorNote}</p>
+              {authorNote && (
+                <p className="text-[11px] text-butter-muted italic font-light line-clamp-1">{authorNote}</p>
               )}
             </div>
           </div>
@@ -264,18 +270,18 @@ const RightColumn = ({ book, reflections, refLoading, refError }: {
       )}
 
       {/* {t('book.about')} (quote 없을 때) */}
-      {book.authorNote && !book.quote && (
+      {authorNote && !quote && (
         <div className="mb-10">
-          <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-butter-primary/80 mb-3">About the Author</p>
-          <p className="text-[15px] leading-[1.85] text-butter-muted font-light">{book.authorNote}</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-butter-primary/80 mb-3">{t('book.about')}</p>
+          <p className="text-[15px] leading-[1.85] text-butter-muted font-light">{authorNote}</p>
         </div>
       )}
 
       {/* {t('book.historical')} */}
-      {book.historicalContext && (
+      {historicalContext && (
         <div className="mb-10">
-          <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-butter-primary/80 mb-3">Historical Context</p>
-          <p className="text-[15px] leading-[1.85] text-butter-muted font-light">{book.historicalContext}</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-butter-primary/80 mb-3">{t('book.historical')}</p>
+          <p className="text-[15px] leading-[1.85] text-butter-muted font-light">{historicalContext}</p>
         </div>
       )}
 
