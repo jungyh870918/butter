@@ -29,11 +29,15 @@ export const BookDetail = () => {
   const { book, loading: bookLoading, error: bookError } = useBook(bookId);
   const { reflections, loading: refLoading, error: refError } = useReflections({ bookId });
 
-  if (bookLoading) return <div className="pt-24 flex items-center justify-center min-h-[60vh]"><LoadingSpinner /></div>;
-  if (bookError || !book) return <div className="pt-24 flex items-center justify-center min-h-[60vh]"><ErrorMessage message={bookError || 'Book not found'} /></div>;
+  // 에러만 전체 페이지 대체 — 로딩 중엔 Skeleton으로
+  if (bookError) return (
+    <div className="pt-24 flex items-center justify-center min-h-[60vh]">
+      <ErrorMessage message={bookError || 'Book not found'} />
+    </div>
+  );
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="min-h-screen bg-butter-bg">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="min-h-screen bg-butter-bg">
       <div className="px-6 md:px-12 max-w-6xl mx-auto pt-20 md:pt-24 pb-5">
         <button onClick={() => navigate('/explore')} className="inline-flex items-center gap-2 text-butter-muted hover:text-butter-text transition-colors">
           <ArrowLeft size={14} strokeWidth={1.5} />
@@ -43,18 +47,19 @@ export const BookDetail = () => {
 
       <div className="px-6 md:px-12 max-w-6xl mx-auto pb-16">
         <div className="flex flex-col md:flex-row gap-10 md:gap-16 lg:gap-20">
-          <LeftColumn book={book} bookId={bookId!} />
-          <RightColumn book={book} reflections={reflections} refLoading={refLoading} refError={refError} />
+          <LeftColumn book={book} bookId={bookId!} loading={bookLoading} />
+          <RightColumn book={book} reflections={reflections} refLoading={refLoading} refError={refError} loading={bookLoading} />
         </div>
       </div>
 
-      {/* {t('book.collection')} */}
-      <SameCollectionSection currentBookId={bookId!} tags={book.tags || []} />
+      {!bookLoading && book && (
+        <SameCollectionSection currentBookId={bookId!} tags={book.tags || []} />
+      )}
     </motion.div>
   );
 };
 
-const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
+const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: string; loading: boolean }) => {
   const navigate = useNavigate();
   const { t } = useLocale();
   const [linkOpen, setLinkOpen] = useState(false);
@@ -74,10 +79,14 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
         {/* 커버 */}
         <div className="aspect-[2/3] rounded-sm overflow-hidden bg-butter-surface"
           style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.14)' }}>
-          <BookCoverImage src={book.cover} alt={book.title} className="w-full h-full object-cover" />
+          {loading ? (
+            <div className="w-full h-full animate-pulse" style={{ background: 'var(--color-butter-accent)' }} />
+          ) : (
+            <BookCoverImage src={book!.cover} alt={book!.title} className="w-full h-full object-cover" />
+          )}
         </div>
 
-        {/* CTA */}
+        {/* CTA 버튼 — 데이터 불필요, 즉시 렌더링 */}
         <div className="space-y-2">
           <button className="w-full flex items-center justify-center gap-2 bg-butter-primary text-white py-3 rounded font-medium text-[13px] tracking-wide hover:brightness-105 transition-all">
             <BookOpen size={14} strokeWidth={2} />
@@ -89,7 +98,7 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
             {t('book.add')}
           </button>
           <button
-            onClick={() => navigate('/journal', {
+            onClick={() => book && navigate('/journal', {
               state: {
                 bookId: book.id,
                 bookTitle: book.title,
@@ -105,7 +114,7 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
           </button>
         </div>
 
-        {/* 액션 */}
+        {/* 액션 — 즉시 렌더링 */}
         <div className="flex gap-2">
           <button
             onClick={() => setLiked(p => !p)}
@@ -148,37 +157,47 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
           )}
         </AnimatePresence>
 
-        {/* 메타 */}
+        {/* 메타 — skeleton or real data */}
         <div className="pt-3 space-y-3.5" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-          {book.publishedDate && (
-            <div className="flex justify-between items-baseline">
-              <span className="text-[10px] uppercase tracking-widest text-butter-muted">{t('book.published')}</span>
-              <span className="text-[12px] font-serif italic text-butter-text/80">
-                {book.publishedDate}
-              </span>
-            </div>
-          )}
-          {book.pageCount && (
-            <div className="flex justify-between items-baseline">
-              <span className="text-[10px] uppercase tracking-widest text-butter-muted">{t('book.length')}</span>
-              <span className="text-[12px] font-serif italic text-butter-text/80">
-                {book.pageCount} {t('book.pages')}
-              </span>
-            </div>
-          )}
-          {(book.tags || []).length > 0 && (
-            <div className="flex justify-between items-baseline">
-              <span className="text-[10px] uppercase tracking-widest text-butter-muted">{t('book.genre')}</span>
-              <span className="text-[12px] font-light text-butter-text text-right max-w-[60%] line-clamp-1">
-                {(book.tags || []).slice(0, 1)[0]}
-              </span>
-            </div>
-          )}
-          {book.rating > 0 && (
-            <div className="flex justify-between items-baseline">
-              <span className="text-[10px] uppercase tracking-widest text-butter-muted">{t('book.rating')}</span>
-              <span className="text-sm font-serif italic">{book.rating}</span>
-            </div>
+          {loading ? (
+            // 메타 skeleton
+            <>
+              {[70, 55, 80].map((w, i) => (
+                <div key={i} className="flex justify-between items-baseline">
+                  <div className="h-2.5 w-16 rounded animate-pulse" style={{ background: 'var(--color-butter-accent)' }} />
+                  <div className={`h-2.5 rounded animate-pulse`} style={{ width: `${w}px`, background: 'var(--color-butter-accent)' }} />
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              {book!.publishedDate && (
+                <div className="flex justify-between items-baseline">
+                  <span className="text-[10px] uppercase tracking-widest text-butter-muted">{t('book.published')}</span>
+                  <span className="text-[12px] font-serif italic text-butter-text/80">{book!.publishedDate}</span>
+                </div>
+              )}
+              {book!.pageCount && (
+                <div className="flex justify-between items-baseline">
+                  <span className="text-[10px] uppercase tracking-widest text-butter-muted">{t('book.length')}</span>
+                  <span className="text-[12px] font-serif italic text-butter-text/80">{book!.pageCount} {t('book.pages')}</span>
+                </div>
+              )}
+              {(book!.tags || []).length > 0 && (
+                <div className="flex justify-between items-baseline">
+                  <span className="text-[10px] uppercase tracking-widest text-butter-muted">{t('book.genre')}</span>
+                  <span className="text-[12px] font-light text-butter-text text-right max-w-[60%] line-clamp-1">
+                    {(book!.tags || []).slice(0, 1)[0]}
+                  </span>
+                </div>
+              )}
+              {book!.rating > 0 && (
+                <div className="flex justify-between items-baseline">
+                  <span className="text-[10px] uppercase tracking-widest text-butter-muted">{t('book.rating')}</span>
+                  <span className="text-sm font-serif italic">{book!.rating}</span>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -188,104 +207,156 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
 
 const DESCRIPTION_LIMIT = 500;
 
-const RightColumn = ({ book, reflections, refLoading, refError }: {
-  book: Book; reflections: Reflection[]; refLoading: boolean; refError: string;
+// ── Skeleton 헬퍼 ─────────────────────────────────────────────────────────
+const Sk = ({ w = '100%', h = 14, className = '' }: { w?: string | number; h?: number; className?: string }) => (
+  <div
+    className={`rounded animate-pulse ${className}`}
+    style={{ width: w, height: h, background: 'var(--color-butter-accent)' }}
+  />
+);
+
+const RightColumn = ({ book, reflections, refLoading, refError, loading }: {
+  book: Book | null; reflections: Reflection[]; refLoading: boolean; refError: string; loading: boolean;
 }) => {
   const { locale, t } = useLocale();
   const [descExpanded, setDescExpanded] = useState(false);
-  const description = book.description || '';
+
+  const description = book?.description || '';
   const isTruncated = description.length > DESCRIPTION_LIMIT;
   const displayedDescription = isTruncated && !descExpanded
     ? description.slice(0, DESCRIPTION_LIMIT).trimEnd() + '…'
     : description;
 
-  // locale에 따라 EN/KO 필드 자동 선택
-  // KO 필드가 없으면 EN fallback
-  const quote             = (locale === 'ko' && book.quoteKo)             ? book.quoteKo             : book.quote;
-  const authorNote        = (locale === 'ko' && book.authorNoteKo)        ? book.authorNoteKo        : book.authorNote;
-  const historicalContext = (locale === 'ko' && book.historicalContextKo) ? book.historicalContextKo : book.historicalContext;
+  const quote             = book ? ((locale === 'ko' && book.quoteKo)             ? book.quoteKo             : book.quote)             : undefined;
+  const authorNote        = book ? ((locale === 'ko' && book.authorNoteKo)        ? book.authorNoteKo        : book.authorNote)        : undefined;
+  const historicalContext = book ? ((locale === 'ko' && book.historicalContextKo) ? book.historicalContextKo : book.historicalContext) : undefined;
 
   return (
     <div className="flex-1 min-w-0">
-      {/* 태그 */}
-      {(book.tags || []).length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {(book.tags || []).map((tag) => (
-            <TagPill key={tag} label={tag} />
-          ))}
-        </div>
-      )}
 
-      {/* 제목 */}
-      <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-serif font-light leading-[1.1] tracking-tight mb-3">
-        {book.title}
-      </h1>
-
-      {/* 저자 */}
-      <p className="text-lg font-serif italic text-butter-muted mb-8 font-light">
-        by {book.author}
-      </p>
-
-      {/* 구분 */}
-      <div className="mb-8" style={{ height: '1px', background: 'rgba(0,0,0,0.07)' }} />
-
-      {/* Description */}
-      <div className="mb-12">
-        <p className="text-[15px] leading-[1.9] text-butter-text/75 font-light drop-cap">
-          {displayedDescription}
-        </p>
-        {isTruncated && (
-          <button onClick={() => setDescExpanded(p => !p)} className="mt-4 text-[11px] font-medium uppercase tracking-widest text-butter-primary hover:opacity-70 transition-opacity">
-            {descExpanded ? t('book.readless') : t('book.readmore')}
-          </button>
+      {/* 태그 pills */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {loading ? (
+          <>
+            <Sk w={120} h={26} className="rounded-full" />
+            <Sk w={90} h={26} className="rounded-full" />
+            <Sk w={150} h={26} className="rounded-full" />
+          </>
+        ) : (
+          (book?.tags || []).map((tag) => <TagPill key={tag} label={tag} />)
         )}
       </div>
 
-      {/* {t('book.author_note')} (quote) */}
-      {quote && (
-        <div className="mb-12 relative pl-6" style={{ borderLeft: '2px solid rgba(107,82,0,0.3)' }}>
-          <p className="text-[10px] uppercase tracking-[0.25em] font-semibold text-butter-primary/80 mb-4">
-            {t('book.author_note')}
-          </p>
-          <blockquote className="text-xl md:text-2xl font-serif italic leading-relaxed text-butter-text/80 font-light mb-6">
-            "{quote}"
-          </blockquote>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full overflow-hidden shrink-0"
-              style={{ background: 'var(--color-butter-surface)', boxShadow: '0 2px 8px rgba(0,0,0,0.10)' }}>
-              <AvatarImage
-                src={`https://api.dicebear.com/7.x/personas/svg?seed=${encodeURIComponent(book.author)}`}
-                alt={book.author}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <p className="text-[13px] font-medium">{book.author}</p>
-              {authorNote && (
-                <p className="text-[11px] text-butter-muted italic font-light line-clamp-1">{authorNote}</p>
-              )}
+      {/* 제목 */}
+      {loading ? (
+        <div className="mb-3 space-y-3">
+          <Sk w="85%" h={48} />
+          <Sk w="55%" h={48} />
+        </div>
+      ) : (
+        <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-serif font-light leading-[1.1] tracking-tight mb-3">
+          {book!.title}
+        </h1>
+      )}
+
+      {/* 저자 */}
+      {loading ? (
+        <Sk w={200} h={20} className="mb-8" />
+      ) : (
+        <p className="text-lg font-serif italic text-butter-muted mb-8 font-light">
+          by {book!.author}
+        </p>
+      )}
+
+      <div className="mb-8" style={{ height: '1px', background: 'rgba(0,0,0,0.07)' }} />
+
+      {/* 설명 */}
+      <div className="mb-12">
+        {loading ? (
+          <div className="space-y-2.5">
+            {[100, 95, 100, 88, 60].map((w, i) => (
+              <Sk key={i} w={`${w}%`} h={15} />
+            ))}
+          </div>
+        ) : (
+          <>
+            <p className="text-[15px] leading-[1.9] text-butter-text/75 font-light drop-cap">
+              {displayedDescription}
+            </p>
+            {isTruncated && (
+              <button onClick={() => setDescExpanded(p => !p)} className="mt-4 text-[11px] font-medium uppercase tracking-widest text-butter-primary hover:opacity-70 transition-opacity">
+                {descExpanded ? t('book.readless') : t('book.readmore')}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Author's Note / Quote — GPT 응답 skeleton */}
+      {loading ? (
+        <div className="mb-12 pl-6 space-y-3" style={{ borderLeft: '2px solid var(--color-butter-accent)' }}>
+          <Sk w={100} h={10} />
+          <Sk w="90%" h={28} />
+          <Sk w="70%" h={28} />
+          <div className="flex items-center gap-3 pt-2">
+            <Sk w={36} h={36} className="rounded-full shrink-0" />
+            <div className="space-y-1.5">
+              <Sk w={120} h={13} />
+              <Sk w={180} h={11} />
             </div>
           </div>
         </div>
+      ) : (
+        <>
+          {quote && (
+            <div className="mb-12 relative pl-6" style={{ borderLeft: '2px solid rgba(107,82,0,0.3)' }}>
+              <p className="text-[10px] uppercase tracking-[0.25em] font-semibold text-butter-primary/80 mb-4">
+                {t('book.author_note')}
+              </p>
+              <blockquote className="text-xl md:text-2xl font-serif italic leading-relaxed text-butter-text/80 font-light mb-6">
+                "{quote}"
+              </blockquote>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full overflow-hidden shrink-0"
+                  style={{ background: 'var(--color-butter-surface)', boxShadow: '0 2px 8px rgba(0,0,0,0.10)' }}>
+                  <AvatarImage
+                    src={`https://api.dicebear.com/7.x/personas/svg?seed=${encodeURIComponent(book!.author)}`}
+                    alt={book!.author}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="text-[13px] font-medium">{book!.author}</p>
+                  {authorNote && (
+                    <p className="text-[11px] text-butter-muted italic font-light line-clamp-1">{authorNote}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          {authorNote && !quote && (
+            <div className="mb-10">
+              <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-butter-primary/80 mb-3">{t('book.about')}</p>
+              <p className="text-[15px] leading-[1.85] text-butter-muted font-light">{authorNote}</p>
+            </div>
+          )}
+        </>
       )}
 
-      {/* {t('book.about')} (quote 없을 때) */}
-      {authorNote && !quote && (
-        <div className="mb-10">
-          <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-butter-primary/80 mb-3">{t('book.about')}</p>
-          <p className="text-[15px] leading-[1.85] text-butter-muted font-light">{authorNote}</p>
+      {/* Historical Context — GPT 응답 skeleton */}
+      {loading ? (
+        <div className="mb-10 space-y-2">
+          <Sk w={130} h={10} />
+          <Sk w="95%" h={14} />
+          <Sk w="80%" h={14} />
         </div>
-      )}
-
-      {/* {t('book.historical')} */}
-      {historicalContext && (
+      ) : historicalContext ? (
         <div className="mb-10">
           <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-butter-primary/80 mb-3">{t('book.historical')}</p>
           <p className="text-[15px] leading-[1.85] text-butter-muted font-light">{historicalContext}</p>
         </div>
-      )}
+      ) : null}
 
-      {/* 구분 */}
       <div className="mb-10" style={{ height: '1px', background: 'rgba(0,0,0,0.07)' }} />
 
       {/* {t('book.reflections')} */}

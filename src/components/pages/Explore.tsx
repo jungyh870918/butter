@@ -123,7 +123,7 @@ export const Explore = () => {
             {!loading && error && <ErrorMessage message={error} />}
             {!loading && !error && books.length === 0 && <EmptyState {...{message: t('explore.empty')}} />}
             {!loading && !error && books.length > 0 && (
-              <div className="grid grid-cols-2 gap-x-7 gap-y-12">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-8">
                 {books.map((book, i) => (
                   <BookCard key={book.id} book={book} onClick={() => handleSelectBook(book)} index={i} />
                 ))}
@@ -287,9 +287,9 @@ const BookCard = ({ book, onClick, index }: { book: Book; onClick: () => void; i
         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
       />
     </div>
-    <h3 className="font-serif text-[0.95rem] leading-snug mb-1 group-hover:text-butter-primary transition-colors duration-300 line-clamp-2">
+    <h3 className="font-serif text-[0.85rem] leading-snug mb-0.5 group-hover:text-butter-primary transition-colors duration-300 line-clamp-2">
       {book.title}
     </h3>
-    <p className="text-[12px] text-butter-muted italic font-light line-clamp-1">{book.author}</p>
+    <p className="text-[11px] text-butter-muted italic font-light line-clamp-1">{book.author}</p>
   </motion.article>
 );
