@@ -1,3 +1,4 @@
+import { useLocale } from '../../hooks/useLocale';
 import {
   LineChart,
   Line,
@@ -14,6 +15,7 @@ import { EmotionData, EmotionSummary } from '../../types';
 const MATRIX_CELLS = 28;
 
 export const Cartography = () => {
+  const { t } = useLocale();
   const { emotions, summary, loading, error } = useEmotions();
 
   return (
@@ -41,12 +43,14 @@ export const Cartography = () => {
 
 // ── NarrativeArc ───────────────────────────────────────────────────────────
 
-const NarrativeArc = ({ emotions }: { emotions: EmotionData[] }) => (
+const NarrativeArc = ({ emotions }: { emotions: EmotionData[] }) => {
+  const { t } = useLocale();
+  return (
   <div className="py-4">
     <h3 className="text-sm font-medium uppercase tracking-[0.15em] text-butter-muted mb-6">Narrative Arc — Weekly Intensity</h3>
     <div className="h-[300px] w-full">
       {emotions.length === 0 ? (
-        <EmptyState message="Log moods in your journal to see your arc" />
+        <EmptyState {...{message: t('map.empty')}} />
       ) : (
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={emotions}>
@@ -79,13 +83,15 @@ const NarrativeArc = ({ emotions }: { emotions: EmotionData[] }) => (
       )}
     </div>
   </div>
-);
+  );
+};
 
 // ── IntensityMatrix ────────────────────────────────────────────────────────
 
 const LEGEND_OPACITIES = [0.1, 0.3, 0.5, 0.7, 1] as const;
 
 const IntensityMatrix = ({ emotions }: { emotions: EmotionData[] }) => {
+  const { t } = useLocale();
   const cells = Array.from({ length: MATRIX_CELLS }).map((_, i) => {
     const entry = emotions.length > 0 ? emotions[i % emotions.length] : null;
     return {
@@ -98,7 +104,7 @@ const IntensityMatrix = ({ emotions }: { emotions: EmotionData[] }) => {
     <div className="py-4">
       <h3 className="text-sm font-bold uppercase tracking-widest mb-5 md:mb-8">Intensity Matrix</h3>
       {emotions.length === 0 ? (
-        <EmptyState message="No emotion data yet" />
+        <EmptyState {...{message: t('map.empty.data')}} />
       ) : (
         <>
           <div className="grid grid-cols-7 gap-2">
@@ -112,7 +118,7 @@ const IntensityMatrix = ({ emotions }: { emotions: EmotionData[] }) => {
             ))}
           </div>
           <div className="mt-6 flex justify-between items-center text-[10px] uppercase tracking-widest font-bold text-butter-muted">
-            <span>Low Intensity</span>
+            <span>{t('map.low')}</span>
             <div className="flex gap-1">
               {LEGEND_OPACITIES.map((o) => (
                 <div
@@ -122,7 +128,7 @@ const IntensityMatrix = ({ emotions }: { emotions: EmotionData[] }) => {
                 />
               ))}
             </div>
-            <span>High Intensity</span>
+            <span>{t('map.high')}</span>
           </div>
         </>
       )}

@@ -1,3 +1,4 @@
+import { useLocale } from '../../hooks/useLocale';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -7,17 +8,19 @@ import { useBooks } from '../../hooks/useBooks';
 import { LoadingSpinner, ErrorMessage, EmptyState, BookCoverImage } from '../ui';
 
 const CATEGORIES = ['All', 'Fiction', 'Poetry', 'Philosophy', 'Sci-Fi', 'Historical'] as const;
-const CATEGORY_LABELS: Record<string, string> = {
-  'All': 'All',
-  'Fiction': 'Fiction',
-  'Poetry': 'Poetry Anthology',
-  'Philosophy': 'Philosophy',
-  'Sci-Fi': 'Sci-Fi',
-  'Historical': 'Classic Lit',
-};
+// CATEGORY_LABELS는 컴포넌트 내부에서 t()로 처리
 
 export const Explore = () => {
   const [filter, setFilter] = useState('All');
+  const { t } = useLocale();
+  const CATEGORY_LABELS: Record<string, string> = {
+    'All': t('explore.cat.all'),
+    'Fiction': t('explore.cat.fiction'),
+    'Poetry': t('explore.cat.poetry'),
+    'Philosophy': t('explore.cat.philosophy'),
+    'Sci-Fi': t('explore.cat.scifi'),
+    'Historical': t('explore.cat.historical'),
+  };
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { books, loading, error } = useBooks(filter);
   const navigate = useNavigate();
@@ -31,16 +34,16 @@ export const Explore = () => {
       {/* ── Hero 헤더 ── */}
       <div className="pt-24 pb-6 px-8 md:px-14 max-w-7xl mx-auto">
         <p className="text-[10px] uppercase tracking-[0.3em] text-butter-muted/70 font-medium mb-4">
-          Curated Readings
+          {t('explore.label')}
         </p>
         <h1 className="text-5xl md:text-[3.75rem] font-serif font-black leading-[1.06] tracking-tight mb-5">
-          Explore{' '}
+          {t('explore.title')}{' '}
           <em style={{ fontStyle: 'italic', color: 'var(--color-butter-primary)', fontWeight: 700 }}>
-            the library
+            {t('explore.title.em')}
           </em>
         </h1>
         <p className="text-butter-muted leading-[1.75] max-w-md font-light text-[15px]">
-          A sanctuary for slow reading. Discover volumes curated for contemplation, curiosity, and the quiet pursuit of knowledge.
+          {t('explore.subtitle')}
         </p>
       </div>
 
@@ -71,7 +74,7 @@ export const Explore = () => {
           <main className="flex-1 min-w-0">
             {loading && <LoadingSpinner />}
             {!loading && error && <ErrorMessage message={error} />}
-            {!loading && !error && books.length === 0 && <EmptyState message="No books found" />}
+            {!loading && !error && books.length === 0 && <EmptyState {...{message: t('explore.empty')}} />}
             {!loading && !error && books.length > 0 && (
               <div className="grid grid-cols-2 gap-x-7 gap-y-12">
                 {books.map((book, i) => (
@@ -84,7 +87,7 @@ export const Explore = () => {
           {/* ── 사이드바 ── */}
           <aside className="lg:w-60 xl:w-64 shrink-0 space-y-0">
 
-            {/* A. Trending Now */}
+            {/* A. {t('explore.trending')} */}
             {!loading && trendingBooks.length > 0 && (
               <div
                 className="p-6 mb-8"
@@ -94,7 +97,7 @@ export const Explore = () => {
                 }}
               >
                 <p className="text-[9px] uppercase tracking-[0.28em] font-bold text-butter-muted/80 mb-5">
-                  Trending Now
+                  {t('explore.trending')}
                 </p>
                 <div className="space-y-5">
                   {trendingBooks.map((book, i) => (
@@ -127,14 +130,14 @@ export const Explore = () => {
               style={{ borderLeft: '2px solid rgba(107,82,0,0.20)' }}
             >
               <h3 className="font-serif text-[1rem] font-light leading-snug mb-2 text-butter-text">
-                The Journaling Circle
+                {t('explore.journal.title')}
               </h3>
               <p className="text-[12px] text-butter-muted leading-[1.7] mb-5 font-light">
-                Join our weekly correspondence on the art of slow reading and curated lists from our library.
+                {t('explore.journal.desc')}
               </p>
               <input
                 type="email"
-                placeholder="Email address"
+                {...{placeholder: t('explore.journal.email')}}
                 className="w-full px-0 py-2 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/40 transition-colors"
                 style={{ borderBottom: '1px solid rgba(0,0,0,0.10)' }}
               />
@@ -145,7 +148,7 @@ export const Explore = () => {
                   borderRadius: '2px',
                 }}
               >
-                Subscribe
+                {t('explore.journal.subscribe')}
               </button>
             </div>
 
@@ -161,7 +164,7 @@ export const Explore = () => {
               <div className="flex items-center gap-2 mb-3">
                 <span style={{ fontSize: '14px', lineHeight: 1 }}>📖</span>
                 <p className="text-[9px] uppercase tracking-[0.24em] font-bold text-butter-muted/60">
-                  Did you know?
+                  {t('explore.didyouknow')}
                 </p>
               </div>
               <p className="text-[13px] text-butter-muted leading-[1.75] italic font-light">

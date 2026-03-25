@@ -1,3 +1,4 @@
+import { useLocale } from '../../hooks/useLocale';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -22,6 +23,7 @@ const TagPill = ({ label }: { label: string }) => (
 );
 
 export const BookDetail = () => {
+  const { t } = useLocale();
   const { bookId } = useParams<{ bookId: string }>();
   const navigate = useNavigate();
   const { book, loading: bookLoading, error: bookError } = useBook(bookId);
@@ -35,7 +37,7 @@ export const BookDetail = () => {
       <div className="px-6 md:px-12 max-w-6xl mx-auto pt-20 md:pt-24 pb-5">
         <button onClick={() => navigate('/explore')} className="inline-flex items-center gap-2 text-butter-muted hover:text-butter-text transition-colors">
           <ArrowLeft size={14} strokeWidth={1.5} />
-          <span className="text-[11px] uppercase tracking-widest font-medium">Explore</span>
+          <span className="text-[11px] uppercase tracking-widest font-medium">{t('book.back')}</span>
         </button>
       </div>
 
@@ -46,7 +48,7 @@ export const BookDetail = () => {
         </div>
       </div>
 
-      {/* From the Same Collection */}
+      {/* {t('book.collection')} */}
       <SameCollectionSection currentBookId={bookId!} tags={book.tags || []} />
     </motion.div>
   );
@@ -54,6 +56,7 @@ export const BookDetail = () => {
 
 const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
   const navigate = useNavigate();
+  const { t } = useLocale();
   const [linkOpen, setLinkOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -78,12 +81,12 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
         <div className="space-y-2">
           <button className="w-full flex items-center justify-center gap-2 bg-butter-primary text-white py-3 rounded font-medium text-[13px] tracking-wide hover:brightness-105 transition-all">
             <BookOpen size={14} strokeWidth={2} />
-            Start Reading
+            {t('book.start')}
           </button>
           <button className="w-full flex items-center justify-center gap-2 text-butter-muted py-3 rounded text-[13px] font-medium hover:text-butter-text transition-colors"
             style={{ background: 'rgba(0,0,0,0.04)' }}>
             <Bookmark size={14} strokeWidth={1.5} />
-            Add to Library
+            {t('book.add')}
           </button>
           <button
             onClick={() => navigate('/journal', {
@@ -98,7 +101,7 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
             style={{ background: 'rgba(0,0,0,0.04)' }}
           >
             <PenLine size={14} strokeWidth={1.5} />
-            Write in Journal
+            {t('book.write')}
           </button>
         </div>
 
@@ -112,7 +115,7 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
             style={!liked ? { background: 'rgba(0,0,0,0.04)' } : {}}
           >
             <Heart size={13} strokeWidth={1.5} fill={liked ? 'currentColor' : 'none'} />
-            Save
+            {t('book.save')}
           </button>
           <button
             onClick={() => setLinkOpen(p => !p)}
@@ -122,7 +125,7 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
             style={{ background: linkOpen ? 'rgba(107,82,0,0.06)' : 'rgba(0,0,0,0.04)' }}
           >
             <Share2 size={13} strokeWidth={1.5} />
-            Share
+            {t('book.share')}
           </button>
         </div>
 
@@ -132,12 +135,12 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.18 }} className="overflow-hidden">
               <div className="pt-1 pb-2">
                 <p className="text-[10px] uppercase tracking-widest text-butter-muted mb-2 flex items-center gap-1">
-                  <Link size={9} /> Share link
+                  <Link size={9} /> {t('book.share.link')}
                 </p>
                 <div className="flex gap-2">
                   <input readOnly value={pageUrl} className="flex-1 bg-butter-surface rounded px-2.5 py-1.5 text-[11px] font-mono truncate focus:outline-none text-butter-muted" onFocus={(e) => e.target.select()} />
                   <button onClick={handleCopy} className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded text-[11px] font-medium transition-all ${copied ? 'bg-green-500 text-white' : 'bg-butter-primary text-white'}`}>
-                    {copied ? <><Check size={10} /> Done</> : <><Copy size={10} /> Copy</>}
+                    {copied ? <><Check size={10} /> {t('book.copied')}</> : <><Copy size={10} /> {t('book.copy')}</>}
                   </button>
                 </div>
               </div>
@@ -149,7 +152,7 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
         <div className="pt-3 space-y-3.5" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
           {book.publishedDate && (
             <div className="flex justify-between items-baseline">
-              <span className="text-[10px] uppercase tracking-widest text-butter-muted">Published</span>
+              <span className="text-[10px] uppercase tracking-widest text-butter-muted">{t('book.published')}</span>
               <span className="text-[12px] font-serif italic text-butter-text/80">
                 {book.publishedDate}
               </span>
@@ -157,15 +160,15 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
           )}
           {book.pageCount && (
             <div className="flex justify-between items-baseline">
-              <span className="text-[10px] uppercase tracking-widest text-butter-muted">Length</span>
+              <span className="text-[10px] uppercase tracking-widest text-butter-muted">{t('book.length')}</span>
               <span className="text-[12px] font-serif italic text-butter-text/80">
-                {book.pageCount} Pages
+                {book.pageCount} {t('book.pages')}
               </span>
             </div>
           )}
           {(book.tags || []).length > 0 && (
             <div className="flex justify-between items-baseline">
-              <span className="text-[10px] uppercase tracking-widest text-butter-muted">Genre</span>
+              <span className="text-[10px] uppercase tracking-widest text-butter-muted">{t('book.genre')}</span>
               <span className="text-[12px] font-light text-butter-text text-right max-w-[60%] line-clamp-1">
                 {(book.tags || []).slice(0, 1)[0]}
               </span>
@@ -173,7 +176,7 @@ const LeftColumn = ({ book, bookId }: { book: Book; bookId: string }) => {
           )}
           {book.rating > 0 && (
             <div className="flex justify-between items-baseline">
-              <span className="text-[10px] uppercase tracking-widest text-butter-muted">Rating</span>
+              <span className="text-[10px] uppercase tracking-widest text-butter-muted">{t('book.rating')}</span>
               <span className="text-sm font-serif italic">{book.rating}</span>
             </div>
           )}
@@ -188,6 +191,7 @@ const DESCRIPTION_LIMIT = 500;
 const RightColumn = ({ book, reflections, refLoading, refError }: {
   book: Book; reflections: Reflection[]; refLoading: boolean; refError: string;
 }) => {
+  const { t } = useLocale();
   const [descExpanded, setDescExpanded] = useState(false);
   const description = book.description || '';
   const isTruncated = description.length > DESCRIPTION_LIMIT;
@@ -226,12 +230,12 @@ const RightColumn = ({ book, reflections, refLoading, refError }: {
         </p>
         {isTruncated && (
           <button onClick={() => setDescExpanded(p => !p)} className="mt-4 text-[11px] font-medium uppercase tracking-widest text-butter-primary hover:opacity-70 transition-opacity">
-            {descExpanded ? 'Show less' : 'Read more'}
+            {descExpanded ? t('book.readless') : t('book.readmore')}
           </button>
         )}
       </div>
 
-      {/* Author's Note (quote) */}
+      {/* {t('book.author_note')} (quote) */}
       {book.quote && (
         <div className="mb-12 relative pl-6" style={{ borderLeft: '2px solid rgba(107,82,0,0.3)' }}>
           <p className="text-[10px] uppercase tracking-[0.25em] font-semibold text-butter-primary/80 mb-4">
@@ -259,7 +263,7 @@ const RightColumn = ({ book, reflections, refLoading, refError }: {
         </div>
       )}
 
-      {/* About the Author (quote 없을 때) */}
+      {/* {t('book.about')} (quote 없을 때) */}
       {book.authorNote && !book.quote && (
         <div className="mb-10">
           <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-butter-primary/80 mb-3">About the Author</p>
@@ -267,7 +271,7 @@ const RightColumn = ({ book, reflections, refLoading, refError }: {
         </div>
       )}
 
-      {/* Historical Context */}
+      {/* {t('book.historical')} */}
       {book.historicalContext && (
         <div className="mb-10">
           <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-butter-primary/80 mb-3">Historical Context</p>
@@ -278,7 +282,7 @@ const RightColumn = ({ book, reflections, refLoading, refError }: {
       {/* 구분 */}
       <div className="mb-10" style={{ height: '1px', background: 'rgba(0,0,0,0.07)' }} />
 
-      {/* Community Reflections */}
+      {/* {t('book.reflections')} */}
       <div>
         <div className="flex items-center gap-2 mb-8">
           <MessageSquare size={13} strokeWidth={1.5} className="text-butter-muted" />
@@ -291,7 +295,7 @@ const RightColumn = ({ book, reflections, refLoading, refError }: {
         {!refLoading && refError && <ErrorMessage message={refError} />}
         {!refLoading && !refError && reflections.length === 0 && (
           <p className="text-[12px] uppercase tracking-widest text-butter-muted/60 text-center py-8">
-            No reflections for this book yet
+            {t('book.no_reflections')}
           </p>
         )}
         {!refLoading && !refError && reflections.length > 0 && (

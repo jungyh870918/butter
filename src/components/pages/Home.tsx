@@ -1,3 +1,4 @@
+import { useLocale } from '../../hooks/useLocale';
 import { motion } from 'motion/react';
 import { Heart, MessageSquare } from 'lucide-react';
 import { Reflection } from '../../types';
@@ -7,22 +8,23 @@ import { formatDate } from '../../lib/format';
 
 export const Home = () => {
   const { reflections, loading, error } = useReflections({ limit: 10 });
+  const { t } = useLocale();
 
   return (
     <div className="pt-24 pb-20 px-6 md:px-10 max-w-4xl mx-auto">
       <header className="mb-16">
-        <p className="text-[11px] uppercase tracking-[0.25em] text-butter-muted mb-4">Community</p>
+        <p className="text-[11px] uppercase tracking-[0.25em] text-butter-muted mb-4">{t('home.label')}</p>
         <h1 className="text-4xl md:text-5xl font-serif font-light leading-tight mb-4">
-          Recent Reflections
+          {t('home.title')}
         </h1>
         <p className="text-butter-muted text-base leading-relaxed max-w-xl font-light">
-          A curated stream of thoughts and insights from our community of deep readers.
+          {t('home.subtitle')}
         </p>
       </header>
 
       {loading && <LoadingSpinner />}
       {!loading && error && <ErrorMessage message={error} />}
-      {!loading && !error && reflections.length === 0 && <EmptyState message="No reflections yet" />}
+      {!loading && !error && reflections.length === 0 && <EmptyState {...{message: t('home.empty')}} />}
 
       {!loading && !error && (
         <div className="space-y-16">

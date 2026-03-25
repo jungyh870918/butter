@@ -2,17 +2,12 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { AvatarImage } from '../ui';
 import { Search } from 'lucide-react';
 import { useTheme, THEMES } from '../../hooks/useTheme';
-
-const NAV_ITEMS = [
-  { path: '/', label: 'Home' },
-  { path: '/explore', label: 'Explore' },
-  { path: '/journal', label: 'Journal' },
-  { path: '/cartography', label: 'Map' },
-] as const;
+import { useLocale } from '../../hooks/useLocale';
 
 export const Navbar = () => {
   const navigate = useNavigate();
   const { themeId, setTheme } = useTheme();
+  const { locale, setLocale, t } = useLocale();
 
   const cycleTheme = () => {
     const idx = THEMES.findIndex((t) => t.id === themeId);
@@ -23,6 +18,13 @@ export const Navbar = () => {
   const currentTheme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
   const nextTheme = THEMES[(THEMES.findIndex((t) => t.id === themeId) + 1) % THEMES.length];
 
+  const NAV_ITEMS = [
+    { path: '/', label: t('nav.home') },
+    { path: '/explore', label: t('nav.explore') },
+    { path: '/journal', label: t('nav.journal') },
+    { path: '/cartography', label: t('nav.map') },
+  ] as const;
+
   return (
     <>
       {/* ── 데스크탑 ── */}
@@ -30,12 +32,10 @@ export const Navbar = () => {
         className="hidden md:flex fixed top-0 left-0 right-0 z-50 bg-butter-bg/95 backdrop-blur-sm px-8 md:px-14 py-4 items-center gap-10"
         style={{ boxShadow: '0 1px 0 var(--color-butter-rule)' }}
       >
-        {/* 로고 */}
         <div className="flex items-center cursor-pointer shrink-0" onClick={() => navigate('/')}>
           <span className="font-serif text-[1.15rem] font-bold italic tracking-tight text-butter-text">Butter</span>
         </div>
 
-        {/* 네비 링크 */}
         <div className="flex items-center gap-7">
           {NAV_ITEMS.map((item) => (
             <NavLink
@@ -60,19 +60,37 @@ export const Navbar = () => {
           ))}
         </div>
 
-        {/* 오른쪽 — 검색 + 테마 토글 + 아바타 */}
         <div className="ml-auto flex items-center gap-5">
           <div className="relative flex items-center">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-butter-muted/60 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search the library…"
+              placeholder={t('nav.search.placeholder')}
               className="pl-8 pr-3 py-1.5 text-[12px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/50 w-40 focus:w-52 transition-all duration-300 rounded-sm"
               style={{ border: '1px solid var(--color-butter-rule)' }}
             />
           </div>
 
-          {/* 테마 토글 버튼 */}
+          {/* 언어 토글 */}
+          <button
+            onClick={() => setLocale(locale === 'en' ? 'ko' : 'en')}
+            title={locale === 'en' ? '한국어로 전환' : 'Switch to English'}
+            className="transition-all duration-200 hover:opacity-80"
+            style={{
+              fontSize: '11px',
+              fontWeight: 500,
+              letterSpacing: '0.08em',
+              color: 'var(--color-butter-muted)',
+              padding: '2px 6px',
+              border: '1px solid var(--color-butter-rule)',
+              borderRadius: '2px',
+              lineHeight: 1.6,
+            }}
+          >
+            {locale === 'en' ? '한' : 'EN'}
+          </button>
+
+          {/* 테마 토글 */}
           <button
             onClick={cycleTheme}
             title={`Switch to ${nextTheme.label}`}
@@ -96,7 +114,19 @@ export const Navbar = () => {
         <div className="flex items-center cursor-pointer" onClick={() => navigate('/')}>
           <span className="font-serif text-base font-bold italic tracking-tight text-butter-text">Butter</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setLocale(locale === 'en' ? 'ko' : 'en')}
+            style={{
+              fontSize: '11px', fontWeight: 500, letterSpacing: '0.08em',
+              color: 'var(--color-butter-muted)',
+              padding: '2px 5px',
+              border: '1px solid var(--color-butter-rule)',
+              borderRadius: '2px', lineHeight: 1.6,
+            }}
+          >
+            {locale === 'en' ? '한' : 'EN'}
+          </button>
           <button onClick={cycleTheme} style={{ fontSize: '16px', lineHeight: 1 }}>
             {currentTheme.emoji}
           </button>

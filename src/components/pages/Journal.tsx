@@ -1,3 +1,4 @@
+import { useLocale } from '../../hooks/useLocale';
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -21,58 +22,24 @@ interface Prompt {
   isAtmosphere?: boolean;
 }
 
-const PROMPTS: Prompt[] = [
-  {
-    id: 'opening',
-    label: 'Opening',
-    question: 'What were you reading today, and what first impression did it leave on you?',
-    placeholder: 'Describe the book, a scene, a passage — anything that caught your attention first…',
-    hint: 'Let the first thing that comes to mind lead you.',
-  },
-  {
-    id: 'highlight',
-    label: 'A Passage',
-    question: 'Is there a sentence or image from the reading that you want to keep?',
-    placeholder: '"The world is not what it is, but what we remember of it."',
-    hint: 'A line, a phrase, a detail. Even a single word.',
-    isHighlight: true,
-  },
-  {
-    id: 'emotion',
-    label: 'Emotion',
-    question: 'What emotion surfaced most strongly while you read?',
-    placeholder: 'Was it curiosity, unease, longing, joy? Try to name it precisely…',
-    hint: 'Precision here matters more than being right.',
-  },
-  {
-    id: 'mirror',
-    label: 'Reflection',
-    question: 'Did anything in the text mirror something in your own life right now?',
-    placeholder: 'A character\'s situation, a theme, a single line — what felt personally true?',
-    hint: 'The most honest answer is usually the first one.',
-  },
-  {
-    id: 'linger',
-    label: 'Lingering',
-    question: 'What single image, sentence, or idea will stay with you after you close the book?',
-    placeholder: 'Something you\'ll still be thinking about tomorrow…',
-    hint: 'What refuses to leave?',
-  },
-  {
-    id: 'atmosphere',
-    label: 'Atmosphere',
-    question: 'How would you describe the atmosphere of today\'s reading?',
-    placeholder: '',
-    hint: 'Select everything that resonates.',
-    isAtmosphere: true,
-  },
-];
+function getPrompts(t: (k: any) => string): Prompt[] {
+  return [
+    { id: 'opening', label: t('prompt.opening.label'), question: t('prompt.opening.q'), placeholder: t('prompt.opening.p'), hint: t('prompt.opening.h') },
+    { id: 'highlight', label: t('prompt.passage.label'), question: t('prompt.passage.q'), placeholder: t('prompt.passage.p'), hint: t('prompt.passage.h'), isHighlight: true },
+    { id: 'emotion', label: t('prompt.emotion.label'), question: t('prompt.emotion.q'), placeholder: t('prompt.emotion.p'), hint: t('prompt.emotion.h') },
+    { id: 'mirror', label: t('prompt.reflection.label'), question: t('prompt.reflection.q'), placeholder: t('prompt.reflection.p'), hint: t('prompt.reflection.h') },
+    { id: 'linger', label: t('prompt.lingering.label'), question: t('prompt.lingering.q'), placeholder: t('prompt.lingering.p'), hint: t('prompt.lingering.h') },
+    { id: 'atmosphere', label: t('prompt.atmosphere.label'), question: t('prompt.atmosphere.q'), placeholder: '', hint: t('prompt.atmosphere.h'), isAtmosphere: true },
+  ];
+}
 
-const ATMOSPHERES = [
-  'Contemplative', 'Moved', 'Melancholy', 'Nostalgic',
-  'Inspired', 'Unsettled', 'Joyful', 'Awe',
-  'Anxious', 'Pensive', 'Calm',
-] as const;
+function getAtmospheres(t: (k: any) => string): string[] {
+  return [
+    t('atm.contemplative'), t('atm.moved'), t('atm.melancholy'), t('atm.nostalgic'),
+    t('atm.inspired'), t('atm.unsettled'), t('atm.joyful'), t('atm.awe'),
+    t('atm.anxious'), t('atm.pensive'), t('atm.calm'),
+  ];
+}
 
 type PromptId = 'opening' | 'highlight' | 'emotion' | 'mirror' | 'linger' | 'atmosphere';
 type JournalView = 'write' | 'archive';
@@ -94,6 +61,7 @@ const EMPTY_BOOK: BookContext = {
 
 // ── Journal page ──────────────────────────────────────────────────────────
 export const Journal = () => {
+  const { t } = useLocale();
   const location = useLocation();
   const bookContext: BookContext = location.state ?? EMPTY_BOOK;
 
@@ -106,18 +74,18 @@ export const Journal = () => {
       {/* ── Page header ── */}
       <div className="pt-24 pb-8 px-8 md:px-14 max-w-7xl mx-auto">
         <p className="text-[10px] uppercase tracking-[0.3em] text-butter-muted/70 font-medium mb-4">
-          Daily Practice
+          {t('journal.label')}
         </p>
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <h1 className="text-5xl md:text-[3.75rem] font-serif font-black leading-[1.06] tracking-tight mb-4">
-              Your{' '}
+              {t('journal.title')}{' '}
               <em style={{ fontStyle: 'italic', color: 'var(--color-butter-primary)', fontWeight: 700 }}>
-                journal
+                {t('journal.title.em')}
               </em>
             </h1>
             <p className="text-butter-muted leading-[1.75] max-w-sm font-light text-[15px]">
-              A private space for slow reading, quiet reflection, and the thoughts books leave behind.
+              {t('journal.subtitle')}
             </p>
           </div>
           <div className="flex gap-7 pb-1 shrink-0">
@@ -130,7 +98,7 @@ export const Journal = () => {
                 }`}
                 style={view === v ? { borderBottom: '1px solid var(--color-butter-text)' } : {}}
               >
-                {v === 'write' ? 'Write' : 'Archive'}
+                {v === 'write' ? t('journal.tab.write') : t('journal.tab.archive')}
               </button>
             ))}
           </div>
@@ -182,6 +150,9 @@ interface WriteViewProps {
 type WritePhase = 'prompts' | 'summary';
 
 const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
+  const { t } = useLocale();
+  const PROMPTS = getPrompts(t);
+  const ATMOSPHERES = getAtmospheres(t);
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [answers, setAnswers] = useState<Record<PromptId, string>>({
@@ -324,7 +295,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
               />
             )}
 
-            {/* Progress indicator — 현재 스텝과 전체 흐름 */}
+            {/* {t('journal.progress')} indicator — 현재 스텝과 전체 흐름 */}
             {phase === 'prompts' && (
               <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '1.5rem' }}>
                 <p className="text-[9px] uppercase tracking-[0.25em] font-medium text-butter-muted/60 mb-4">
@@ -501,7 +472,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                     className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.14em] text-butter-muted hover:text-butter-text transition-colors disabled:opacity-0 disabled:pointer-events-none px-4 py-2"
                     style={{ border: '1px solid rgba(0,0,0,0.10)', borderRadius: '2px' }}
                   >
-                    <ArrowLeft size={12} /> Back
+                    <ArrowLeft size={12} /> {t('journal.back')}
                   </button>
 
                   <button
@@ -510,7 +481,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                       isLast ? 'invisible' : ''
                     }`}
                   >
-                    Skip
+                    {t('journal.skip')}
                   </button>
 
                   {isLast ? (
@@ -520,7 +491,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                       className="flex items-center gap-2 px-7 py-2.5 bg-butter-primary text-white font-medium uppercase tracking-[0.14em] hover:brightness-110 transition-all text-[11px] disabled:opacity-40"
                       style={{ borderRadius: '2px' }}
                     >
-                      Review <ArrowRight size={12} />
+                      {t('journal.review')} <ArrowRight size={12} />
                     </button>
                   ) : (
                     <button
@@ -529,7 +500,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                       className="flex items-center gap-2 px-7 py-2.5 bg-butter-primary text-white font-medium uppercase tracking-[0.14em] hover:brightness-110 transition-all text-[11px] disabled:opacity-40"
                       style={{ borderRadius: '2px' }}
                     >
-                      Next <ArrowRight size={12} />
+                      {t('journal.next')} <ArrowRight size={12} />
                     </button>
                   )}
                 </div>
@@ -553,13 +524,13 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                 {/* Summary header */}
                 <div className="mb-10" style={{ background: 'var(--color-butter-primary)', height: '1px' }} />
                 <span className="text-[10px] uppercase tracking-[0.22em] font-medium text-butter-primary mb-4 block">
-                  Your Reflection
+                  {t('journal.review.label')}
                 </span>
                 <h2 className="text-2xl md:text-[1.75rem] font-serif font-light leading-[1.35] mb-2 text-butter-text">
-                  Here's what emerged from today's reading.
+                  {t('journal.review.title')}
                 </h2>
                 <p className="text-[13px] text-butter-muted font-light leading-[1.7] mb-10">
-                  Review your responses before saving to your private archive.
+                  {t('journal.review.subtitle')}
                 </p>
 
                 {/* Answers review */}
@@ -624,7 +595,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                     className="flex items-center gap-2 px-5 py-2.5 text-butter-muted hover:text-butter-text text-[11px] font-medium uppercase tracking-[0.14em] transition-colors"
                     style={{ border: '1px solid rgba(0,0,0,0.10)', borderRadius: '2px' }}
                   >
-                    <ArrowLeft size={12} /> Edit
+                    <ArrowLeft size={12} /> {t('journal.edit')}
                   </button>
 
                   <div className="text-right">
@@ -637,13 +608,13 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                       style={{ borderRadius: '2px' }}
                     >
                       {saveSuccess ? (
-                        <><Check size={12} /> Saved</>
-                      ) : saving ? 'Saving…' : (
-                        <><span style={{ fontSize: '14px' }}>📖</span> Save Reflection</>
+                        <><Check size={12} /> {t('journal.saved')}</>
+                      ) : saving ? t('journal.saving') : (
+                        <><span style={{ fontSize: '14px' }}>📖</span> {t('journal.save')}</>
                       )}
                     </button>
                     <p className="text-[10px] text-butter-muted/40 mt-2 font-light italic">
-                      Added to your private journal archive.
+                      {t('journal.archive.note')}
                     </p>
                   </div>
                 </div>
@@ -666,12 +637,13 @@ const GptQuestionsPanel = ({
   questions: string[];
   loading: boolean;
 }) => {
+  const { t } = useLocale();
   if (!loading && questions.length === 0) return null;
 
   return (
     <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '1.5rem' }}>
       <p className="text-[9px] uppercase tracking-[0.25em] font-semibold text-butter-muted/50 mb-4">
-        Questions to Consider
+        {t('journal.questions.label')}
       </p>
 
       {loading ? (
@@ -710,6 +682,7 @@ const BookContextPanel = ({
   bookContext: BookContext;
   onBookChange: (book: BookContext) => void;
 }) => {
+  const { t } = useLocale();
   const hasBook = !!(bookContext.bookTitle && bookContext.bookAuthor);
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState('');
@@ -748,7 +721,7 @@ const BookContextPanel = ({
         const books = await getBooks({ search: value.trim() });
         setResults(books.slice(0, 6));
       } catch {
-        setSearchError('Search failed. Please try again.');
+        setSearchError(t('journal.book.searchfail'));
       } finally {
         setSearchLoading(false);
       }
@@ -774,7 +747,7 @@ const BookContextPanel = ({
     return (
       <div>
         <p className="text-[9px] uppercase tracking-[0.28em] font-medium text-butter-muted/60 mb-4">
-          Currently Reflecting On
+          {t('journal.book.label')}
         </p>
 
         {/* 비활성 상태와 동일한 surface 컨테이너 */}
@@ -797,7 +770,7 @@ const BookContextPanel = ({
               type="text"
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
-              placeholder="Search by title or author…"
+              {...{placeholder: t('journal.book.search')}}
               className="flex-1 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/35 font-light"
             />
             {searchLoading && <Loader2 size={12} className="text-butter-muted/50 animate-spin shrink-0" />}
@@ -809,12 +782,12 @@ const BookContextPanel = ({
           {/* 안내 문구 */}
           {!query.trim() && (
             <p className="text-[11px] text-butter-muted/50 font-light italic leading-[1.6]">
-              Type a title or author name to search.
+              {t('journal.book.typing')}
             </p>
           )}
           {query.trim().length > 0 && query.trim().length < 3 && (
             <p className="text-[11px] text-butter-muted/50 font-light italic leading-[1.6]">
-              Keep typing…
+              {t('journal.book.keeptyping')}
             </p>
           )}
           {searchError && (
@@ -858,7 +831,7 @@ const BookContextPanel = ({
 
           {!searchLoading && query.trim().length >= 3 && results.length === 0 && !searchError && (
             <p className="text-[12px] text-butter-muted/50 font-light italic">
-              No books found for "{query}"
+              {t('journal.book.noresult')} \"{query}\"
             </p>
           )}
         </div>
@@ -906,14 +879,14 @@ const BookContextPanel = ({
             onClick={openSearch}
             className="text-[10px] uppercase tracking-[0.14em] font-medium text-butter-muted/60 hover:text-butter-primary transition-colors"
           >
-            Change
+            {t('journal.book.change')}
           </button>
           <span className="text-butter-muted/25 text-[10px]">·</span>
           <button
             onClick={handleClear}
             className="text-[10px] uppercase tracking-[0.14em] font-medium text-butter-muted/40 hover:text-red-400 transition-colors"
           >
-            Remove
+            {t('journal.book.remove')}
           </button>
           {bookContext.bookId && (
             <>
@@ -922,7 +895,7 @@ const BookContextPanel = ({
                 to={`/explore/${bookContext.bookId}`}
                 className="text-[10px] uppercase tracking-[0.14em] font-medium text-butter-muted/60 hover:text-butter-primary transition-colors"
               >
-                View Details
+                {t('journal.book.viewdetails')}
               </Link>
             </>
           )}
@@ -945,10 +918,10 @@ const BookContextPanel = ({
         <BookOpen size={13} className="text-butter-primary/50 shrink-0" />
         <div>
           <p className="text-[12px] font-medium text-butter-muted group-hover:text-butter-primary transition-colors">
-            Link a book
+            {t('journal.book.link')}
           </p>
           <p className="text-[11px] text-butter-muted/60 font-light mt-0.5">
-            Search to connect this entry to a book
+            {t('journal.book.link.desc')}
           </p>
         </div>
         <Search size={12} className="text-butter-muted/30 shrink-0 ml-auto group-hover:text-butter-primary/50 transition-colors" />
@@ -970,20 +943,21 @@ function groupEntriesByMonth(entries: JournalEntry[]): Map<string, JournalEntry[
   return map;
 }
 
-function formatMonthYear(yyyyMm: string): string {
+function formatMonthYear(yyyyMm: string, locale: string): string {
   const [y, m] = yyyyMm.split('-');
-  return new Date(Number(y), Number(m) - 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  const loc = locale === 'ko' ? 'ko-KR' : 'en-US';
+  return new Date(Number(y), Number(m) - 1).toLocaleString(loc, { month: 'long', year: 'numeric' });
 }
 
 // 날짜 → 계절 레이블 (디자인의 "AUTUMN EQUINOX · 2024" 스타일)
-function getSeasonLabel(dateStr: string): string {
+function getSeasonLabel(dateStr: string, t: (k: any) => string): string {
   const date = new Date(dateStr);
-  const month = date.getMonth(); // 0-11
+  const month = date.getMonth();
   const year = date.getFullYear();
-  if (month >= 2 && month <= 4) return `Spring · ${year}`;
-  if (month >= 5 && month <= 7) return `Summer · ${year}`;
-  if (month >= 8 && month <= 10) return `Autumn · ${year}`;
-  return `Winter · ${year}`;
+  if (month >= 2 && month <= 4) return `${t('season.spring')} · ${year}`;
+  if (month >= 5 && month <= 7) return `${t('season.summer')} · ${year}`;
+  if (month >= 8 && month <= 10) return `${t('season.autumn')} · ${year}`;
+  return `${t('season.winter')} · ${year}`;
 }
 
 // 엔트리의 첫 번째 의미있는 텍스트 줄 (서브타이틀용)
@@ -1020,6 +994,7 @@ interface ArchiveViewProps {
 }
 
 const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWrite }: ArchiveViewProps) => {
+  const { locale, t } = useLocale();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // 캘린더 상태 — 현재 표시 월 (YYYY, MM 0-indexed)
@@ -1053,7 +1028,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
 
   // 첫 엔트리 날짜 (아카이브 시작일)
   const firstEntryDate = entries.length > 0
-    ? new Date(entries[entries.length - 1].date).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+    ? new Date(entries[entries.length - 1].date).toLocaleString(locale === 'ko' ? 'ko-KR' : 'en-US', { month: 'long', year: 'numeric' })
     : null;
 
   if (loading) return (
@@ -1069,17 +1044,17 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
       className="flex flex-col items-center justify-center py-32 text-center"
     >
       <p className="font-serif text-2xl font-light mb-3 italic" style={{ color: 'var(--color-butter-muted)' }}>
-        Nothing here yet.
+        {t('archive.nothing')}
       </p>
       <p className="text-[13px] font-light mb-6" style={{ color: 'var(--color-butter-muted)' }}>
-        Write your first reflection to begin your archive.
+        {t('archive.nothing.sub')}
       </p>
       <button
         onClick={onSwitchToWrite}
         className="flex items-center gap-2 px-6 py-2.5 bg-butter-primary text-white text-[11px] font-medium uppercase tracking-[0.14em] hover:brightness-110 transition-all"
         style={{ borderRadius: '2px' }}
       >
-        + New Journal Entry
+        {t('archive.new')}
       </button>
     </motion.div>
   );
@@ -1111,7 +1086,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
         ) : (
           <div className="flex items-center justify-center h-64">
             <p className="text-[13px] italic font-light" style={{ color: 'var(--color-butter-muted)' }}>
-              Select an entry to read.
+              {t('archive.select')}
             </p>
           </div>
         )}
@@ -1130,7 +1105,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
           {/* 캘린더 헤더 */}
           <div className="flex items-center justify-between mb-5">
             <h3 className="font-serif text-[1.1rem] font-light" style={{ color: 'var(--color-butter-text)' }}>
-              {new Date(calYear, calMonth).toLocaleString('en-US', { month: 'long', year: 'numeric' })}
+              {new Date(calYear, calMonth).toLocaleString(locale === 'ko' ? 'ko-KR' : 'en-US', { month: 'long', year: 'numeric' })}
             </h3>
             <div className="flex items-center gap-1">
               <button
@@ -1162,7 +1137,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
 
           {/* 요일 헤더 */}
           <div className="grid grid-cols-7 mb-2">
-            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+            {[t('archive.cal.su'), t('archive.cal.mo'), t('archive.cal.tu'), t('archive.cal.we'), t('archive.cal.th'), t('archive.cal.fr'), t('archive.cal.sa')].map((d) => (
               <div
                 key={d}
                 className="text-center text-[10px] font-medium uppercase tracking-[0.08em] py-1"
@@ -1226,7 +1201,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
           </div>
         </div>
 
-        {/* ── Recent Entries ── */}
+        {/* ── {t('archive.recent')} ── */}
         <div className="mb-6">
           <p
             className="text-[9px] uppercase tracking-[0.25em] font-semibold mb-4"
@@ -1242,7 +1217,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
                 : entry.mood ? [entry.mood] : [];
               // 날짜 포맷 — "Sep 09" 스타일
               const d = new Date(entry.date);
-              const dateLabel = d.toLocaleString('en-US', { month: 'short', day: '2-digit' });
+              const dateLabel = d.toLocaleString(locale === 'ko' ? 'ko-KR' : 'en-US', { month: 'short', day: '2-digit' });
 
               return (
                 <button
@@ -1251,8 +1226,22 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
                   className="w-full text-left py-3 px-3 transition-all group"
                   style={{
                     borderRadius: '2px',
-                    background: isSelected ? 'var(--color-butter-surface)' : 'transparent',
-                    borderLeft: isSelected ? '2px solid var(--color-butter-primary)' : '2px solid transparent',
+                    background: isSelected
+                      ? 'var(--color-butter-surface)'
+                      : 'transparent',
+                    borderLeft: isSelected
+                      ? '2px solid var(--color-butter-primary)'
+                      : '2px solid transparent',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      (e.currentTarget as HTMLElement).style.background = 'var(--color-butter-faint)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      (e.currentTarget as HTMLElement).style.background = 'transparent';
+                    }
                   }}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -1265,7 +1254,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
                           opacity: isSelected ? 1 : 0.85,
                         }}
                       >
-                        {entry.bookTitle ?? getEntrySubtitle(entry) ?? 'Reflection'}
+                        {entry.bookTitle ?? getEntrySubtitle(entry) ?? t('archive.free')}
                       </p>
                       {/* 감정 태그들 */}
                       {displayEmotions.length > 0 && (
@@ -1284,7 +1273,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
                               className="text-[9px] uppercase tracking-[0.1em] font-semibold"
                               style={{ color: 'var(--color-butter-primary)' }}
                             >
-                              · TODAY
+                              · {t('archive.today')}
                             </span>
                           )}
                         </div>
@@ -1318,7 +1307,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
               className="text-center text-[11px] font-light italic mt-3"
               style={{ color: 'var(--color-butter-muted)', opacity: 0.5 }}
             >
-              {entries.length} {entries.length === 1 ? 'entry' : 'entries'} since {firstEntryDate}
+              {entries.length} {t('archive.entries')} {t('archive.since')} {firstEntryDate}
             </p>
           )}
         </div>
@@ -1337,6 +1326,7 @@ interface ArchiveDetailViewProps {
 }
 
 const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: ArchiveDetailViewProps) => {
+  const { locale, t } = useLocale();
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(entry.content);
   const [editMood, setEditMood] = useState(entry.mood || '');
@@ -1368,7 +1358,7 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
       await onUpdate(entry.id, { content: editContent, mood: editMood, intensity: editIntensity });
       setEditing(false);
     } catch (e: any) {
-      alert('Update failed: ' + e.message);
+      alert(t('archive.update.fail') + e.message);
     }
   };
 
@@ -1380,27 +1370,27 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
       transition={{ duration: 0.28 }}
     >
       {/* ── 헤더 영역 ── */}
-      <header className="mb-10">
+      <header className="mb-12">
 
         {/* 계절 레이블 */}
         <p
-          className="text-[10px] uppercase tracking-[0.28em] font-medium mb-4"
-          style={{ color: 'var(--color-butter-muted)', opacity: 0.6 }}
+          className="text-[10px] uppercase tracking-[0.3em] font-medium mb-5"
+          style={{ color: 'var(--color-butter-muted)', opacity: 0.55 }}
         >
-          {getSeasonLabel(entry.date)}
+          {getSeasonLabel(entry.date, t)}
         </p>
 
         {/* 책 커버 + 제목 — 책이 있을 때 */}
         {entry.bookTitle ? (
-          <div className="flex items-start gap-5 mb-5">
+          <div className="flex items-start gap-6 mb-6">
             {entry.bookCover && (
               <div
                 className="shrink-0 overflow-hidden"
                 style={{
-                  width: '68px',
+                  width: '80px',
                   aspectRatio: '2/3',
                   borderRadius: '2px',
-                  boxShadow: '0 4px 18px rgba(0,0,0,0.15)',
+                  boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
                 }}
               >
                 <BookCoverImage
@@ -1410,19 +1400,24 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
                 />
               </div>
             )}
-            <div className="pt-1">
+            {/* 제목 + 저자 — 단일 블록으로 */}
+            <div className="flex flex-col justify-center" style={{ paddingTop: '0.25rem' }}>
               <h1
-                className="font-serif font-light leading-[1.15] tracking-tight mb-2"
-                style={{ fontSize: 'clamp(1.75rem, 3vw, 2.5rem)', color: 'var(--color-butter-text)' }}
+                className="font-serif leading-[1.12] tracking-tight mb-1.5"
+                style={{
+                  fontSize: 'clamp(1.85rem, 3.2vw, 2.6rem)',
+                  fontWeight: 300,
+                  color: 'var(--color-butter-text)',
+                }}
               >
                 {entry.bookTitle}
               </h1>
               {entry.bookAuthor && (
                 <p
-                  className="font-serif italic font-light text-[1rem]"
-                  style={{ color: 'var(--color-butter-muted)' }}
+                  className="font-serif italic font-light"
+                  style={{ fontSize: '1rem', color: 'var(--color-butter-muted)', opacity: 0.75 }}
                 >
-                  {entry.bookAuthor}
+                  {t('common.by')} {entry.bookAuthor}
                 </p>
               )}
             </div>
@@ -1433,15 +1428,15 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
             className="font-serif font-light leading-[1.15] tracking-tight mb-4"
             style={{ fontSize: 'clamp(1.75rem, 3vw, 2.5rem)', color: 'var(--color-butter-text)' }}
           >
-            {subtitle || 'A quiet reflection'}
+            {subtitle || t('archive.free')}
           </h1>
         )}
 
         {/* 서브타이틀 — 책 있을 때만 */}
         {entry.bookTitle && subtitle && (
           <p
-            className="font-serif italic text-[1rem] font-light mb-5"
-            style={{ color: 'var(--color-butter-muted)' }}
+            className="font-serif italic font-light mb-6"
+            style={{ fontSize: '1rem', color: 'var(--color-butter-muted)', opacity: 0.7 }}
           >
             {subtitle}
           </p>
@@ -1449,7 +1444,7 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
 
         {/* 감정 pill들 */}
         {displayEmotions.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mb-1">
             {displayEmotions.map((em) => (
               <span
                 key={em}
@@ -1489,31 +1484,36 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
                 borderRadius: '2px',
               }}
             >
-              <X size={12} /> Cancel
+              <X size={12} /> {t('archive.cancel')}
             </button>
             <button
               onClick={handleUpdate}
               className="flex items-center gap-1 px-4 py-2 bg-butter-primary text-white text-[11px] font-medium uppercase tracking-[0.14em] hover:brightness-110 transition-all"
               style={{ borderRadius: '2px' }}
             >
-              <Check size={12} /> Save
+              <Check size={12} /> {t('archive.save')}
             </button>
           </div>
         </div>
       ) : (
         <>
-          {/* ── 하이라이트 인용 — 디자인의 대형 이탤릭 인용구 ── */}
+          {/* ── 하이라이트 인용 — 페이지의 감정적 앵커 ── */}
           {entry.highlight && (
             <blockquote
-              className="mb-10"
-              style={{ borderLeft: '2px solid var(--color-butter-primary)', paddingLeft: '1.5rem' }}
+              style={{
+                borderLeft: '2px solid var(--color-butter-primary)',
+                paddingLeft: '1.75rem',
+                marginBottom: '3rem',
+                marginTop: '0.5rem',
+                opacity: 0.88,
+              }}
             >
               <p
-                className="font-serif italic leading-[1.85]"
+                className="font-serif italic"
                 style={{
-                  fontSize: 'clamp(1.1rem, 2vw, 1.35rem)',
+                  fontSize: 'clamp(1.2rem, 2.2vw, 1.5rem)',
+                  lineHeight: 1.95,
                   color: 'var(--color-butter-text)',
-                  opacity: 0.82,
                 }}
               >
                 "{entry.highlight}"
@@ -1521,15 +1521,20 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
             </blockquote>
           )}
 
-          {/* ── 본문 — 단락 prose ── */}
-          <div className="mb-12">
+          {/* ── 본문 ── */}
+          <div className="mb-14">
             {sections.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-7">
                 {sections.map((s) => (
                   <p
                     key={s.label}
-                    className="font-serif leading-[1.9] font-light"
-                    style={{ fontSize: '1rem', color: 'var(--color-butter-text)', opacity: 0.82 }}
+                    className="font-serif font-light"
+                    style={{
+                      fontSize: '1.0125rem',
+                      lineHeight: 2.0,
+                      color: 'var(--color-butter-text)',
+                      opacity: 0.84,
+                    }}
                   >
                     {s.text}
                   </p>
@@ -1537,8 +1542,13 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
               </div>
             ) : (
               <p
-                className="font-serif leading-[1.9] font-light"
-                style={{ fontSize: '1rem', color: 'var(--color-butter-text)', opacity: 0.82 }}
+                className="font-serif font-light"
+                style={{
+                  fontSize: '1.0125rem',
+                  lineHeight: 2.0,
+                  color: 'var(--color-butter-text)',
+                  opacity: 0.84,
+                }}
               >
                 {entry.content}
               </p>
@@ -1547,7 +1557,7 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
 
           {/* ── 하단 메타 + 액션 ── */}
           <footer
-            className="flex items-center justify-between pt-6"
+            className="flex items-center justify-between pt-8"
             style={{ borderTop: '1px solid var(--color-butter-rule)' }}
           >
             {/* 좌: Edit / Delete */}
@@ -1559,7 +1569,7 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-primary)'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.6'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-muted)'; }}
               >
-                <Pencil size={12} /> Edit Entry
+                <Pencil size={12} /> {t('archive.edit')}
               </button>
               <button
                 onClick={() => onDelete(entry.id).catch((e) => alert(e.message))}
@@ -1568,16 +1578,21 @@ const ArchiveDetailView = ({ entry, onUpdate, onDelete, onSwitchToWrite }: Archi
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; (e.currentTarget as HTMLElement).style.color = '#f87171'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.4'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-muted)'; }}
               >
-                <Trash2 size={12} /> Delete
+                <Trash2 size={12} /> {t('archive.delete')}
               </button>
             </div>
 
-            {/* 우: 날짜 */}
+            {/* 우: 날짜 — quiet context note */}
             <p
-              className="text-[11px] font-light italic"
-              style={{ color: 'var(--color-butter-muted)', opacity: 0.5 }}
+              className="font-light italic"
+              style={{
+                fontSize: '11px',
+                letterSpacing: '0.02em',
+                color: 'var(--color-butter-muted)',
+                opacity: 0.38,
+              }}
             >
-              {new Date(entry.date).toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date(entry.date).toLocaleString(locale === 'ko' ? 'ko-KR' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </footer>
         </>

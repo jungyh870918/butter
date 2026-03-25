@@ -1,6 +1,25 @@
 import { RouterProvider } from 'react-router-dom';
+import { useState } from 'react';
 import { router } from './router';
+import {
+  LocaleContext,
+  createT,
+  initLocale,
+  type Locale,
+  STORAGE_KEY,
+} from './hooks/useLocale';
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  const [locale, setLocaleState] = useState<Locale>(initLocale);
+
+  const setLocale = (l: Locale) => {
+    localStorage.setItem(STORAGE_KEY, l);
+    setLocaleState(l);
+  };
+
+  return (
+    <LocaleContext.Provider value={{ locale, setLocale, t: createT(locale) }}>
+      <RouterProvider router={router} />
+    </LocaleContext.Provider>
+  );
 }
