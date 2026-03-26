@@ -71,6 +71,9 @@ export const getJournalEntries = (params?: { bookId?: string }) => {
   return request<any[]>(`/api/journal${qs}`);
 };
 
+export const getJournalEntry = (id: string) =>
+  request<any>(`/api/journal/${id}`);
+
 export const createJournalEntry = (payload: {
   content: string;
   prompt?: string | null;

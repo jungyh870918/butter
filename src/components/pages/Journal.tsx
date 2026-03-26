@@ -2,14 +2,14 @@ import { useLocale } from '../../hooks/useLocale';
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2 } from 'lucide-react';
+import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2, Share2 } from 'lucide-react';
 import { JournalEntry, Book } from '../../types';
 import { useJournal } from '../../hooks/useJournal';
 import { createReflection, getBooks } from '../../lib/api';
 import { LoadingSpinner, ErrorMessage, EmptyState, BookCoverImage } from '../ui';
 import { getReflectionQuestions } from '../../lib/api';
 
-const DEMO_USER_ID = 'demo-user-id';
+const DEMO_USER_ID = 'demo-user-id'; // legacy — 더 이상 사용 안 함
 
 // ── Prompt steps — backend content fields ─────────────────────────────────
 interface Prompt {
@@ -233,7 +233,6 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // content: PROMPTS의 텍스트 답변들을 섹션 형태로 조합
       const journalContent = PROMPTS
         .filter((p) => !p.isAtmosphere && answers[p.id as PromptId].trim())
         .map((p) => `[${p.label}]\n${answers[p.id as PromptId].trim()}`)
@@ -255,15 +254,19 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
         bookCover: activeBook.bookCover ?? null,
       });
 
+      // reflection content: 빈 경우 journalContent → 최종 fallback 'A quiet reflection.'
+      const reflectionContent =
+        [answers.opening, answers.mirror, answers.linger].filter(Boolean).join(' ').trim()
+        || journalContent
+        || 'A quiet reflection.';
+
       await createReflection({
         title: `A reflection on: ${answers.opening.trim().split(' ').slice(0, 6).join(' ') || 'my reading'}…`,
-        content: [answers.opening, answers.mirror, answers.linger]
-          .filter(Boolean).join(' ').trim() || answers.opening.trim(),
-        author: 'Butter Demo User',
+        content: reflectionContent,
+        author: 'Reader',
         authorAvatar: 'https://api.dicebear.com/7.x/personas/svg?seed=butter',
         tags: selectedAtmospheres,
-        bookId: activeBook.bookId ?? null,
-        userId: DEMO_USER_ID,
+        // bookId는 Prisma Book FK가 아닌 soft link이므로 reflections에 전달하지 않음
         journalEntryId: entry.id,
       });
 
@@ -1665,7 +1668,7 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
             className="flex items-center justify-between pt-8"
             style={{ borderTop: '1px solid var(--color-butter-rule)' }}
           >
-            {/* 좌: Edit / Delete */}
+            {/* 좌: Edit / Delete / Share */}
             <div className="flex items-center gap-5">
               <button
                 onClick={() => setEditing(true)}
@@ -1684,6 +1687,20 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.6'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-muted)'; }}
               >
                 <Trash2 size={12} /> {t('archive.delete')}
+              </button>
+              <button
+                onClick={() => {
+                  const url = `${window.location.origin}/share/journal/${entry.id}`;
+                  navigator.clipboard.writeText(url).then(() => alert(
+                    locale === 'ko' ? '링크가 복사됐습니다.' : 'Link copied!'
+                  ));
+                }}
+                className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] transition-colors"
+                style={{ color: 'var(--color-butter-muted)', opacity: 0.6 }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-primary)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.6'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-muted)'; }}
+              >
+                <Share2 size={12} /> {locale === 'ko' ? '공유' : 'Share'}
               </button>
             </div>
 
