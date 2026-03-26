@@ -289,14 +289,14 @@ export const Home = () => {
       <div className="flex flex-col lg:flex-row gap-14 xl:gap-20">
 
         {/* ── 좌측 사이드바 (sticky) ── */}
-        <aside className="lg:w-56 xl:w-64 shrink-0 order-2 lg:order-1">
+        <aside className="lg:w-56 xl:w-64 shrink-0 order-1 lg:order-1">
           <div className="lg:sticky lg:top-28">
             <BookSidebar book={sidebarBook} loading={sidebarLoading} />
           </div>
         </aside>
 
         {/* ── 우측 메인 피드 ── */}
-        <div className="flex-1 min-w-0 order-1 lg:order-2">
+        <div className="flex-1 min-w-0 order-2 lg:order-2">
 
           {/* 헤더 */}
           <header className="mb-0 pb-8" style={{ borderBottom: '1px solid var(--color-butter-rule)' }}>

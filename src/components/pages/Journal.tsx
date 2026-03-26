@@ -72,13 +72,13 @@ export const Journal = () => {
     <div className="min-h-screen bg-butter-bg">
 
       {/* ── Page header ── */}
-      <div className="pt-24 pb-8 px-8 md:px-14 max-w-7xl mx-auto">
+      <div className="pt-16 md:pt-24 pb-6 md:pb-8 px-5 md:px-14 max-w-7xl mx-auto">
         <p className="text-[10px] uppercase tracking-[0.3em] text-butter-muted/70 font-medium mb-4">
           {t('journal.label')}
         </p>
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
-            <h1 className="text-5xl md:text-[3.75rem] font-serif font-black leading-[1.06] tracking-tight mb-4">
+            <h1 className="text-4xl md:text-[3.75rem] font-serif font-black leading-[1.06] tracking-tight mb-3 md:mb-4">
               {t('journal.title')}{' '}
               <em style={{ fontStyle: 'italic', color: 'var(--color-butter-primary)', fontWeight: 700 }}>
                 {t('journal.title.em')}
@@ -107,7 +107,7 @@ export const Journal = () => {
 
       <div style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }} />
 
-      <div className="px-8 md:px-14 max-w-7xl mx-auto py-14">
+      <div className="px-5 md:px-14 max-w-7xl mx-auto py-8 md:py-14">
         <AnimatePresence mode="wait">
           {view === 'write' ? (
             <WriteView key="write" onCreate={create} onSaved={() => setView('archive')} bookContext={bookContext} />
@@ -288,11 +288,11 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
       exit={{ opacity: 0, y: -12 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="flex flex-col lg:flex-row gap-16 xl:gap-24">
+      <div className="flex flex-col lg:flex-row gap-8 md:gap-16 xl:gap-24 pb-0">
 
         {/* ── Left col: book + progress context ── */}
-        <aside className="lg:w-64 xl:w-72 shrink-0">
-          <div className="lg:sticky lg:top-28 space-y-8">
+        <aside className="hidden lg:block lg:w-64 xl:w-72 shrink-0">
+          <div className="lg:sticky lg:top-28 space-y-5 md:space-y-8">
 
             {/* Book context — search 기능 포함 */}
             <BookContextPanel
@@ -385,7 +385,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
               >
                 {/* Progress bar */}
                 <div
-                  className="mb-10"
+                  className="mb-5 md:mb-10"
                   style={{ background: 'rgba(0,0,0,0.06)', height: '1px' }}
                 >
                   <motion.div
@@ -406,7 +406,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                 </div>
 
                 {/* Question */}
-                <h2 className="text-2xl md:text-[1.75rem] font-serif font-light leading-[1.35] mb-8 text-butter-text">
+                <h2 className="text-2xl md:text-[1.75rem] font-serif font-light leading-[1.35] mb-5 md:mb-8 text-butter-text">
                   {current.question}
                 </h2>
 
@@ -472,8 +472,8 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                       setAnswers((prev) => ({ ...prev, [current.id]: e.target.value }))
                     }
                     placeholder={current.placeholder}
-                    rows={7}
-                    className="w-full bg-transparent text-[17px] font-serif leading-[1.9] resize-none focus:outline-none text-butter-text/85 placeholder:text-butter-muted/55 mb-10"
+                    rows={5}
+                    className="w-full bg-transparent text-[17px] font-serif leading-[1.9] resize-none focus:outline-none text-butter-text/85 placeholder:text-butter-muted/55 mb-6 md:mb-10"
                     style={{ borderBottom: '1px solid rgba(0,0,0,0.07)', paddingBottom: '1.5rem' }}
                   />
                 )}
@@ -1117,9 +1117,11 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
           RIGHT — 캘린더 + 엔트리 목록
           ══════════════════════════════════════════════ */}
       <aside
-        className="lg:w-72 xl:w-80 shrink-0"
+        className="lg:w-72 xl:w-80 shrink-0 mt-10 lg:mt-0"
         style={{ borderLeft: '1px solid var(--color-butter-rule)', paddingLeft: '2rem' }}
       >
+        {/* 모바일 전용 상단 구분선 */}
+        <div className="block lg:hidden mb-8" style={{ height: '1px', background: 'var(--color-butter-rule)' }} />
 
         {/* ── 캘린더 ── */}
         <div className="mb-8">
