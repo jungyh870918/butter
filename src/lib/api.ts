@@ -33,8 +33,6 @@ export const getBooks = (params?: { tag?: string; search?: string; lang?: string
 
 export const getBook = (id: string) => request<any>(`/api/books/${id}`);
 
-export const getRandomBookWithReflections = () =>
-  request<{ book: any; reflections: any[] }>('/api/books/random-with-reflections');
 
 export const getBookReflections = (bookId: string) =>
   request<any[]>(`/api/books/${bookId}/reflections`);

@@ -8,7 +8,6 @@ import { BookDetail } from './components/pages/BookDetail';
 import { ShareCard } from './components/pages/ShareCard';
 import { JournalShareCard } from './components/pages/JournalShareCard';
 import { Journal } from './components/pages/Journal';
-import { CommunalMargins } from './components/pages/CommunalMargins';
 import { Cartography } from './components/pages/Cartography';
 import { NotFound } from './components/pages/NotFound';
 
@@ -28,7 +27,6 @@ export const router = createBrowserRouter([
       { path: 'explore', element: <Explore /> },
       { path: 'explore/:bookId', element: <BookDetail /> },
       { path: 'journal', element: <Journal /> },
-      { path: 'margins', element: <CommunalMargins /> },
       { path: 'cartography', element: <Cartography /> },
       { path: '*', element: <NotFound /> },
     ],
