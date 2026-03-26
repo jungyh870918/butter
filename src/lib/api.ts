@@ -33,6 +33,9 @@ export const getBooks = (params?: { tag?: string; search?: string; lang?: string
 
 export const getBook = (id: string) => request<any>(`/api/books/${id}`);
 
+export const getRandomBookWithReflections = () =>
+  request<{ book: any; reflections: any[] }>('/api/books/random-with-reflections');
+
 export const getBookReflections = (bookId: string) =>
   request<any[]>(`/api/books/${bookId}/reflections`);
 
@@ -60,6 +63,8 @@ export const createReflection = (payload: {
   tags: string[];
   image?: string | null;
   bookId?: string | null;
+  bookTitle?: string | null;
+  bookAuthor?: string | null;
   userId?: string | null;
   journalEntryId?: string | null;
 }) => request<any>('/api/reflections', { method: 'POST', body: JSON.stringify(payload) });

@@ -28,6 +28,8 @@ export interface Reflection {
   tags: string[];
   image?: string;
   bookId?: string;
+  bookTitle?: string;
+  bookAuthor?: string;
 }
 
 export interface JournalEntry {

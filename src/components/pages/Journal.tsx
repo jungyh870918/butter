@@ -266,8 +266,10 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
         author: 'Reader',
         authorAvatar: 'https://api.dicebear.com/7.x/personas/svg?seed=butter',
         tags: selectedAtmospheres,
-        // bookId는 Prisma Book FK가 아닌 soft link이므로 reflections에 전달하지 않음
         journalEntryId: entry.id,
+        bookId: activeBook.bookId ?? null,
+        bookTitle: activeBook.bookTitle ?? null,
+        bookAuthor: activeBook.bookAuthor ?? null,
       });
 
       setSaveSuccess(true);

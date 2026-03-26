@@ -47,9 +47,11 @@ const translations = {
 
   // ── Home ──
   'home.label': { en: 'Community', ko: '커뮤니티' },
-  'home.title': { en: 'What people are writing', ko: '지금 쓰이고 있는 것들' },
+  'home.title': { en: 'What people are', ko: '지금 쓰이고' },
+  'home.title.em': { en: 'writing', ko: '있는 것들' },
   'home.subtitle': { en: 'Notes, reactions, and passing thoughts from readers in the community.', ko: '커뮤니티 독자들의 메모, 반응, 짧은 생각들.' },
   'home.empty': { en: 'Nothing written yet', ko: '아직 작성된 글이 없습니다' },
+  'home.from': { en: 'from', ko: '' },
 
   // ── BookDetail ──
   'book.start': { en: 'Start Reading', ko: '읽기 시작' },

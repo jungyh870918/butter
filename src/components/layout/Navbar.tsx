@@ -34,6 +34,7 @@ export const Navbar = () => {
     { path: '/', label: t('nav.home') },
     { path: '/explore', label: t('nav.explore') },
     { path: '/journal', label: t('nav.journal') },
+    { path: '/margins', label: locale === 'ko' ? '마진' : 'Margins' },
     { path: '/cartography', label: t('nav.map') },
   ] as const;
 
