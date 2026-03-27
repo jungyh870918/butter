@@ -7,7 +7,7 @@ import { Book } from '../../types';
 import { useBooks } from '../../hooks/useBooks';
 import { LoadingSpinner, ErrorMessage, EmptyState, BookCoverImage } from '../ui';
 
-const CATEGORIES = ['All', 'Fiction', 'Poetry', 'Philosophy', 'Sci-Fi', 'Historical'] as const;
+const CATEGORIES = ['All', 'Fiction', 'Poetry', 'Philosophy', 'Sci-Fi', 'Historical', 'Essay', 'Psychology', 'Mystery', 'History', 'Comics'] as const;
 // CATEGORY_LABELS는 컴포넌트 내부에서 t()로 처리
 
 export const Explore = () => {
@@ -20,6 +20,11 @@ export const Explore = () => {
     'Philosophy': t('explore.cat.philosophy'),
     'Sci-Fi': t('explore.cat.scifi'),
     'Historical': t('explore.cat.historical'),
+    'Essay': t('explore.cat.essay'),
+    'Psychology': t('explore.cat.psychology'),
+    'Mystery': t('explore.cat.mystery'),
+    'History': t('explore.cat.history'),
+    'Comics': t('explore.cat.comics'),
   };
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -27,43 +32,42 @@ export const Explore = () => {
 
   // 검색 쿼리가 바뀌면 카테고리 필터 초기화
   useEffect(() => {
-    if (searchQuery) setFilter('All');
+    if (searchQuery) { setFilter('All'); setCurrentPage(1); }
   }, [searchQuery]);
 
   // 검색 지우기
   const clearSearch = () => setSearchParams({});
 
-  // 필터/언어 변경 시 랜덤 offset — 매번 다른 책 세트
-  const [bookOffset] = useState(() => Math.floor(Math.random() * 5) * 20);
-  const [currentOffset, setCurrentOffset] = useState(bookOffset);
+  // 페이지네이션 — 페이지당 20권, offset = (page-1)*20
+  const PAGE_SIZE = 20;
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // 필터 변경 시 새 offset 생성
+  // 필터 변경 시 페이지 1로 리셋
   const handleFilterChange = (newFilter: string) => {
     setFilter(newFilter);
-    setCurrentOffset(Math.floor(Math.random() * 5) * 20);
+    setCurrentPage(1);
   };
+
+  const currentOffset = searchQuery ? 0 : (currentPage - 1) * PAGE_SIZE;
 
   const { books, loading, error } = useBooks(
     searchQuery ? undefined : filter,
     searchQuery || undefined,
     locale,
-    searchQuery ? undefined : currentOffset
+    currentOffset > 0 ? currentOffset : undefined
   );
   const navigate = useNavigate();
 
   const handleSelectBook = (book: Book) => navigate(`/explore/${book.id}`);
   const trendingBooks = books.slice(0, 3);
+  const shuffledBooks = books; // 인기순 유지 (정렬 안 섞음)
 
-  // 그리드 표시용 — 페이지/필터 변경 시마다 랜덤 셔플 (검색 중엔 그대로)
-  const shuffledBooks = useMemo(() => {
-    if (searchQuery || books.length === 0) return books;
-    const arr = [...books];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }, [books, searchQuery]);
+  // 이전/다음 페이지 — 결과가 PAGE_SIZE 미만이면 마지막 페이지
+  const hasNextPage = !loading && !searchQuery && books.length >= PAGE_SIZE;
+  const hasPrevPage = currentPage > 1;
+
+  const goNextPage = () => { setCurrentPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const goPrevPage = () => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
   return (
     <div className="min-h-screen bg-butter-bg">
@@ -149,6 +153,46 @@ export const Explore = () => {
                 {shuffledBooks.map((book, i) => (
                   <BookCard key={book.id} book={book} onClick={() => handleSelectBook(book)} index={i} />
                 ))}
+              </div>
+            )}
+
+            {/* 페이지네이션 */}
+            {!loading && !searchQuery && (hasPrevPage || hasNextPage) && (
+              <div className="flex items-center justify-center gap-4 mt-12">
+                <button
+                  onClick={goPrevPage}
+                  disabled={!hasPrevPage}
+                  className="flex items-center gap-1.5 px-5 py-2 text-[11px] font-medium uppercase tracking-[0.14em] transition-all disabled:opacity-30"
+                  style={{
+                    border: '1px solid var(--color-butter-rule)',
+                    borderRadius: '2px',
+                    color: 'var(--color-butter-muted)',
+                    background: 'transparent',
+                  }}
+                >
+                  ← {locale === 'ko' ? '이전' : 'Prev'}
+                </button>
+
+                <span
+                  className="text-[11px] font-medium uppercase tracking-[0.14em]"
+                  style={{ color: 'var(--color-butter-muted)', opacity: 0.6 }}
+                >
+                  {currentPage}
+                </span>
+
+                <button
+                  onClick={goNextPage}
+                  disabled={!hasNextPage}
+                  className="flex items-center gap-1.5 px-5 py-2 text-[11px] font-medium uppercase tracking-[0.14em] transition-all disabled:opacity-30"
+                  style={{
+                    border: '1px solid var(--color-butter-rule)',
+                    borderRadius: '2px',
+                    color: 'var(--color-butter-muted)',
+                    background: 'transparent',
+                  }}
+                >
+                  {locale === 'ko' ? '다음' : 'Next'} →
+                </button>
               </div>
             )}
           </main>
@@ -279,7 +323,7 @@ export const Explore = () => {
                     }`}
                     style={filter !== cat ? { background: 'rgba(0,0,0,0.04)' } : {}}
                   >
-                    {cat}
+                    {CATEGORY_LABELS[cat] || cat}
                   </button>
                 ))}
               </div>
