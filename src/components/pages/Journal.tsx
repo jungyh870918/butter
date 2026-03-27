@@ -78,7 +78,7 @@ export const Journal = () => {
         </p>
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
-            <h1 className="text-4xl md:text-[3.75rem] font-serif font-black leading-[1.06] tracking-tight mb-3 md:mb-4">
+            <h1 className="text-[1.6rem] md:text-[2.6rem] font-serif font-black leading-[1.1] tracking-tight mb-3 md:mb-4">
               {t('journal.title')}{' '}
               <em style={{ fontStyle: 'italic', color: 'var(--color-butter-primary)', fontWeight: 700 }}>
                 {t('journal.title.em')}

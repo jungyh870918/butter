@@ -1,12 +1,12 @@
 import { useLocale } from '../../hooks/useLocale';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, MessageSquare, BookOpen, ArrowLeft } from 'lucide-react';
+import { Heart, MessageSquare, BookOpen, ArrowLeft, ChevronDown } from 'lucide-react';
 import { Reflection, Book } from '../../types';
 import { useReflections } from '../../hooks/useReflections';
 import { EmptyState, AvatarImage, BookCoverImage } from '../ui';
 import { formatDate } from '../../lib/format';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { getBooks, getBook } from '../../lib/api';
 
 // ── 좌측 사이드바 ──────────────────────────────────────────────────────────
@@ -278,7 +278,11 @@ export const Home = () => {
       .finally(() => setSidebarLoading(false));
   }, [locale]);
 
-  // bookId 필터 적용된 reflections
+  // 모바일 사이드바 접기/펼치기
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+
   const { reflections, loading: refLoading, error: refError } = useReflections({
     bookId: filteredBookId ?? undefined,
     limit: filteredBookId ? undefined : 10,
@@ -289,9 +293,73 @@ export const Home = () => {
       <div className="flex flex-col lg:flex-row gap-14 xl:gap-20">
 
         {/* ── 좌측 사이드바 (sticky) ── */}
-        <aside className="lg:w-56 xl:w-64 shrink-0 order-1 lg:order-1">
+        <aside ref={sidebarRef} className="lg:w-56 xl:w-64 shrink-0 order-1 lg:order-1">
           <div className="lg:sticky lg:top-28">
-            <BookSidebar book={sidebarBook} loading={sidebarLoading} />
+
+            {/* 모바일: 토글 버튼 — 펼쳤을 때 상단 fixed */}
+            <div className="lg:hidden">
+              {/* 접혀있을 때 — 인라인 버튼 */}
+              {!sidebarExpanded && (
+                <button
+                  onClick={() => setSidebarExpanded(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full font-medium text-[11px] uppercase tracking-[0.15em] mb-4 transition-all"
+                  style={{
+                    background: 'var(--color-butter-primary)',
+                    color: 'white',
+                    boxShadow: '0 2px 8px rgba(107,82,0,0.25)',
+                  }}
+                >
+                  <BookOpen size={12} strokeWidth={2} />
+                  {locale === 'ko' ? '추천 책 보기' : 'Featured Book'}
+                </button>
+              )}
+
+              {/* 펼쳐졌을 때 — 상단 fixed 닫기 버튼 */}
+              {sidebarExpanded && (
+                <div
+                  className="fixed top-16 left-0 right-0 z-40 flex justify-center pointer-events-none"
+                >
+                  <button
+                    onClick={() => setSidebarExpanded(false)}
+                    className="pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full font-medium text-[11px] uppercase tracking-[0.15em] transition-all shadow-md"
+                    style={{
+                      background: 'var(--color-butter-primary)',
+                      color: 'white',
+                      boxShadow: '0 4px 16px rgba(107,82,0,0.35)',
+                    }}
+                  >
+                    <ChevronDown
+                      size={12}
+                      strokeWidth={2.5}
+                      style={{ transform: 'rotate(180deg)' }}
+                    />
+                    {locale === 'ko' ? '책 정보 닫기' : 'Close'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* PC: 항상 표시 / 모바일: 펼쳤을 때만 */}
+            <AnimatePresence initial={false}>
+              {(sidebarExpanded) && (
+                <motion.div
+                  key="sidebar-mobile"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="overflow-hidden lg:hidden"
+                >
+                  <BookSidebar book={sidebarBook} loading={sidebarLoading} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* PC 전용 (항상 표시) */}
+            <div className="hidden lg:block">
+              <BookSidebar book={sidebarBook} loading={sidebarLoading} />
+            </div>
+
           </div>
         </aside>
 
@@ -303,7 +371,7 @@ export const Home = () => {
             <p className="text-[10px] uppercase tracking-[0.3em] text-butter-muted/70 font-medium mb-4">
               {t('home.label')}
             </p>
-            <h1 className="text-5xl md:text-[3.75rem] font-serif font-black leading-[1.06] tracking-tight mb-4">
+            <h1 className="text-[1.6rem] md:text-[2.6rem] font-serif font-black leading-[1.1] tracking-tight mb-4">
               {t('home.title')}{' '}
               <em style={{ fontStyle: 'italic', color: 'var(--color-butter-primary)', fontWeight: 700 }}>
                 {t('home.title.em')}

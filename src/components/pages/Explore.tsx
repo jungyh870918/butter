@@ -51,7 +51,7 @@ export const Explore = () => {
         <p className="text-[10px] uppercase tracking-[0.3em] text-butter-muted/70 font-medium mb-4">
           {t('explore.label')}
         </p>
-        <h1 className="text-5xl md:text-[3.75rem] font-serif font-black leading-[1.06] tracking-tight mb-5">
+        <h1 className="text-[1.6rem] md:text-[2.6rem] font-serif font-black leading-[1.1] tracking-tight mb-5">
           {t('explore.title')}{' '}
           <em style={{ fontStyle: 'italic', color: 'var(--color-butter-primary)', fontWeight: 700 }}>
             {t('explore.title.em')}
