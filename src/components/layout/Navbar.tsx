@@ -105,7 +105,7 @@ export const Navbar = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={t('nav.search.placeholder')}
-              className="pl-8 pr-7 py-1.5 text-[12px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/50 w-40 focus:w-56 transition-all duration-300 rounded-sm"
+              className="pl-8 pr-7 py-1.5 text-[16px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/50 w-40 focus:w-56 transition-all duration-300 rounded-sm"
               style={{ border: '1px solid var(--color-butter-rule)' }}
             />
             {searchQuery && (

@@ -185,7 +185,7 @@ export const Explore = () => {
               <input
                 type="email"
                 {...{placeholder: t('explore.journal.email')}}
-                className="w-full px-0 py-2 text-[13px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/55 transition-colors"
+                className="w-full px-0 py-2 text-[16px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/55 transition-colors"
                 style={{ borderBottom: '1px solid rgba(0,0,0,0.10)' }}
               />
               <button

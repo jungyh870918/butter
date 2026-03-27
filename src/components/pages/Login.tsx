@@ -106,7 +106,7 @@ export const Login = () => {
             onChange={(e) => setUsername(e.target.value)}
             autoComplete="username"
             autoFocus
-            className="w-full px-4 py-3 text-[14px] font-light bg-transparent focus:outline-none transition-colors"
+            className="w-full px-4 py-3 text-[16px] font-light bg-transparent focus:outline-none transition-colors"
             style={{ border: '1px solid var(--color-butter-rule)', borderRadius: '2px', color: 'var(--color-butter-text)' }}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--color-butter-primary)')}
             onBlur={(e)  => (e.currentTarget.style.borderColor = 'var(--color-butter-rule)')}
@@ -130,7 +130,7 @@ export const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
-            className="w-full px-4 py-3 text-[14px] font-light bg-transparent focus:outline-none transition-colors"
+            className="w-full px-4 py-3 text-[16px] font-light bg-transparent focus:outline-none transition-colors"
             style={{ border: '1px solid var(--color-butter-rule)', borderRadius: '2px', color: 'var(--color-butter-text)' }}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--color-butter-primary)')}
             onBlur={(e)  => (e.currentTarget.style.borderColor = 'var(--color-butter-rule)')}
