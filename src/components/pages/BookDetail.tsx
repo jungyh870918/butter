@@ -1,5 +1,5 @@
 import { useLocale } from '../../hooks/useLocale';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -26,7 +26,7 @@ export const BookDetail = () => {
   const { t } = useLocale();
   const { bookId } = useParams<{ bookId: string }>();
   const navigate = useNavigate();
-  const { book, loading: bookLoading, error: bookError } = useBook(bookId);
+  const { book, loading: bookLoading, enriching, error: bookError } = useBook(bookId);
   const { reflections, loading: refLoading, error: refError } = useReflections({ bookId });
 
   // 에러만 전체 페이지 대체 — 로딩 중엔 Skeleton으로
@@ -48,7 +48,7 @@ export const BookDetail = () => {
       <div className="px-6 md:px-12 max-w-6xl mx-auto pb-16">
         <div className="flex flex-col md:flex-row gap-10 md:gap-16 lg:gap-20">
           <LeftColumn book={book} bookId={bookId!} loading={bookLoading} />
-          <RightColumn book={book} reflections={reflections} refLoading={refLoading} refError={refError} loading={bookLoading} />
+          <RightColumn book={book} reflections={reflections} refLoading={refLoading} refError={refError} loading={bookLoading} enriching={enriching} />
         </div>
       </div>
 
@@ -215,11 +215,16 @@ const Sk = ({ w = '100%', h = 14, className = '' }: { w?: string | number; h?: n
   />
 );
 
-const RightColumn = ({ book, reflections, refLoading, refError, loading }: {
-  book: Book | null; reflections: Reflection[]; refLoading: boolean; refError: string; loading: boolean;
+const RightColumn = ({ book, reflections, refLoading, refError, loading, enriching = false }: {
+  book: Book | null; reflections: Reflection[]; refLoading: boolean; refError: string; loading: boolean; enriching?: boolean;
 }) => {
   const { locale, t } = useLocale();
   const [descExpanded, setDescExpanded] = useState(false);
+
+  // book이 로드되면 descExpanded 초기화
+  useEffect(() => {
+    setDescExpanded(false);
+  }, [book?.id]);
 
   const description = book?.description || '';
   const isTruncated = description.length > DESCRIPTION_LIMIT;
@@ -293,7 +298,7 @@ const RightColumn = ({ book, reflections, refLoading, refError, loading }: {
       </div>
 
       {/* Author's Note / Quote — GPT 응답 skeleton */}
-      {loading ? (
+      {(loading || enriching) ? (
         <div className="mb-12 pl-6 space-y-3" style={{ borderLeft: '2px solid var(--color-butter-accent)' }}>
           <Sk w={100} h={10} />
           <Sk w="90%" h={28} />
@@ -344,7 +349,7 @@ const RightColumn = ({ book, reflections, refLoading, refError, loading }: {
       )}
 
       {/* Historical Context — GPT 응답 skeleton */}
-      {loading ? (
+      {(loading || enriching) ? (
         <div className="mb-10 space-y-2">
           <Sk w={130} h={10} />
           <Sk w="95%" h={14} />
@@ -364,7 +369,7 @@ const RightColumn = ({ book, reflections, refLoading, refError, loading }: {
         <div className="flex items-center gap-2 mb-8">
           <MessageSquare size={13} strokeWidth={1.5} className="text-butter-muted" />
           <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-butter-muted">
-            Community Reflections
+            {t('book.reflections')}
           </p>
         </div>
 

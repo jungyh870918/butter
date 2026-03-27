@@ -108,23 +108,23 @@ const BookSidebar = ({ book, loading }: BookSidebarProps) => {
           style={{ fontSize: '10px', background: 'var(--color-butter-primary)', color: 'white', borderRadius: '2px' }}
         >
           <BookOpen size={11} strokeWidth={2} />
-          {locale === 'ko' ? '계속 읽기' : 'Continue Reading'}
+          {locale === 'ko' ? '이어 읽기' : 'Continue Reading'}
         </button>
         <div className="flex gap-2">
           <button className="flex-1 py-2 font-medium uppercase tracking-[0.1em]"
             style={{ fontSize: '10px', border: '1px solid var(--color-butter-rule)', borderRadius: '2px', color: 'var(--color-butter-muted)', background: 'transparent' }}>
-            {locale === 'ko' ? '저장' : 'Save'}
+            {locale === 'ko' ? '보관하기' : 'Save'}
           </button>
           <button className="flex-1 py-2 font-medium uppercase tracking-[0.1em]"
             style={{ fontSize: '10px', border: '1px solid var(--color-butter-rule)', borderRadius: '2px', color: 'var(--color-butter-muted)', background: 'transparent' }}>
-            {locale === 'ko' ? '공유' : 'Share'}
+            {locale === 'ko' ? '공유하기' : 'Share'}
           </button>
         </div>
         <button
           onClick={() => navigate('/journal', { state: { bookId: book.id, bookTitle: book.title, bookAuthor: book.author, bookCover: book.cover } })}
           className="w-full py-2 font-medium uppercase tracking-[0.1em]"
           style={{ fontSize: '10px', border: '1px solid var(--color-butter-rule)', borderRadius: '2px', color: 'var(--color-butter-muted)', background: 'transparent' }}>
-          {locale === 'ko' ? '리플렉션 쓰기' : 'Write Reflection'}
+          {locale === 'ko' ? '감상 남기기' : 'Write Reflection'}
         </button>
       </div>
     </motion.div>
@@ -333,7 +333,7 @@ export const Home = () => {
                       className="font-serif italic font-light"
                       style={{ fontSize: '13px', color: 'var(--color-butter-muted)', opacity: 0.7 }}
                     >
-                      {locale === 'ko' ? `『${filteredBookTitle}』의 코멘트` : `Reflections on "${filteredBookTitle}"`}
+                      {locale === 'ko' ? `『${filteredBookTitle}』의 감상` : `Reflections on "${filteredBookTitle}"`}
                     </span>
                   </div>
                   <button
@@ -343,7 +343,7 @@ export const Home = () => {
                   >
                     <ArrowLeft size={11} strokeWidth={1.5} />
                     <span className="uppercase tracking-[0.12em] font-medium" style={{ fontSize: '10px' }}>
-                      {locale === 'ko' ? '전체 보기' : 'All reflections'}
+                      {locale === 'ko' ? '전체 감상 보기' : 'All reflections'}
                     </span>
                   </button>
                 </div>
@@ -378,7 +378,7 @@ export const Home = () => {
             <div className="mt-4">
               <EmptyState message={
                 filteredBookId
-                  ? (locale === 'ko' ? '이 책에 대한 코멘트가 없습니다.' : 'No reflections for this book yet.')
+                  ? (locale === 'ko' ? '이 책에 남긴 감상이 없습니다.' : 'No reflections for this book yet.')
                   : t('home.empty')
               } />
               {filteredBookId && (
@@ -388,7 +388,7 @@ export const Home = () => {
                   style={{ fontSize: '12px', color: 'var(--color-butter-muted)' }}
                 >
                   <ArrowLeft size={12} strokeWidth={1.5} />
-                  {locale === 'ko' ? '전체 코멘트 보기' : 'View all reflections'}
+                  {locale === 'ko' ? '전체 감상 보기' : 'View all reflections'}
                 </button>
               )}
             </div>

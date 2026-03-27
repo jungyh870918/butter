@@ -33,6 +33,9 @@ export const getBooks = (params?: { tag?: string; search?: string; lang?: string
 
 export const getBook = (id: string) => request<any>(`/api/books/${id}`);
 
+export const getBookEnrich = (id: string, title: string, author: string) =>
+  request<any>(`/api/books/${id}/enrich?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}`);
+
 
 export const getBookReflections = (bookId: string) =>
   request<any[]>(`/api/books/${bookId}/reflections`);

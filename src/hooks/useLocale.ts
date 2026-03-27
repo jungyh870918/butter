@@ -12,23 +12,23 @@ export const DEFAULT_LOCALE: Locale = 'en';
 const translations = {
   // ── Navbar ──
   'nav.home': { en: 'Home', ko: '홈' },
-  'nav.explore': { en: 'Explore', ko: '탐색' },
-  'nav.journal': { en: 'Journal', ko: '저널' },
+  'nav.explore': { en: 'Explore', ko: '둘러보기' },
+  'nav.journal': { en: 'Journal', ko: '기록' },
   'nav.map': { en: 'Map', ko: '지도' },
   'nav.search.placeholder': { en: 'Search the library…', ko: '책 검색…' },
 
   // ── Footer ──
   'footer.manifesto': { en: 'The Manifesto', ko: '선언문' },
-  'footer.archive': { en: 'Library Archive', ko: '도서관 아카이브' },
-  'footer.ethics': { en: 'Journaling Ethics', ko: '저널링 윤리' },
+  'footer.archive': { en: 'Library Archive', ko: '도서관 기록 보관함' },
+  'footer.ethics': { en: 'Journaling Ethics', ko: '기록 윤리' },
   'footer.privacy': { en: 'Privacy', ko: '개인정보' },
   'footer.contact': { en: 'Contact', ko: '문의' },
   'footer.tagline': { en: 'For readers who like to think while they read.', ko: '읽으면서 생각하는 사람들을 위해.' },
   'footer.quiet': { en: 'A quiet place on the internet.', ko: '인터넷 속 조용한 공간.' },
 
   // ── Explore ──
-  'explore.label': { en: 'Curated Readings', ko: '큐레이션 도서' },
-  'explore.title': { en: 'Explore', ko: '탐색' },
+  'explore.label': { en: 'Curated Readings', ko: '엄선된 도서' },
+  'explore.title': { en: 'Explore', ko: '둘러보기' },
   'explore.title.em': { en: 'the library', ko: '도서관' },
   'explore.subtitle': { en: 'Books worth slowing down for. Picked for curiosity, depth, and the occasional rabbit hole.', ko: '천천히 읽을 만한 책들. 호기심과 깊이를 기준으로 골랐습니다.' },
   'explore.empty': { en: 'No books found', ko: '검색 결과가 없습니다' },
@@ -39,7 +39,7 @@ const translations = {
   'explore.cat.scifi': { en: 'Sci-Fi', ko: 'SF' },
   'explore.cat.historical': { en: 'Classic Lit', ko: '고전문학' },
   'explore.trending': { en: 'Trending Now', ko: '지금 인기' },
-  'explore.journal.title': { en: 'The Reading Notes', ko: '리딩 노트' },
+  'explore.journal.title': { en: 'The Reading Notes', ko: '독서 기록 노트' },
   'explore.journal.desc': { en: 'A weekly newsletter on books, notes, and what we\'ve been reading lately.', ko: '매주 책과 독서 메모를 공유하는 뉴스레터입니다.' },
   'explore.journal.email': { en: 'Your email', ko: '이메일 주소' },
   'explore.journal.subscribe': { en: 'Subscribe', ko: '구독' },
@@ -49,16 +49,16 @@ const translations = {
   'home.label': { en: 'Community', ko: '커뮤니티' },
   'home.title': { en: 'What people are', ko: '지금 쓰이고' },
   'home.title.em': { en: 'writing', ko: '있는 것들' },
-  'home.subtitle': { en: 'Notes, reactions, and passing thoughts from readers in the community.', ko: '커뮤니티 독자들의 메모, 반응, 짧은 생각들.' },
-  'home.empty': { en: 'Nothing written yet', ko: '아직 작성된 글이 없습니다' },
+  'home.subtitle': { en: 'Notes, reactions, and passing thoughts from readers in the community.', ko: '독자들이 남긴 감상과 짧은 기록들.' },
+  'home.empty': { en: 'Nothing written yet', ko: '아직 남긴 기록이 없습니다.' },
   'home.from': { en: 'from', ko: '' },
 
   // ── BookDetail ──
   'book.start': { en: 'Start Reading', ko: '읽기 시작' },
   'book.add': { en: 'Add to Library', ko: '서재에 추가' },
-  'book.write': { en: 'Add your thoughts', ko: '생각 남기기' },
-  'book.save': { en: 'Save', ko: '저장' },
-  'book.share': { en: 'Share', ko: '공유' },
+  'book.write': { en: 'Add your thoughts', ko: '감상 남기기' },
+  'book.save': { en: 'Save', ko: '보관하기' },
+  'book.share': { en: 'Share', ko: '공유하기' },
   'book.share.link': { en: 'Share link', ko: '링크 공유' },
   'book.copy': { en: 'Copy', ko: '복사' },
   'book.copied': { en: 'Done', ko: '완료' },
@@ -72,18 +72,18 @@ const translations = {
   'book.author_note': { en: "Author's Note", ko: '저자 한마디' },
   'book.historical': { en: 'Historical Context', ko: '배경 정보' },
   'book.about': { en: 'About the Author', ko: '저자 소개' },
-  'book.reflections': { en: 'Reader Notes', ko: '독자 노트' },
-  'book.no_reflections': { en: 'No notes for this book yet', ko: '아직 이 책에 대한 노트가 없습니다' },
+  'book.reflections': { en: 'Reader Notes', ko: '독자 감상' },
+  'book.no_reflections': { en: 'No notes for this book yet', ko: '아직 이 책에 남긴 감상이 없습니다.' },
   'book.collection': { en: 'More Like This', ko: '비슷한 책' },
-  'book.back': { en: 'Explore', ko: '탐색으로' },
+  'book.back': { en: 'Explore', ko: '둘러보기로' },
 
   // ── Journal — Write ──
   'journal.label': { en: 'Reading Notes', ko: '독서 노트' },
   'journal.title': { en: 'Your', ko: '나의' },
-  'journal.title.em': { en: 'journal', ko: '저널' },
-  'journal.subtitle': { en: 'Jot down what you read, what stuck, and what you want to remember.', ko: '읽은 것, 기억에 남은 것, 기록해두고 싶은 것을 적어보세요.' },
+  'journal.title.em': { en: 'journal', ko: '기록' },
+  'journal.subtitle': { en: 'Jot down what you read, what stuck, and what you want to remember.', ko: '읽은 것, 기억에 남은 것, 오래 간직하고 싶은 것을 적어보세요.' },
   'journal.tab.write': { en: 'Write', ko: '쓰기' },
-  'journal.tab.archive': { en: 'Archive', ko: '아카이브' },
+  'journal.tab.archive': { en: 'Archive', ko: '기록 보관함' },
 
   // Journal prompts
   'prompt.opening.label': { en: 'Opening', ko: '시작' },
@@ -130,14 +130,14 @@ const translations = {
   'journal.skip': { en: 'Skip', ko: '건너뛰기' },
   'journal.review': { en: 'Review', ko: '확인' },
   'journal.edit': { en: 'Edit', ko: '수정' },
-  'journal.save': { en: 'Save to Journal', ko: '저널에 저장' },
+  'journal.save': { en: 'Save to Journal', ko: '기록 남기기' },
   'journal.saving': { en: 'Saving…', ko: '저장 중…' },
   'journal.saved': { en: 'Saved', ko: '저장됨' },
   'journal.progress': { en: 'Progress', ko: '진행' },
   'journal.review.title': { en: "Here's what you wrote today.", ko: '오늘 쓴 내용입니다.' },
   'journal.review.subtitle': { en: 'Take a look before saving. You can always edit it later.', ko: '저장 전에 한 번 확인해보세요. 나중에 언제든 수정할 수 있습니다.' },
-  'journal.review.label': { en: 'Your Notes', ko: '오늘의 메모' },
-  'journal.archive.note': { en: 'Saved to your journal.', ko: '저널에 저장되었습니다.' },
+  'journal.review.label': { en: 'Your Notes', ko: '오늘의 기록' },
+  'journal.archive.note': { en: 'Saved to your journal.', ko: '기록이 보관되었습니다.' },
 
   // Book context in journal
   'journal.book.label': { en: 'Reading Now', ko: '지금 읽는 책' },
@@ -153,14 +153,14 @@ const translations = {
   'journal.book.searchfail': { en: 'Search failed. Try again.', ko: '검색에 실패했습니다. 다시 시도하세요.' },
 
   // Questions to consider
-  'journal.questions.label': { en: 'Things to think about', ko: '생각해볼 것들' },
+  'journal.questions.label': { en: 'Things to think about', ko: '떠올려볼 것들' },
 
   // ── Archive ──
   'archive.nothing': { en: 'Nothing here yet.', ko: '아직 아무것도 없습니다.' },
-  'archive.nothing.sub': { en: 'Write your first entry to get started.', ko: '첫 번째 항목을 작성해 시작해보세요.' },
-  'archive.new': { en: '+ New Entry', ko: '+ 새로 쓰기' },
-  'archive.select': { en: 'Pick something to read.', ko: '읽을 항목을 선택하세요.' },
-  'archive.recent': { en: 'What you\'ve been writing', ko: '최근에 쓴 것들' },
+  'archive.nothing.sub': { en: 'Write your first entry to get started.', ko: '첫 번째 기록을 남겨 시작해보세요.' },
+  'archive.new': { en: '+ New Entry', ko: '+ 새 기록 남기기' },
+  'archive.select': { en: 'Pick something to read.', ko: '기록을 선택해보세요.' },
+  'archive.recent': { en: 'What you\'ve been writing', ko: '최근에 남긴 기록들' },
   'archive.entries': { en: 'entries', ko: '개' },
   'archive.entry': { en: 'entry', ko: '개' },
   'archive.since': { en: 'since', ko: '부터' },
@@ -192,8 +192,8 @@ const translations = {
   'map.subtitle': { en: 'A visual record of the emotional landscape of your reading life.', ko: '독서 생활의 감정 흐름을 시각화한 기록입니다.' },
   'map.low': { en: 'Low Intensity', ko: '낮음' },
   'map.high': { en: 'High Intensity', ko: '높음' },
-  'map.empty': { en: 'Add moods in your journal to see them here', ko: '저널에 기분을 기록하면 여기에 표시됩니다' },
-  'map.empty.data': { en: 'No data yet', ko: '아직 데이터가 없습니다' },
+  'map.empty': { en: 'Add moods in your journal to see them here', ko: '기록에 분위기를 담으면 여기에 나타납니다.' },
+  'map.empty.data': { en: 'No data yet', ko: '아직 쌓인 기록이 없습니다.' },
 
   // ── NotFound ──
   '404.title': { en: 'Page not found', ko: '페이지를 찾을 수 없습니다' },

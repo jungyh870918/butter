@@ -2,7 +2,7 @@ import { useLocale } from '../../hooks/useLocale';
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2, Share2 } from 'lucide-react';
+import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2, Share2, Link as LinkIcon, Copy } from 'lucide-react';
 import { JournalEntry, Book } from '../../types';
 import { useJournal } from '../../hooks/useJournal';
 import { createReflection, getBooks } from '../../lib/api';
@@ -1377,6 +1377,8 @@ interface ArchiveDetailViewProps {
 const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWrite }: ArchiveDetailViewProps) => {
   const { locale, t } = useLocale();
   const [editing, setEditing] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [editContent, setEditContent] = useState(entry.content);
   const [editMood, setEditMood] = useState(entry.mood || '');
   const [editIntensity, setEditIntensity] = useState(entry.intensity);
@@ -1693,18 +1695,13 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
                 <Trash2 size={12} /> {t('archive.delete')}
               </button>
               <button
-                onClick={() => {
-                  const url = `${window.location.origin}/share/journal/${entry.id}`;
-                  navigator.clipboard.writeText(url).then(() => alert(
-                    locale === 'ko' ? '링크가 복사됐습니다.' : 'Link copied!'
-                  ));
-                }}
+                onClick={() => setLinkOpen(p => !p)}
                 className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] transition-colors"
-                style={{ color: 'var(--color-butter-muted)', opacity: 0.6 }}
+                style={{ color: linkOpen ? 'var(--color-butter-primary)' : 'var(--color-butter-muted)', opacity: linkOpen ? 1 : 0.6 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-primary)'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.6'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-muted)'; }}
+                onMouseLeave={(e) => { if (!linkOpen) { (e.currentTarget as HTMLElement).style.opacity = '0.6'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-muted)'; }}}
               >
-                <Share2 size={12} /> {locale === 'ko' ? '공유' : 'Share'}
+                <Share2 size={12} /> {locale === 'ko' ? '공유하기' : 'Share'}
               </button>
             </div>
 
@@ -1721,6 +1718,49 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
               {new Date(entry.date).toLocaleString(locale === 'ko' ? 'ko-KR' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </footer>
+
+          {/* 링크 패널 — BookDetail과 동일한 패턴 */}
+          <AnimatePresence>
+            {linkOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden"
+              >
+                <div className="pt-4 pb-1">
+                  <p
+                    className="text-[10px] uppercase tracking-widest mb-2 flex items-center gap-1"
+                    style={{ color: 'var(--color-butter-muted)' }}
+                  >
+                    <LinkIcon size={9} /> {locale === 'ko' ? '공유 링크' : 'Share Link'}
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      readOnly
+                      value={`${window.location.origin}/share/journal/${entry.id}`}
+                      className="flex-1 rounded px-2.5 py-1.5 text-[11px] font-mono truncate focus:outline-none"
+                      style={{ background: 'var(--color-butter-surface)', color: 'var(--color-butter-muted)', border: 'none' }}
+                      onFocus={(e) => e.target.select()}
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/share/journal/${entry.id}`)
+                          .then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+                      }}
+                      className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded text-[11px] font-medium transition-all text-white"
+                      style={{ background: copied ? '#22c55e' : 'var(--color-butter-primary)' }}
+                    >
+                      {copied
+                        ? <><Check size={10} /> {locale === 'ko' ? '완료' : 'Done'}</>
+                        : <><Copy size={10} /> {locale === 'ko' ? '복사' : 'Copy'}</>}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
     </motion.article>

@@ -13,8 +13,8 @@ import { NotFound } from './components/pages/NotFound';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
+  { path: '/share/journal/:entryId', element: <JournalShareCard /> },  // 구체적인 경로 먼저
   { path: '/share/:bookId', element: <ShareCard /> },
-  { path: '/share/journal/:entryId', element: <JournalShareCard /> },
   {
     path: '/',
     element: (

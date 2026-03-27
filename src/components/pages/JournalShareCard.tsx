@@ -198,7 +198,7 @@ export const JournalShareCard = () => {
                     className="text-sm text-[#9a8e78] italic mb-4"
                     style={{ fontFamily: "'Newsreader', serif" }}
                   >
-                    by {entry.bookAuthor}
+                    작가명  {entry.bookAuthor}
                   </p>
                 )}
 
