@@ -1,13 +1,13 @@
 import { useLocale } from '../../hooks/useLocale';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, MessageSquare, BookOpen, ArrowLeft, ChevronDown } from 'lucide-react';
+import { Heart, MessageSquare, BookOpen, ArrowLeft, ChevronDown, Bookmark, Share2, Copy, Check } from 'lucide-react';
 import { Reflection, Book } from '../../types';
 import { useReflections } from '../../hooks/useReflections';
 import { EmptyState, AvatarImage, BookCoverImage } from '../ui';
 import { formatDate } from '../../lib/format';
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { getBooks, getBook } from '../../lib/api';
+import { getBooks, getBook, addToBookShelf } from '../../lib/api';
 
 // ── 좌측 사이드바 ──────────────────────────────────────────────────────────
 interface BookSidebarProps {
@@ -18,6 +18,25 @@ interface BookSidebarProps {
 const BookSidebar = ({ book, loading }: BookSidebarProps) => {
   const navigate = useNavigate();
   const { locale } = useLocale();
+  const [shelved, setShelved] = useState(false);
+  const [shelving, setShelving] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleAddToShelf = async () => {
+    if (!book || shelved || shelving) return;
+    setShelving(true);
+    try {
+      await addToBookShelf({ bookId: book.id, bookTitle: book.title, bookAuthor: book.author, bookCover: book.cover });
+      setShelved(true);
+    } catch { setShelved(true); }
+    finally { setShelving(false); }
+  };
+
+  const handleCopy = () => {
+    const url = `${window.location.origin}/share/${book?.id}`;
+    navigator.clipboard.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
 
   if (loading) return (
     <div className="space-y-4">
@@ -103,7 +122,14 @@ const BookSidebar = ({ book, loading }: BookSidebarProps) => {
       {/* 액션 버튼 */}
       <div className="space-y-2">
         <button
-          onClick={() => navigate(`/explore/${book.id}`)}
+          onClick={() => {
+            const query = encodeURIComponent(`${book.title} ${book.author}`);
+            const isKo = /[\uAC00-\uD7A3]/.test((book.title || '') + (book.author || ''));
+            const url = isKo
+              ? `https://search.kyobobook.co.kr/search?keyword=${query}`
+              : `https://www.amazon.com/s?k=${query}`;
+            window.open(url, '_blank', 'noopener,noreferrer');
+          }}
           className="w-full flex items-center justify-center gap-2 py-2.5 font-medium uppercase tracking-[0.12em] transition-all hover:brightness-110"
           style={{ fontSize: '10px', background: 'var(--color-butter-primary)', color: 'white', borderRadius: '2px' }}
         >
@@ -111,15 +137,62 @@ const BookSidebar = ({ book, loading }: BookSidebarProps) => {
           {locale === 'ko' ? '이어 읽기' : 'Continue Reading'}
         </button>
         <div className="flex gap-2">
-          <button className="flex-1 py-2 font-medium uppercase tracking-[0.1em]"
-            style={{ fontSize: '10px', border: '1px solid var(--color-butter-rule)', borderRadius: '2px', color: 'var(--color-butter-muted)', background: 'transparent' }}>
-            {locale === 'ko' ? '보관하기' : 'Save'}
+          {/* 서재에 추가 */}
+          <button
+            onClick={handleAddToShelf}
+            disabled={shelving || !book}
+            className="flex-1 flex items-center justify-center gap-1 py-2 font-medium uppercase tracking-[0.1em] transition-all cursor-pointer"
+            style={{
+              fontSize: '10px', border: '1px solid var(--color-butter-rule)', borderRadius: '2px',
+              color: shelved ? 'var(--color-butter-primary)' : 'var(--color-butter-muted)',
+              background: shelved ? 'rgba(107,82,0,0.06)' : 'transparent',
+            }}
+          >
+            {shelving
+              ? <div className="w-3 h-3 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--color-butter-accent)', borderTopColor: 'var(--color-butter-primary)' }} />
+              : <Bookmark size={10} strokeWidth={shelved ? 2 : 1.5} fill={shelved ? 'var(--color-butter-primary)' : 'none'} />
+            }
+            {shelved ? '✓' : (locale === 'ko' ? '서재에 추가' : 'Save')}
           </button>
-          <button className="flex-1 py-2 font-medium uppercase tracking-[0.1em]"
-            style={{ fontSize: '10px', border: '1px solid var(--color-butter-rule)', borderRadius: '2px', color: 'var(--color-butter-muted)', background: 'transparent' }}>
+
+          {/* 공유하기 */}
+          <button
+            onClick={() => setShareOpen(p => !p)}
+            className="flex-1 flex items-center justify-center gap-1 py-2 font-medium uppercase tracking-[0.1em] transition-all"
+            style={{
+              fontSize: '10px', border: '1px solid var(--color-butter-rule)', borderRadius: '2px',
+              color: shareOpen ? 'var(--color-butter-primary)' : 'var(--color-butter-muted)',
+              background: shareOpen ? 'rgba(107,82,0,0.04)' : 'transparent',
+            }}
+          >
+            <Share2 size={10} strokeWidth={1.5} />
             {locale === 'ko' ? '공유하기' : 'Share'}
           </button>
         </div>
+
+        {/* 공유 링크 패널 */}
+        {shareOpen && (
+          <div className="space-y-1.5">
+            <input
+              readOnly
+              value={`${window.location.origin}/share/${book?.id}`}
+              className="w-full rounded px-2.5 py-1.5 text-[11px] font-mono truncate focus:outline-none"
+              style={{ background: 'var(--color-butter-surface)', color: 'var(--color-butter-muted)', border: 'none' }}
+              onFocus={(e) => e.target.select()}
+            />
+            <button
+              onClick={handleCopy}
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 font-medium uppercase tracking-[0.1em] transition-all"
+              style={{
+                fontSize: '10px', borderRadius: '2px',
+                background: copied ? '#22c55e' : 'var(--color-butter-primary)',
+                color: 'white',
+              }}
+            >
+              {copied ? <><Check size={10} /> {locale === 'ko' ? '복사됨' : 'Copied'}</> : <><Copy size={10} /> {locale === 'ko' ? '링크 복사' : 'Copy Link'}</>}
+            </button>
+          </div>
+        )}
         <button
           onClick={() => navigate('/journal', { state: { bookId: book.id, bookTitle: book.title, bookAuthor: book.author, bookCover: book.cover } })}
           className="w-full py-2 font-medium uppercase tracking-[0.1em]"

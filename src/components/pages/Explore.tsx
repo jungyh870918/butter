@@ -1,5 +1,5 @@
 import { useLocale } from '../../hooks/useLocale';
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
@@ -33,15 +33,37 @@ export const Explore = () => {
   // 검색 지우기
   const clearSearch = () => setSearchParams({});
 
+  // 필터/언어 변경 시 랜덤 offset — 매번 다른 책 세트
+  const [bookOffset] = useState(() => Math.floor(Math.random() * 5) * 20);
+  const [currentOffset, setCurrentOffset] = useState(bookOffset);
+
+  // 필터 변경 시 새 offset 생성
+  const handleFilterChange = (newFilter: string) => {
+    setFilter(newFilter);
+    setCurrentOffset(Math.floor(Math.random() * 5) * 20);
+  };
+
   const { books, loading, error } = useBooks(
     searchQuery ? undefined : filter,
     searchQuery || undefined,
-    locale          // 현재 언어 설정 → 백엔드 langRestrict로 전달
+    locale,
+    searchQuery ? undefined : currentOffset
   );
   const navigate = useNavigate();
 
   const handleSelectBook = (book: Book) => navigate(`/explore/${book.id}`);
   const trendingBooks = books.slice(0, 3);
+
+  // 그리드 표시용 — 페이지/필터 변경 시마다 랜덤 셔플 (검색 중엔 그대로)
+  const shuffledBooks = useMemo(() => {
+    if (searchQuery || books.length === 0) return books;
+    const arr = [...books];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, [books, searchQuery]);
 
   return (
     <div className="min-h-screen bg-butter-bg">
@@ -102,7 +124,7 @@ export const Explore = () => {
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
-              onClick={() => setFilter(cat)}
+              onClick={() => handleFilterChange(cat)}
               className={`shrink-0 px-4 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 ${
                 filter === cat
                   ? 'bg-butter-primary text-white'
@@ -121,10 +143,10 @@ export const Explore = () => {
           <main className="flex-1 min-w-0">
             {loading && <LoadingSpinner />}
             {!loading && error && <ErrorMessage message={error} />}
-            {!loading && !error && books.length === 0 && <EmptyState {...{message: t('explore.empty')}} />}
-            {!loading && !error && books.length > 0 && (
+            {!loading && !error && shuffledBooks.length === 0 && <EmptyState {...{message: t('explore.empty')}} />}
+            {!loading && !error && shuffledBooks.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-8">
-                {books.map((book, i) => (
+                {shuffledBooks.map((book, i) => (
                   <BookCard key={book.id} book={book} onClick={() => handleSelectBook(book)} index={i} />
                 ))}
               </div>
@@ -251,7 +273,7 @@ export const Explore = () => {
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
-                    onClick={() => { setFilter(cat); setDrawerOpen(false); }}
+                    onClick={() => { handleFilterChange(cat); setDrawerOpen(false); }}
                     className={`py-3 px-4 rounded-lg text-sm font-medium transition-all ${
                       filter === cat ? 'bg-butter-primary text-white' : 'text-butter-muted'
                     }`}

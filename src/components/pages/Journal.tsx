@@ -1,11 +1,11 @@
 import { useLocale } from '../../hooks/useLocale';
 import { useState, useRef, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2, Share2, Link as LinkIcon, Copy } from 'lucide-react';
+import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2, Share2, Link as LinkIcon, Copy, Library, X as XIcon } from 'lucide-react';
 import { JournalEntry, Book } from '../../types';
 import { useJournal } from '../../hooks/useJournal';
-import { createReflection, getBooks } from '../../lib/api';
+import { createReflection, getBooks, getBookShelf, removeFromBookShelf } from '../../lib/api';
 import { LoadingSpinner, ErrorMessage, EmptyState, BookCoverImage } from '../ui';
 import { getReflectionQuestions } from '../../lib/api';
 
@@ -61,11 +61,24 @@ const EMPTY_BOOK: BookContext = {
 
 // ── Journal page ──────────────────────────────────────────────────────────
 export const Journal = () => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const navigate = useNavigate();
   const location = useLocation();
   const bookContext: BookContext = location.state ?? EMPTY_BOOK;
 
   const [view, setView] = useState<JournalView>('write');
+  const [shelfOpen, setShelfOpen] = useState(false);
+  const [shelfItems, setShelfItems] = useState<any[]>([]);
+  const [shelfLoading, setShelfLoading] = useState(false);
+
+  const openShelf = () => {
+    setShelfOpen(true);
+    setShelfLoading(true);
+    getBookShelf()
+      .then(setShelfItems)
+      .catch(() => {})
+      .finally(() => setShelfLoading(false));
+  };
   const { entries, loading, error, create, update, remove } = useJournal(view === 'archive');
 
   return (
@@ -88,7 +101,7 @@ export const Journal = () => {
               {t('journal.subtitle')}
             </p>
           </div>
-          <div className="flex gap-7 pb-1 shrink-0">
+          <div className="flex items-center gap-5 pb-1 shrink-0">
             {(['write', 'archive'] as const).map((v) => (
               <button
                 key={v}
@@ -101,6 +114,12 @@ export const Journal = () => {
                 {v === 'write' ? t('journal.tab.write') : t('journal.tab.archive')}
               </button>
             ))}
+            <button
+              onClick={openShelf}
+              className="pb-1.5 text-[11px] uppercase tracking-[0.18em] font-medium text-butter-muted hover:text-butter-text transition-all duration-200"
+            >
+              {locale === 'ko' ? '서재' : 'Library'}
+            </button>
           </div>
         </div>
       </div>
@@ -124,6 +143,129 @@ export const Journal = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* ── 서재 모달 ── */}
+      <AnimatePresence>
+        {shelfOpen && (
+          <>
+            {/* 백드롭 */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50"
+              style={{ background: 'rgba(0,0,0,0.35)' }}
+              onClick={() => setShelfOpen(false)}
+            />
+            {/* 모달 패널 */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="fixed inset-x-4 sm:inset-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[480px] top-1/2 -translate-y-1/2 z-50 rounded-xl overflow-hidden"
+              style={{ background: 'var(--color-butter-bg)', boxShadow: '0 24px 64px rgba(0,0,0,0.22)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}
+            >
+              {/* 모달 헤더 */}
+              <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--color-butter-rule)' }}>
+                <div className="flex items-center gap-2">
+                  <Library size={15} strokeWidth={1.5} style={{ color: 'var(--color-butter-primary)' }} />
+                  <h2 className="text-[13px] font-medium uppercase tracking-[0.18em]" style={{ color: 'var(--color-butter-text)' }}>
+                    {locale === 'ko' ? '내 서재' : 'My Library'}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShelfOpen(false)}
+                  className="transition-opacity hover:opacity-60"
+                  style={{ color: 'var(--color-butter-muted)' }}
+                >
+                  <XIcon size={16} strokeWidth={1.5} />
+                </button>
+              </div>
+
+              {/* 모달 바디 */}
+              <div className="overflow-y-auto flex-1 px-6 py-4">
+                {shelfLoading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--color-butter-accent)', borderTopColor: 'var(--color-butter-primary)' }} />
+                  </div>
+                ) : shelfItems.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Library size={28} strokeWidth={1} className="mx-auto mb-3" style={{ color: 'var(--color-butter-muted)', opacity: 0.4 }} />
+                    <p className="font-serif italic text-[14px]" style={{ color: 'var(--color-butter-muted)', opacity: 0.6 }}>
+                      {locale === 'ko' ? '서재가 비어 있습니다.' : 'Your library is empty.'}
+                    </p>
+                  </div>
+                ) : (
+                  <ul className="space-y-0">
+                    {shelfItems.map((item, i) => (
+                      <li
+                        key={item.id}
+                        className="flex items-center gap-4 py-4 group"
+                        style={{ borderBottom: i < shelfItems.length - 1 ? '1px solid var(--color-butter-rule)' : 'none' }}
+                      >
+                        {/* 커버 썸네일 — 클릭 시 상세 페이지 */}
+                        <div
+                          className="w-9 h-12 rounded-sm overflow-hidden shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                          style={{ background: 'var(--color-butter-accent)', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+                          onClick={() => { setShelfOpen(false); navigate(`/explore/${item.bookId}`); }}
+                        >
+                          {item.bookCover ? (
+                            <img src={item.bookCover} alt={item.bookTitle} className="w-full h-full object-cover" referrerPolicy="no-referrer"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          ) : null}
+                        </div>
+
+                        {/* 텍스트 — 제목 클릭 시 상세 페이지 */}
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className="font-serif font-light leading-snug truncate cursor-pointer hover:text-butter-primary transition-colors"
+                            style={{ fontSize: '14px', color: 'var(--color-butter-text)' }}
+                            onClick={() => { setShelfOpen(false); navigate(`/explore/${item.bookId}`); }}
+                          >
+                            {item.bookTitle}
+                          </p>
+                          <p className="font-light italic truncate mt-0.5" style={{ fontSize: '12px', color: 'var(--color-butter-muted)' }}>
+                            {item.bookAuthor}
+                          </p>
+                          <p className="mt-1" style={{ fontSize: '10px', color: 'var(--color-butter-muted)', opacity: 0.55, letterSpacing: '0.05em' }}>
+                            {new Date(item.addedAt).toLocaleDateString(locale === 'ko' ? 'ko-KR' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                          </p>
+                        </div>
+
+                        {/* 삭제 버튼 */}
+                        <button
+                          onClick={async () => {
+                            await removeFromBookShelf(item.bookId).catch(() => {});
+                            setShelfItems(prev => prev.filter(s => s.id !== item.id));
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                          style={{ color: 'var(--color-butter-muted)' }}
+                          title={locale === 'ko' ? '서재에서 제거' : 'Remove'}
+                        >
+                          <XIcon size={13} strokeWidth={1.5} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* 모달 푸터 */}
+              {shelfItems.length > 0 && (
+                <div className="px-6 py-3" style={{ borderTop: '1px solid var(--color-butter-rule)' }}>
+                  <p className="text-center" style={{ fontSize: '11px', color: 'var(--color-butter-muted)', opacity: 0.55 }}>
+                    {locale === 'ko'
+                      ? `${shelfItems.length}권이 서재에 보관되어 있습니다.`
+                      : `${shelfItems.length} book${shelfItems.length > 1 ? 's' : ''} in your library.`}
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

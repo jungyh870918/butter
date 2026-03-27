@@ -21,7 +21,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 // ── Books ──────────────────────────────────────────────────────────────────
 
-export const getBooks = (params?: { tag?: string; search?: string; lang?: string }) => {
+export const getBooks = (params?: { tag?: string; search?: string; lang?: string; offset?: number }) => {
   const qs = params
     ? '?' +
       new URLSearchParams(
@@ -70,7 +70,16 @@ export const createReflection = (payload: {
   journalEntryId?: string | null;
 }) => request<any>('/api/reflections', { method: 'POST', body: JSON.stringify(payload) });
 
-// ── Journal ────────────────────────────────────────────────────────────────
+// ── BookShelf ──────────────────────────────────────────────────────────────
+
+export const getBookShelf = () => request<any[]>('/api/bookshelf');
+
+export const addToBookShelf = (payload: {
+  bookId: string; bookTitle: string; bookAuthor: string; bookCover?: string;
+}) => request<any>('/api/bookshelf', { method: 'POST', body: JSON.stringify(payload) });
+
+export const removeFromBookShelf = (bookId: string) =>
+  request<any>(`/api/bookshelf/${encodeURIComponent(bookId)}`, { method: 'DELETE' });
 
 export const getJournalEntries = (params?: { bookId?: string }) => {
   const qs = params?.bookId ? `?bookId=${encodeURIComponent(params.bookId)}` : '';

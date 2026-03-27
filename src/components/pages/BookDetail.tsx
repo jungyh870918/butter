@@ -11,6 +11,7 @@ import { useBook } from '../../hooks/useBook';
 import { useBooks } from '../../hooks/useBooks';
 import { useReflections } from '../../hooks/useReflections';
 import { LoadingSpinner, ErrorMessage, EmptyState, BookCoverImage, AvatarImage } from '../ui';
+import { addToBookShelf } from '../../lib/api';
 import { formatDate } from '../../lib/format';
 
 const TagPill = ({ label }: { label: string }) => (
@@ -23,7 +24,7 @@ const TagPill = ({ label }: { label: string }) => (
 );
 
 export const BookDetail = () => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { bookId } = useParams<{ bookId: string }>();
   const navigate = useNavigate();
   const { book, loading: bookLoading, enriching, error: bookError } = useBook(bookId);
@@ -53,13 +54,34 @@ export const BookDetail = () => {
       </div>
 
       {!bookLoading && book && (
-        <SameCollectionSection currentBookId={bookId!} tags={book.tags || []} />
+        <SameCollectionSection currentBookId={bookId!} tags={book.tags || []} locale={locale} />
       )}
     </motion.div>
   );
 };
 
 const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: string; loading: boolean }) => {
+  const [shelved, setShelved] = useState(false);
+  const [shelving, setShelving] = useState(false);
+
+  const handleAddToShelf = async () => {
+    if (!book || shelved || shelving) return;
+    setShelving(true);
+    try {
+      await addToBookShelf({
+        bookId: bookId,
+        bookTitle: book.title,
+        bookAuthor: book.author,
+        bookCover: book.cover,
+      });
+      setShelved(true);
+    } catch {
+      // 이미 추가된 경우도 shelved 처리
+      setShelved(true);
+    } finally {
+      setShelving(false);
+    }
+  };
   const navigate = useNavigate();
   const { t } = useLocale();
   const [linkOpen, setLinkOpen] = useState(false);
@@ -88,14 +110,38 @@ const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: stri
 
         {/* CTA 버튼 — 데이터 불필요, 즉시 렌더링 */}
         <div className="space-y-2">
-          <button className="w-full flex items-center justify-center gap-2 bg-butter-primary text-white py-3 rounded font-medium text-[13px] tracking-wide hover:brightness-105 transition-all">
+          <button
+            onClick={() => {
+              if (!book) return;
+              const query = encodeURIComponent(`${book.title} ${book.author}`);
+              // 한국어 여부: 제목/저자에 한글 포함
+              const isKo = /[\uAC00-\uD7A3]/.test((book.title || '') + (book.author || ''));
+              const url = isKo
+                ? `https://search.kyobobook.co.kr/search?keyword=${query}`
+                : `https://www.amazon.com/s?k=${query}`;
+              window.open(url, '_blank', 'noopener,noreferrer');
+            }}
+            className="w-full flex items-center justify-center gap-2 bg-butter-primary text-white py-3 rounded font-medium text-[13px] tracking-wide hover:brightness-105 transition-all"
+          >
             <BookOpen size={14} strokeWidth={2} />
             {t('book.start')}
           </button>
-          <button className="w-full flex items-center justify-center gap-2 text-butter-muted py-3 rounded text-[13px] font-medium hover:text-butter-text transition-colors"
-            style={{ background: 'rgba(0,0,0,0.04)' }}>
-            <Bookmark size={14} strokeWidth={1.5} />
-            {t('book.add')}
+          <button
+            onClick={handleAddToShelf}
+            disabled={shelving || !book}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded text-[13px] font-medium transition-all cursor-pointer hover:brightness-95 disabled:cursor-default"
+            style={{
+              background: shelved ? 'rgba(107,82,0,0.08)' : 'rgba(0,0,0,0.04)',
+              color: shelved ? 'var(--color-butter-primary)' : 'var(--color-butter-muted)',
+            }}
+          >
+            {shelving ? (
+              <div className="w-3.5 h-3.5 rounded-full border-2 animate-spin"
+                style={{ borderColor: 'var(--color-butter-accent)', borderTopColor: 'var(--color-butter-primary)' }} />
+            ) : (
+              <Bookmark size={14} strokeWidth={shelved ? 2 : 1.5} fill={shelved ? 'var(--color-butter-primary)' : 'none'} />
+            )}
+            {shelved ? (t('book.add') + ' ✓') : t('book.add')}
           </button>
           <button
             onClick={() => book && navigate('/journal', {
@@ -206,6 +252,7 @@ const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: stri
 };
 
 const DESCRIPTION_LIMIT = 500;
+const DESCRIPTION_LIMIT_KO = 150; // 카카오 API는 최대 200자이므로 더 낮게
 
 // ── Skeleton 헬퍼 ─────────────────────────────────────────────────────────
 const Sk = ({ w = '100%', h = 14, className = '' }: { w?: string | number; h?: number; className?: string }) => (
@@ -227,9 +274,10 @@ const RightColumn = ({ book, reflections, refLoading, refError, loading, enrichi
   }, [book?.id]);
 
   const description = book?.description || '';
-  const isTruncated = description.length > DESCRIPTION_LIMIT;
+  const limit = locale === 'ko' ? DESCRIPTION_LIMIT_KO : DESCRIPTION_LIMIT;
+  const isTruncated = description.length > limit;
   const displayedDescription = isTruncated && !descExpanded
-    ? description.slice(0, DESCRIPTION_LIMIT).trimEnd() + '…'
+    ? description.slice(0, limit).trimEnd() + '…'
     : description;
 
   const quote             = book ? ((locale === 'ko' && book.quoteKo)             ? book.quoteKo             : book.quote)             : undefined;
@@ -407,13 +455,16 @@ const RightColumn = ({ book, reflections, refLoading, refError, loading, enrichi
 const SameCollectionSection = ({
   currentBookId,
   tags,
+  locale,
 }: {
   currentBookId: string;
   tags: string[];
+  locale: string;
 }) => {
   const navigate = useNavigate();
   const tag = tags[0] ?? '';
-  const { books, loading } = useBooks(tag || 'All');
+  const lang = locale === 'ko' ? 'ko' : undefined;
+  const { books, loading } = useBooks(tag || 'All', undefined, lang);
 
   const related = books
     .filter((b) => b.id !== currentBookId)
