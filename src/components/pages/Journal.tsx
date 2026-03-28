@@ -79,7 +79,7 @@ export const Journal = () => {
       .catch(() => {})
       .finally(() => setShelfLoading(false));
   };
-  const { entries, loading, error, create, update, remove } = useJournal(view === 'archive');
+  const { entries, loading, error, create, update, remove, refetch } = useJournal(true);
 
   return (
     <div className="min-h-screen bg-butter-bg">
@@ -160,12 +160,25 @@ export const Journal = () => {
             />
             {/* 모달 패널 */}
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 16 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="fixed inset-x-4 sm:inset-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[480px] top-1/2 -translate-y-1/2 z-50 rounded-xl overflow-hidden"
-              style={{ background: 'var(--color-butter-bg)', boxShadow: '0 24px 64px rgba(0,0,0,0.22)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="fixed z-50 rounded-xl overflow-hidden"
+              style={{
+                background: 'var(--color-butter-bg)',
+                boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+                maxHeight: '80vh',
+                display: 'flex',
+                flexDirection: 'column',
+                width: 'min(480px, calc(100vw - 2rem))',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                margin: 'auto',
+                height: 'fit-content',
+              }}
             >
               {/* 모달 헤더 */}
               <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--color-butter-rule)' }}>
@@ -292,7 +305,7 @@ interface WriteViewProps {
 type WritePhase = 'prompts' | 'summary';
 
 const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const PROMPTS = getPrompts(t);
   const ATMOSPHERES = getAtmospheres(t);
   const [step, setStep] = useState(0);
@@ -304,6 +317,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   const [phase, setPhase] = useState<WritePhase>('prompts');
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
 
   // activeBook: navigation에서 전달된 bookContext로 초기화, 검색으로 교체 가능
   const [activeBook, setActiveBook] = useState<BookContext>(bookContext);
@@ -394,25 +408,28 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
         bookTitle: activeBook.bookTitle ?? null,
         bookAuthor: activeBook.bookAuthor ?? null,
         bookCover: activeBook.bookCover ?? null,
+        isPublic,
       });
 
-      // reflection content: 빈 경우 journalContent → 최종 fallback 'A quiet reflection.'
-      const reflectionContent =
-        [answers.opening, answers.mirror, answers.linger].filter(Boolean).join(' ').trim()
-        || journalContent
-        || 'A quiet reflection.';
+      // isPublic일 때만 Reflection 생성 (홈/책 상세 피드 노출)
+      if (isPublic) {
+        const reflectionContent =
+          [answers.opening, answers.mirror, answers.linger].filter(Boolean).join(' ').trim()
+          || journalContent
+          || 'A quiet reflection.';
 
-      await createReflection({
-        title: `A reflection on: ${answers.opening.trim().split(' ').slice(0, 6).join(' ') || 'my reading'}…`,
-        content: reflectionContent,
-        author: 'Reader',
-        authorAvatar: 'https://api.dicebear.com/7.x/personas/svg?seed=butter',
-        tags: selectedAtmospheres,
-        journalEntryId: entry.id,
-        bookId: activeBook.bookId ?? null,
-        bookTitle: activeBook.bookTitle ?? null,
-        bookAuthor: activeBook.bookAuthor ?? null,
-      });
+        await createReflection({
+          title: `A reflection on: ${answers.opening.trim().split(' ').slice(0, 6).join(' ') || 'my reading'}…`,
+          content: reflectionContent,
+          author: 'Reader',
+          authorAvatar: 'https://api.dicebear.com/7.x/personas/svg?seed=butter',
+          tags: selectedAtmospheres,
+          journalEntryId: entry.id,
+          bookId: activeBook.bookId ?? null,
+          bookTitle: activeBook.bookTitle ?? null,
+          bookAuthor: activeBook.bookAuthor ?? null,
+        });
+      }
 
       setSaveSuccess(true);
       setTimeout(() => { setSaveSuccess(false); onSaved(); }, 1200);
@@ -580,6 +597,52 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                           </button>
                         );
                       })}
+                    </div>
+
+                    {/* ── 공개/비공개 토글 ── */}
+                    <div
+                      className="mt-8 flex items-center justify-between px-4 py-3"
+                      style={{
+                        border: '1px solid var(--color-butter-rule)',
+                        borderRadius: '4px',
+                        background: 'var(--color-butter-surface)',
+                      }}
+                    >
+                      <div>
+                        <p className="text-[12px] font-medium" style={{ color: 'var(--color-butter-text)' }}>
+                          {isPublic
+                            ? (locale === 'ko' ? '커뮤니티에 공개' : 'Share with community')
+                            : (locale === 'ko' ? '나만 보기' : 'Only visible to me')}
+                        </p>
+                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-butter-muted)' }}>
+                          {isPublic
+                            ? (locale === 'ko' ? '홈과 책 페이지 피드에 노출됩니다' : 'Appears in home & book page feeds')
+                            : (locale === 'ko' ? '피드에 노출되지 않습니다' : 'Won\'t appear in any feeds')}
+                        </p>
+                      </div>
+                      {/* 토글 스위치 */}
+                      <button
+                        onClick={() => setIsPublic((v) => !v)}
+                        className="relative shrink-0 transition-all duration-200"
+                        style={{
+                          width: '40px',
+                          height: '22px',
+                          borderRadius: '11px',
+                          background: isPublic ? 'var(--color-butter-primary)' : 'var(--color-butter-accent)',
+                          border: '1px solid var(--color-butter-rule)',
+                        }}
+                      >
+                        <span
+                          className="absolute top-[2px] transition-all duration-200"
+                          style={{
+                            width: '16px',
+                            height: '16px',
+                            borderRadius: '50%',
+                            background: isPublic ? '#ffffff' : 'var(--color-butter-muted)',
+                            left: isPublic ? '20px' : '2px',
+                          }}
+                        />
+                      </button>
                     </div>
                   </div>
                 ) : current.isHighlight ? (
@@ -1150,7 +1213,7 @@ interface ArchiveViewProps {
   entries: JournalEntry[];
   loading: boolean;
   error: string;
-  onUpdate: (id: string, payload: { content: string; mood: string; intensity: number }) => Promise<void>;
+  onUpdate: (id: string, payload: { content: string; mood: string; intensity: number; isPublic?: boolean }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onSwitchToWrite: () => void;
 }
@@ -1164,7 +1227,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
   const [calYear, setCalYear] = useState(now.getFullYear());
   const [calMonth, setCalMonth] = useState(now.getMonth());
 
-  // 첫 로드 시 최신 엔트리 자동 선택
+  // entries 변경 시 선택된 항목이 없으면 최신(첫 번째) 항목 자동 선택
   useEffect(() => {
     if (entries.length > 0 && !selectedId) {
       setSelectedId(entries[0].id);
@@ -1511,7 +1574,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
 interface ArchiveDetailViewProps {
   entry: JournalEntry;
   allEntries: JournalEntry[];
-  onUpdate: (id: string, payload: { content: string; mood: string; intensity: number }) => Promise<void>;
+  onUpdate: (id: string, payload: { content: string; mood: string; intensity: number; isPublic?: boolean }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onSwitchToWrite: () => void;
 }
@@ -1816,7 +1879,7 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
             className="flex items-center justify-between pt-8"
             style={{ borderTop: '1px solid var(--color-butter-rule)' }}
           >
-            {/* 좌: Edit / Delete / Share */}
+            {/* 좌: Edit / Delete / Share / 공개 토글 */}
             <div className="flex items-center gap-5">
               <button
                 onClick={() => setEditing(true)}
@@ -1844,6 +1907,25 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
                 onMouseLeave={(e) => { if (!linkOpen) { (e.currentTarget as HTMLElement).style.opacity = '0.6'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-muted)'; }}}
               >
                 <Share2 size={12} /> {locale === 'ko' ? '공유하기' : 'Share'}
+              </button>
+              {/* 공개/비공개 토글 */}
+              <button
+                onClick={() => {
+                  const next = !entry.isPublic;
+                  onUpdate(entry.id, { content: entry.content, mood: entry.mood ?? '', intensity: entry.intensity, isPublic: next }).catch((e) => alert(e.message));
+                }}
+                className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] transition-colors"
+                style={{ color: entry.isPublic ? 'var(--color-butter-primary)' : 'var(--color-butter-muted)', opacity: entry.isPublic ? 1 : 0.6 }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
+                onMouseLeave={(e) => { if (!entry.isPublic) (e.currentTarget as HTMLElement).style.opacity = '0.6'; }}
+                title={entry.isPublic
+                  ? (locale === 'ko' ? '클릭하면 비공개로 전환' : 'Click to make private')
+                  : (locale === 'ko' ? '클릭하면 공개로 전환' : 'Click to make public')}
+              >
+                {entry.isPublic
+                  ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>{locale === 'ko' ? '공개' : 'Public'}</>
+                  : <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>{locale === 'ko' ? '비공개' : 'Private'}</>
+                }
               </button>
             </div>
 

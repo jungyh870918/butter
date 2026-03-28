@@ -100,6 +100,7 @@ export const createJournalEntry = (payload: {
   bookAuthor?: string | null;
   bookCover?: string | null;
   highlight?: string | null;
+  isPublic?: boolean;
 }) => request<any>('/api/journal', { method: 'POST', body: JSON.stringify(payload) });
 
 export const updateJournalEntry = (
@@ -115,6 +116,7 @@ export const updateJournalEntry = (
     bookAuthor: string | null;
     bookCover: string | null;
     highlight: string | null;
+    isPublic: boolean;
   }>,
 ) => request<any>(`/api/journal/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 

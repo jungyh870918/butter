@@ -252,12 +252,13 @@ export const Explore = () => {
                 type="email"
                 {...{placeholder: t('explore.journal.email')}}
                 className="w-full px-0 py-2 text-[16px] bg-transparent focus:outline-none text-butter-text placeholder:text-butter-muted/55 transition-colors"
-                style={{ borderBottom: '1px solid rgba(0,0,0,0.10)' }}
+                style={{ borderBottom: '1px solid var(--color-butter-rule)' }}
               />
               <button
-                className="mt-4 w-full py-2.5 text-white text-[10px] uppercase tracking-[0.18em] font-semibold hover:brightness-110 transition-all"
+                className="mt-4 w-full py-2.5 text-[10px] uppercase tracking-[0.18em] font-semibold hover:brightness-110 transition-all"
                 style={{
-                  background: 'var(--color-butter-text)',
+                  background: 'var(--color-butter-primary)',
+                  color: 'var(--color-butter-bg)',
                   borderRadius: '2px',
                 }}
               >

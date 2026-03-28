@@ -47,6 +47,7 @@ export interface JournalEntry {
   bookCover?: string;
   // guided extras
   highlight?: string;
+  isPublic: boolean;
 }
 
 export interface EmotionData {
