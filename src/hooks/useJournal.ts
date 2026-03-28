@@ -5,11 +5,11 @@ import {
   createJournalEntry,
   updateJournalEntry,
   deleteJournalEntry,
-  createEmotionLog,
 } from '../lib/api';
-import { getWeekdayLabel } from '../lib/format';
 
-export function useJournal(enabled: boolean, bookId?: string) {
+// enabled 패턴 제거 — 항상 마운트 시 fetch
+// Reflection 생성, EmotionLog 기록은 백엔드 journal POST/PATCH에서 처리
+export function useJournal(bookId?: string) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,8 +24,8 @@ export function useJournal(enabled: boolean, bookId?: string) {
   }, [bookId]);
 
   useEffect(() => {
-    if (enabled) fetchEntries();
-  }, [enabled, fetchEntries]);
+    fetchEntries();
+  }, [fetchEntries]);
 
   const create = async (payload: {
     content: string;
@@ -33,11 +33,11 @@ export function useJournal(enabled: boolean, bookId?: string) {
     mood: string;
     emotions?: string[];
     intensity: number;
+    highlight?: string | null;
     bookId?: string | null;
     bookTitle?: string | null;
     bookAuthor?: string | null;
     bookCover?: string | null;
-    highlight?: string | null;
     isPublic?: boolean;
   }): Promise<{ id: string }> => {
     const entry = await createJournalEntry({
@@ -54,20 +54,7 @@ export function useJournal(enabled: boolean, bookId?: string) {
       isPublic: payload.isPublic ?? true,
     });
 
-    // 감정 로그: emotions 배열이 있으면 각각 기록, 없으면 기존 mood로 fallback
-    const emotionsToLog = (payload.emotions ?? []).length > 0
-      ? payload.emotions!
-      : payload.mood ? [payload.mood] : [];
-
-    for (const emotion of emotionsToLog) {
-      await createEmotionLog({
-        date: getWeekdayLabel(),
-        intensity: payload.intensity,
-        emotion,
-      });
-    }
-
-    // 로컬 상태에 즉시 추가 (뷰 전환 후 바로 보이도록)
+    // 로컬 상태에 즉시 추가
     setEntries((prev) => [entry, ...prev]);
 
     return entry;
@@ -97,4 +84,3 @@ export function useJournal(enabled: boolean, bookId?: string) {
 
   return { entries, loading, error, create, update, remove, refetch: fetchEntries };
 }
-

@@ -47,6 +47,7 @@ export const Navbar = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.nativeEvent.isComposing) return; // 한글 IME 조합 중엔 무시
     if (e.key === 'Enter') submitSearch(searchQuery);
     if (e.key === 'Escape') {
       setSearchQuery('');
@@ -97,7 +98,12 @@ export const Navbar = () => {
         <div className="ml-auto flex items-center gap-5">
           {/* 검색창 */}
           <div className="relative flex items-center">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-butter-muted/60 pointer-events-none" />
+            <button
+              onClick={() => submitSearch(searchQuery)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-butter-muted/60 hover:text-butter-muted transition-colors"
+            >
+              <Search size={13} />
+            </button>
             <input
               ref={inputRef}
               type="text"

@@ -31,6 +31,9 @@ export const getBooks = (params?: { tag?: string; search?: string; lang?: string
   return request<any[]>(`/api/books${qs}`);
 };
 
+export const getFeaturedBooks = (lang: string, count = 1) =>
+  request<any[]>(`/api/books/featured?lang=${lang}&count=${count}`);
+
 export const getBook = (id: string) => request<any>(`/api/books/${id}`);
 
 export const getBookEnrich = (id: string, title: string, author: string) =>
@@ -55,20 +58,6 @@ export const getReflections = (params?: { bookId?: string; limit?: number }) => 
 };
 
 export const getReflection = (id: string) => request<any>(`/api/reflections/${id}`);
-
-export const createReflection = (payload: {
-  title: string;
-  content: string;
-  author: string;
-  authorAvatar: string;
-  tags: string[];
-  image?: string | null;
-  bookId?: string | null;
-  bookTitle?: string | null;
-  bookAuthor?: string | null;
-  userId?: string | null;
-  journalEntryId?: string | null;
-}) => request<any>('/api/reflections', { method: 'POST', body: JSON.stringify(payload) });
 
 // ── BookShelf ──────────────────────────────────────────────────────────────
 
@@ -150,9 +139,3 @@ export const getReflectionQuestions = (payload: {
 export const getEmotions = () => request<any[]>('/api/emotions');
 
 export const getEmotionSummary = () => request<any>('/api/emotions/summary');
-
-export const createEmotionLog = (payload: {
-  date: string;
-  intensity: number;
-  emotion: string;
-}) => request<any>('/api/emotions', { method: 'POST', body: JSON.stringify(payload) });

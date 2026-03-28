@@ -7,7 +7,7 @@ import { useReflections } from '../../hooks/useReflections';
 import { EmptyState, AvatarImage, BookCoverImage } from '../ui';
 import { formatDate } from '../../lib/format';
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { getBooks, getBook, addToBookShelf } from '../../lib/api';
+import { getFeaturedBooks, getBook, addToBookShelf } from '../../lib/api';
 
 // ── 좌측 사이드바 ──────────────────────────────────────────────────────────
 interface BookSidebarProps {
@@ -309,13 +309,13 @@ export const Home = () => {
   const [filteredBookId, setFilteredBookId] = useState<string | null>(null);
   const [filteredBookTitle, setFilteredBookTitle] = useState<string>('');
 
-  // 초기 랜덤 책 로드
+  // 초기 featured 책 로드 — 베스트셀러 pool에서 랜덤 1권
   useEffect(() => {
     setSidebarLoading(true);
-    getBooks({ lang: locale })
+    getFeaturedBooks(locale, 1)
       .then((books: Book[]) => {
         if (books.length === 0) return;
-        setSidebarBook(books[Math.floor(Math.random() * books.length)]);
+        setSidebarBook(books[0]);
       })
       .catch(() => {})
       .finally(() => setSidebarLoading(false));
@@ -340,12 +340,11 @@ export const Home = () => {
   const handleClearFilter = useCallback(() => {
     setFilteredBookId(null);
     setFilteredBookTitle('');
-    // 사이드바도 다시 랜덤 책으로
     setSidebarLoading(true);
-    getBooks({ lang: locale })
+    getFeaturedBooks(locale, 1)
       .then((books: Book[]) => {
         if (books.length === 0) return;
-        setSidebarBook(books[Math.floor(Math.random() * books.length)]);
+        setSidebarBook(books[0]);
       })
       .catch(() => {})
       .finally(() => setSidebarLoading(false));

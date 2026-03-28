@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2, Share2, Link as LinkIcon, Copy, Library, X as XIcon } from 'lucide-react';
 import { JournalEntry, Book } from '../../types';
 import { useJournal } from '../../hooks/useJournal';
-import { createReflection, getBooks, getBookShelf, removeFromBookShelf } from '../../lib/api';
+import { getBooks, getBookShelf, removeFromBookShelf } from '../../lib/api';
 import { LoadingSpinner, ErrorMessage, EmptyState, BookCoverImage } from '../ui';
 import { getReflectionQuestions } from '../../lib/api';
 
@@ -22,13 +22,102 @@ interface Prompt {
   isAtmosphere?: boolean;
 }
 
-function getPrompts(t: (k: any) => string): Prompt[] {
+// 각 스텝별 placeholder 레퍼토리 — 마운트 시 랜덤 선택
+const PLACEHOLDER_POOLS: Record<string, { en: string[]; ko: string[] }> = {
+  opening: {
+    en: [
+      'The first thing that comes back when you think of it.',
+      'What you noticed before you even realized you were paying attention.',
+      'The moment the book stopped feeling like a book.',
+      'Something you were not expecting.',
+      'Where you were, and what the reading felt like from the outside.',
+    ],
+    ko: [
+      '떠올리면 가장 먼저 생각나는 것.',
+      '의식하기도 전에 눈에 들어왔던 것.',
+      '책이 책처럼 느껴지지 않았던 순간.',
+      '예상하지 못했던 무언가.',
+      '읽던 장소, 그때의 분위기.',
+    ],
+  },
+  highlight: {
+    en: [
+      'Something you read slowly, or read twice.',
+      'A line that landed differently than the ones around it.',
+      'A sentence you might write down somewhere.',
+      'Something that felt more precise than you expected.',
+      'The part where the writing got out of the way.',
+    ],
+    ko: [
+      '천천히 읽었거나, 두 번 읽게 된 부분.',
+      '주변 문장들과 다르게 느껴진 한 줄.',
+      '어딘가 적어두고 싶었던 문장.',
+      '생각보다 정확하게 표현된 것.',
+      '문장이 사라지고 내용만 남았던 순간.',
+    ],
+  },
+  emotion: {
+    en: [
+      'A mood, a tension, something that shifted while reading.',
+      'How the book sat with you — heavy, light, somewhere in between.',
+      'Whether it felt good to read, or necessary, or neither.',
+      'The tone it left behind after you stopped.',
+      'What changed between the first page and where you are now.',
+    ],
+    ko: [
+      '읽는 동안 바뀐 기분이나 분위기.',
+      '책이 남긴 무게감 — 가볍거나, 무겁거나, 그 사이 어딘가.',
+      '읽기 좋았는지, 아니면 읽어야 했는지.',
+      '멈추고 난 뒤 남은 톤.',
+      '처음 펼쳤을 때와 지금 사이에 달라진 것.',
+    ],
+  },
+  mirror: {
+    en: [
+      'A moment in the book that felt oddly close.',
+      'Something a character did that you understood without explanation.',
+      'A situation that rhymed with something in your own life.',
+      'A detail that made you think of someone specific.',
+      'Where the book seemed to know something it had no reason to know.',
+    ],
+    ko: [
+      '어쩐지 낯설지 않았던 장면이나 인물.',
+      '설명 없이도 이해된 인물의 행동.',
+      '내 삶의 어떤 순간과 겹쳐 보였던 것.',
+      '누군가 특정한 사람이 떠올랐던 대목.',
+      '책이 알 리 없는 걸 알고 있는 것 같았던 순간.',
+    ],
+  },
+  linger: {
+    en: [
+      'The part that comes up first if someone asks.',
+      'What you are still turning over, without meaning to.',
+      'An image or sentence that is still sitting somewhere.',
+      'Something you would want to come back to.',
+      'The part that felt unfinished — in a good way, or not.',
+    ],
+    ko: [
+      '누군가 물으면 먼저 꺼낼 말.',
+      '의도하지 않아도 자꾸 다시 떠오르는 것.',
+      '아직 어딘가에 걸려 있는 이미지나 문장.',
+      '나중에 다시 찾아보고 싶은 부분.',
+      '끝난 것 같지 않은 느낌 — 좋은 의미로든, 아니든.',
+    ],
+  },
+};
+
+function pickPlaceholder(pool: { en: string[]; ko: string[] }, locale: string): string {
+  const arr = locale === 'ko' ? pool.ko : pool.en;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function getPrompts(t: (k: any) => string, locale: string): Prompt[] {
   return [
-    { id: 'opening', label: t('prompt.opening.label'), question: t('prompt.opening.q'), placeholder: t('prompt.opening.p'), hint: t('prompt.opening.h') },
-    { id: 'highlight', label: t('prompt.passage.label'), question: t('prompt.passage.q'), placeholder: t('prompt.passage.p'), hint: t('prompt.passage.h'), isHighlight: true },
-    { id: 'emotion', label: t('prompt.emotion.label'), question: t('prompt.emotion.q'), placeholder: t('prompt.emotion.p'), hint: t('prompt.emotion.h') },
-    { id: 'mirror', label: t('prompt.reflection.label'), question: t('prompt.reflection.q'), placeholder: t('prompt.reflection.p'), hint: t('prompt.reflection.h') },
-    { id: 'linger', label: t('prompt.lingering.label'), question: t('prompt.lingering.q'), placeholder: t('prompt.lingering.p'), hint: t('prompt.lingering.h') },
+    { id: 'opening', label: t('prompt.opening.label'), question: t('prompt.opening.q'), placeholder: pickPlaceholder(PLACEHOLDER_POOLS.opening, locale), hint: t('prompt.opening.h') },
+    { id: 'highlight', label: t('prompt.passage.label'), question: t('prompt.passage.q'), placeholder: pickPlaceholder(PLACEHOLDER_POOLS.highlight, locale), hint: t('prompt.passage.h'), isHighlight: true },
+    { id: 'emotion', label: t('prompt.emotion.label'), question: t('prompt.emotion.q'), placeholder: pickPlaceholder(PLACEHOLDER_POOLS.emotion, locale), hint: t('prompt.emotion.h') },
+    { id: 'mirror', label: t('prompt.reflection.label'), question: t('prompt.reflection.q'), placeholder: pickPlaceholder(PLACEHOLDER_POOLS.mirror, locale), hint: t('prompt.reflection.h') },
+    { id: 'linger', label: t('prompt.lingering.label'), question: t('prompt.lingering.q'), placeholder: pickPlaceholder(PLACEHOLDER_POOLS.linger, locale), hint: t('prompt.lingering.h') },
     { id: 'atmosphere', label: t('prompt.atmosphere.label'), question: t('prompt.atmosphere.q'), placeholder: '', hint: t('prompt.atmosphere.h'), isAtmosphere: true },
   ];
 }
@@ -79,7 +168,7 @@ export const Journal = () => {
       .catch(() => {})
       .finally(() => setShelfLoading(false));
   };
-  const { entries, loading, error, create, update, remove, refetch } = useJournal(true);
+  const { entries, loading, error, create, update, remove, refetch } = useJournal();
 
   return (
     <div className="min-h-screen bg-butter-bg">
@@ -306,9 +395,10 @@ type WritePhase = 'prompts' | 'summary';
 
 const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   const { t, locale } = useLocale();
-  const PROMPTS = getPrompts(t);
   const ATMOSPHERES = getAtmospheres(t);
   const [step, setStep] = useState(0);
+  // PROMPTS를 useState로 고정 — 세션 내에서 placeholder가 바뀌지 않도록
+  const [PROMPTS] = useState(() => getPrompts(t, locale));
   const [direction, setDirection] = useState<1 | -1>(1);
   const [answers, setAnswers] = useState<Record<PromptId, string>>({
     opening: '', highlight: '', emotion: '', mirror: '', linger: '', atmosphere: '',
@@ -411,25 +501,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
         isPublic,
       });
 
-      // isPublic일 때만 Reflection 생성 (홈/책 상세 피드 노출)
-      if (isPublic) {
-        const reflectionContent =
-          [answers.opening, answers.mirror, answers.linger].filter(Boolean).join(' ').trim()
-          || journalContent
-          || 'A quiet reflection.';
-
-        await createReflection({
-          title: `A reflection on: ${answers.opening.trim().split(' ').slice(0, 6).join(' ') || 'my reading'}…`,
-          content: reflectionContent,
-          author: 'Reader',
-          authorAvatar: 'https://api.dicebear.com/7.x/personas/svg?seed=butter',
-          tags: selectedAtmospheres,
-          journalEntryId: entry.id,
-          bookId: activeBook.bookId ?? null,
-          bookTitle: activeBook.bookTitle ?? null,
-          bookAuthor: activeBook.bookAuthor ?? null,
-        });
-      }
+      // Reflection 생성 + EmotionLog 기록은 백엔드 journal POST에서 처리됨
 
       setSaveSuccess(true);
       setTimeout(() => { setSaveSuccess(false); onSaved(); }, 1200);
@@ -867,8 +939,11 @@ const GptQuestionsPanel = ({
 
   return (
     <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '1.5rem' }}>
-      <p className="text-[9px] uppercase tracking-[0.25em] font-semibold text-butter-muted/65 mb-4">
+      <p className="text-[9px] uppercase tracking-[0.25em] font-semibold text-butter-muted/65 mb-1">
         {t('journal.questions.label')}
+      </p>
+      <p className="text-[9px] font-light mb-4" style={{ color: 'var(--color-butter-muted)', opacity: 0.45 }}>
+        {t('journal.questions.hint')}
       </p>
 
       {loading ? (
@@ -1581,6 +1656,7 @@ interface ArchiveDetailViewProps {
 
 const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWrite }: ArchiveDetailViewProps) => {
   const { locale, t } = useLocale();
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -1665,13 +1741,14 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
           <div className="flex items-start gap-6 mb-6">
             {entry.bookCover && (
               <div
-                className="shrink-0 overflow-hidden"
+                className="shrink-0 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                 style={{
                   width: '80px',
                   aspectRatio: '2/3',
                   borderRadius: '2px',
                   boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
                 }}
+                onClick={() => entry.bookId && navigate(`/explore/${entry.bookId}`)}
               >
                 <BookCoverImage
                   src={entry.bookCover}
@@ -1683,12 +1760,13 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
             {/* 제목 + 저자 — 단일 블록으로 */}
             <div className="flex flex-col justify-center" style={{ paddingTop: '0.25rem' }}>
               <h1
-                className="font-serif leading-[1.12] tracking-tight mb-1.5"
+                className={`font-serif leading-[1.12] tracking-tight mb-1.5 ${entry.bookId ? 'cursor-pointer hover:opacity-70 transition-opacity' : ''}`}
                 style={{
                   fontSize: 'clamp(1.85rem, 3.2vw, 2.6rem)',
                   fontWeight: 300,
                   color: 'var(--color-butter-text)',
                 }}
+                onClick={() => entry.bookId && navigate(`/explore/${entry.bookId}`)}
               >
                 {entry.bookTitle}
               </h1>

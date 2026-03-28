@@ -93,27 +93,22 @@ const translations = {
   // Journal prompts
   'prompt.opening.label': { en: 'Opening', ko: '시작' },
   'prompt.opening.q': { en: 'What were you reading, and what was your first reaction?', ko: '무엇을 읽었나요? 처음 든 생각은요?' },
-  'prompt.opening.p': { en: 'The book, a scene, a line — whatever came to mind first…', ko: '책, 장면, 구절 — 처음 떠오른 것이라면 무엇이든…' },
-  'prompt.opening.h': { en: 'Start anywhere. There\'s no wrong answer.', ko: '어디서든 시작해도 됩니다.' },
+  'prompt.opening.h': { en: '', ko: '' },
   'prompt.passage.label': { en: 'A Passage', ko: '구절' },
   'prompt.passage.q': { en: 'Any line or image you want to hold onto?', ko: '기억해두고 싶은 문장이나 장면이 있나요?' },
-  'prompt.passage.p': { en: '"The world is not what it is, but what we remember of it."', ko: '"세상은 있는 그대로가 아니라, 우리가 기억하는 모습으로 존재한다."' },
-  'prompt.passage.h': { en: 'A line, a phrase, even just a word.', ko: '문장 하나, 구절, 단어 하나도 괜찮습니다.' },
+  'prompt.passage.h': { en: '', ko: '' },
   'prompt.emotion.label': { en: 'Feeling', ko: '느낌' },
   'prompt.emotion.q': { en: 'How did reading this make you feel?', ko: '읽으면서 어떤 기분이었나요?' },
-  'prompt.emotion.p': { en: 'Curious? Uneasy? Surprised? Just try to name it…', ko: '궁금했나요? 불편했나요? 놀랐나요? 그냥 말해보세요…' },
-  'prompt.emotion.h': { en: 'There\'s no right answer. Just what was true for you.', ko: '정답은 없습니다. 느낀 대로 쓰면 됩니다.' },
+  'prompt.emotion.h': { en: '', ko: '' },
   'prompt.reflection.label': { en: 'Connection', ko: '연결' },
   'prompt.reflection.q': { en: 'Did anything in the book connect to your own life?', ko: '책 내용 중 내 삶과 연결되는 게 있었나요?' },
-  'prompt.reflection.p': { en: 'A situation, a character, a moment that felt close to home…', ko: '상황, 인물, 내 얘기처럼 느껴진 순간…' },
-  'prompt.reflection.h': { en: 'Even a loose connection counts.', ko: '느슨한 연결이어도 괜찮습니다.' },
+  'prompt.reflection.h': { en: '', ko: '' },
   'prompt.lingering.label': { en: 'What Stayed', ko: '남은 것' },
   'prompt.lingering.q': { en: 'What\'s still on your mind after closing the book?', ko: '책을 덮고 나서도 머릿속에 남아 있는 건 뭔가요?' },
-  'prompt.lingering.p': { en: 'Something you might still think about tomorrow…', ko: '내일도 떠올릴 것 같은 무언가…' },
-  'prompt.lingering.h': { en: 'The thing that won\'t quite leave.', ko: '계속 마음에 걸리는 것.' },
+  'prompt.lingering.h': { en: '', ko: '' },
   'prompt.atmosphere.label': { en: 'Mood', ko: '분위기' },
   'prompt.atmosphere.q': { en: 'How would you describe the mood of today\'s reading?', ko: '오늘 읽은 것의 분위기를 한 마디로 표현하면요?' },
-  'prompt.atmosphere.h': { en: 'Pick what fits.', ko: '맞는 것을 골라보세요.' },
+  'prompt.atmosphere.h': { en: '', ko: '' },
 
   // Atmosphere options
   'atm.contemplative': { en: 'Contemplative', ko: '사색적' },
@@ -159,6 +154,7 @@ const translations = {
 
   // Questions to consider
   'journal.questions.label': { en: 'Things to think about', ko: '떠올려볼 것들' },
+  'journal.questions.hint': { en: 'Based on this book and your past journals', ko: '이 책과 지난 기록을 바탕으로' },
 
   // ── Archive ──
   'archive.nothing': { en: 'Nothing here yet.', ko: '아직 아무것도 없습니다.' },
