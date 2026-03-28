@@ -170,98 +170,88 @@ export const Explore = () => {
 
       <div className="px-8 md:px-14 max-w-7xl mx-auto">
 
-        {/* ── 카테고리 필터 + 상단 페이지네이션 ── */}
-        <div
-          className="flex items-center mb-10 pt-6 gap-2"
-          style={{
-            borderTop: '1px solid rgba(0,0,0,0.07)',
-            opacity: searchQuery ? 0.35 : 1,
-            pointerEvents: searchQuery ? 'none' : 'auto',
-          }}
-        >
-          {/* 카테고리 탭 — 좌측, 가로 스크롤 + 우측 페이드 힌트 */}
-          <div className="relative flex-1 min-w-0">
-            {/* 스크롤 가능 힌트: 우측 페이드 마스크 */}
-            <div
-              className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none z-10"
-              style={{
-                background: 'linear-gradient(to right, transparent, var(--color-butter-bg))',
-              }}
-            />
-            <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => handleFilterChange(cat)}
-                  className={`shrink-0 px-3 py-1 rounded-full text-[11px] font-medium transition-all duration-200 ${
-                    filter === cat
-                      ? 'bg-butter-primary text-white'
-                      : 'text-butter-muted hover:text-butter-text'
-                  }`}
-                >
-                  {CATEGORY_LABELS[cat]}
-                </button>
-              ))}
-              {/* 우측 패딩 — 페이드 마스크 안쪽으로 마지막 버튼이 가려지지 않도록 */}
-              <div className="shrink-0 w-6" />
-            </div>
-          </div>
-
-          {/* 페이지네이션 — 우측 고정 */}
-          {(hasPrevPage || hasNextPage) && (
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                onClick={goPrevPage}
-                disabled={!hasPrevPage}
-                className="flex items-center justify-center transition-all disabled:opacity-25 hover:opacity-70"
-                style={{
-                  width: '28px', height: '28px',
-                  border: '1px solid var(--color-butter-rule)',
-                  borderRadius: '2px',
-                  color: 'var(--color-butter-muted)',
-                  background: 'transparent',
-                }}
-                title={locale === 'ko' ? '이전' : 'Previous page'}
-              >
-                <ChevronLeft size={14} strokeWidth={1.5} />
-              </button>
-
-              <span
-                className="text-[11px] font-medium tabular-nums"
-                style={{
-                  color: 'var(--color-butter-muted)',
-                  minWidth: '20px',
-                  textAlign: 'center',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                {currentPage}
-              </span>
-
-              <button
-                onClick={goNextPage}
-                disabled={!hasNextPage}
-                className="flex items-center justify-center transition-all disabled:opacity-25 hover:opacity-70"
-                style={{
-                  width: '28px', height: '28px',
-                  border: '1px solid var(--color-butter-rule)',
-                  borderRadius: '2px',
-                  color: 'var(--color-butter-muted)',
-                  background: 'transparent',
-                }}
-                title={locale === 'ko' ? '다음' : 'Next page'}
-              >
-                <ChevronRight size={14} strokeWidth={1.5} />
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* ── 메인 + 사이드바 ── */}
         <div className="flex flex-col lg:flex-row gap-14 lg:gap-20 pb-8 lg:pb-24">
 
           {/* 책 그리드 */}
           <main className="flex-1 min-w-0">
+
+            {/* 카테고리 필터 + 페이지네이션 — main 너비 안에서 우측 정렬 */}
+            <div
+              className="flex items-center mb-10 pt-6 gap-2"
+              style={{
+                borderTop: '1px solid rgba(0,0,0,0.07)',
+                opacity: searchQuery ? 0.35 : 1,
+                pointerEvents: searchQuery ? 'none' : 'auto',
+              }}
+            >
+              {/* 카테고리 탭 */}
+              <div className="relative flex-1 min-w-0">
+                <div
+                  className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none z-10"
+                  style={{ background: 'linear-gradient(to right, transparent, var(--color-butter-bg))' }}
+                />
+                <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => handleFilterChange(cat)}
+                      className={`shrink-0 px-3 py-1 rounded-full text-[11px] font-medium transition-all duration-200 ${
+                        filter === cat
+                          ? 'bg-butter-primary text-white'
+                          : 'text-butter-muted hover:text-butter-text'
+                      }`}
+                    >
+                      {CATEGORY_LABELS[cat]}
+                    </button>
+                  ))}
+                  <div className="shrink-0 w-6" />
+                </div>
+              </div>
+
+              {/* 페이지네이션 — 그리드 우측 끝 정렬 */}
+              {(hasPrevPage || hasNextPage) && (
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={goPrevPage}
+                    disabled={!hasPrevPage}
+                    className="flex items-center justify-center transition-all disabled:opacity-25 hover:opacity-70"
+                    style={{
+                      width: '28px', height: '28px',
+                      border: '1px solid var(--color-butter-rule)',
+                      borderRadius: '2px',
+                      color: 'var(--color-butter-muted)',
+                      background: 'transparent',
+                    }}
+                    title={locale === 'ko' ? '이전' : 'Previous page'}
+                  >
+                    <ChevronLeft size={14} strokeWidth={1.5} />
+                  </button>
+                  <span
+                    className="text-[11px] font-medium tabular-nums"
+                    style={{ color: 'var(--color-butter-muted)', minWidth: '20px', textAlign: 'center', letterSpacing: '0.05em' }}
+                  >
+                    {currentPage}
+                  </span>
+                  <button
+                    onClick={goNextPage}
+                    disabled={!hasNextPage}
+                    className="flex items-center justify-center transition-all disabled:opacity-25 hover:opacity-70"
+                    style={{
+                      width: '28px', height: '28px',
+                      border: '1px solid var(--color-butter-rule)',
+                      borderRadius: '2px',
+                      color: 'var(--color-butter-muted)',
+                      background: 'transparent',
+                    }}
+                    title={locale === 'ko' ? '다음' : 'Next page'}
+                  >
+                    <ChevronRight size={14} strokeWidth={1.5} />
+                  </button>
+                </div>
+              )}
+            </div>
+
             {loading && <LoadingSpinner />}
             {!loading && error && <ErrorMessage message={error} />}
             {!loading && !error && shuffledBooks.length === 0 && <EmptyState {...{message: t('explore.empty')}} />}
