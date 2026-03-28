@@ -408,6 +408,9 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isPublic, setIsPublic] = useState(true);
+  const [bookRequiredOpen, setBookRequiredOpen] = useState(false);
+  const [confirmPublicOpen, setConfirmPublicOpen] = useState(false);
+  const [pendingPublic, setPendingPublic] = useState<boolean | null>(null);
 
   // activeBook: navigation에서 전달된 bookContext로 초기화, 검색으로 교체 가능
   const [activeBook, setActiveBook] = useState<BookContext>(bookContext);
@@ -477,7 +480,17 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   };
 
   const handleSave = async () => {
+    // 책이 지정되지 않았으면 모달로 안내
+    if (!activeBook.bookTitle) {
+      setBookRequiredOpen(true);
+      return;
+    }
+    await doSave();
+  };
+
+  const doSave = async (bookOverride?: BookContext) => {
     setSaving(true);
+    const book = bookOverride ?? activeBook;
     try {
       const journalContent = PROMPTS
         .filter((p) => !p.isAtmosphere && answers[p.id as PromptId].trim())
@@ -494,10 +507,10 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
         emotions: selectedAtmospheres,
         intensity,
         highlight: answers.highlight.trim() || null,
-        bookId: activeBook.bookId ?? null,
-        bookTitle: activeBook.bookTitle ?? null,
-        bookAuthor: activeBook.bookAuthor ?? null,
-        bookCover: activeBook.bookCover ?? null,
+        bookId: book.bookId ?? null,
+        bookTitle: book.bookTitle ?? null,
+        bookAuthor: book.bookAuthor ?? null,
+        bookCover: book.bookCover ?? null,
         isPublic,
       });
 
@@ -513,6 +526,143 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   };
 
   return (
+    <>
+    {/* ── 책 지정 요청 모달 ── */}
+    <AnimatePresence>
+      {bookRequiredOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-50"
+            style={{ background: 'rgba(0,0,0,0.18)', backdropFilter: 'blur(2px)' }}
+            onClick={() => setBookRequiredOpen(false)}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="fixed z-50 overflow-hidden"
+            style={{
+              background: 'var(--color-butter-surface)',
+              boxShadow: '0 8px 48px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
+              width: 'min(460px, calc(100vw - 2rem))',
+              top: 0, left: 0, right: 0, bottom: 0,
+              margin: 'auto',
+              height: 'fit-content',
+              maxHeight: '78vh',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '3px',
+            }}
+          >
+            {/* 헤더 */}
+            <div className="px-7 pt-7 pb-5 shrink-0 flex items-start justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.28em] font-semibold mb-2" style={{ color: 'var(--color-butter-primary)', opacity: 0.8 }}>
+                  {locale === 'ko' ? '책 연결' : 'Link a book'}
+                </p>
+                <h2 className="font-serif font-light leading-snug" style={{ fontSize: '1.25rem', color: 'var(--color-butter-text)' }}>
+                  {locale === 'ko' ? '어떤 책에 대한 기록인가요?' : 'Which book is this about?'}
+                </h2>
+              </div>
+              <button
+                onClick={() => setBookRequiredOpen(false)}
+                className="mt-1 ml-4 shrink-0 transition-opacity hover:opacity-50"
+                style={{ color: 'var(--color-butter-muted)' }}
+              >
+                <XIcon size={15} strokeWidth={1.5} />
+              </button>
+            </div>
+
+            {/* 검색 바디 */}
+            <BookSearchInModal
+              locale={locale}
+              onSelect={(book) => {
+                handleBookChange(book);
+                setBookRequiredOpen(false);
+                doSave(book);
+              }}
+              onSkip={() => {
+                setBookRequiredOpen(false);
+                doSave();
+              }}
+            />
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+
+    {/* ── 공개/비공개 전환 확인 모달 ── */}
+    <AnimatePresence>
+      {confirmPublicOpen && pendingPublic !== null && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50"
+            style={{ background: 'rgba(0,0,0,0.15)', backdropFilter: 'blur(2px)' }}
+            onClick={() => setConfirmPublicOpen(false)}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="fixed z-50"
+            style={{
+              background: 'var(--color-butter-surface)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)',
+              width: 'min(360px, calc(100vw - 2rem))',
+              top: 0, left: 0, right: 0, bottom: 0,
+              margin: 'auto',
+              height: 'fit-content',
+              padding: '2rem',
+              borderRadius: '3px',
+            }}
+          >
+            <p className="text-[10px] uppercase tracking-[0.28em] font-semibold mb-3" style={{ color: 'var(--color-butter-primary)', opacity: 0.75 }}>
+              {pendingPublic
+                ? (locale === 'ko' ? '공개로 전환' : 'Make public')
+                : (locale === 'ko' ? '비공개로 전환' : 'Make private')}
+            </p>
+            <p className="font-serif font-light leading-relaxed mb-8" style={{ fontSize: '15px', color: 'var(--color-butter-text)' }}>
+              {pendingPublic
+                ? (locale === 'ko' ? '홈과 책 페이지 피드에 노출됩니다.' : 'This entry will appear in home and book page feeds.')
+                : (locale === 'ko' ? '피드에서 더 이상 표시되지 않습니다.' : 'This entry will no longer appear in any feeds.')}
+            </p>
+            <div className="flex items-center justify-end gap-4">
+              <button
+                onClick={() => setConfirmPublicOpen(false)}
+                className="font-light transition-opacity hover:opacity-50"
+                style={{ fontSize: '11px', letterSpacing: '0.05em', color: 'var(--color-butter-muted)' }}
+              >
+                {locale === 'ko' ? '취소' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => {
+                  setIsPublic(pendingPublic!);
+                  setConfirmPublicOpen(false);
+                  setPendingPublic(null);
+                }}
+                className="font-medium transition-all hover:brightness-110"
+                style={{
+                  fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase',
+                  background: 'var(--color-butter-primary)',
+                  color: 'var(--color-butter-bg)',
+                  padding: '0.5rem 1.25rem',
+                  borderRadius: '2px',
+                }}
+              >
+                {locale === 'ko' ? '확인' : 'Confirm'}
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
@@ -694,7 +844,10 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                       </div>
                       {/* 토글 스위치 */}
                       <button
-                        onClick={() => setIsPublic((v) => !v)}
+                        onClick={() => {
+                          setPendingPublic(!isPublic);
+                          setConfirmPublicOpen(true);
+                        }}
                         className="relative shrink-0 transition-all duration-200"
                         style={{
                           width: '40px',
@@ -915,6 +1068,124 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
         </main>
       </div>
     </motion.div>
+    </>
+  );
+};
+
+// ── BookSearchInModal ──────────────────────────────────────────────────────
+// 책 지정 요청 모달 내부 검색 UI
+
+const BookSearchInModal = ({
+  locale,
+  onSelect,
+  onSkip,
+}: {
+  locale: string;
+  onSelect: (book: BookContext) => void;
+  onSkip: () => void;
+}) => {
+  const { t } = useLocale();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Book[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, []);
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.length < 2) { setResults([]); return; }
+    debounceRef.current = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const books = await getBooks({ search: trimmed, lang: locale });
+        setResults(books.slice(0, 6));
+      } catch { setResults([]); }
+      finally { setSearchLoading(false); }
+    }, 400);
+  };
+
+  return (
+    <div className="flex flex-col overflow-hidden">
+      {/* 검색 input */}
+      <div className="px-7 pb-4 shrink-0">
+        <div
+          className="flex items-center gap-2.5 px-0 py-2"
+          style={{ borderBottom: '1px solid var(--color-butter-rule)' }}
+        >
+          <Search size={13} style={{ color: 'var(--color-butter-muted)', opacity: 0.5 }} className="shrink-0" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => handleQueryChange(e.target.value)}
+            placeholder={locale === 'ko' ? '제목 또는 저자' : 'Title or author'}
+            className="flex-1 bg-transparent focus:outline-none font-serif font-light"
+            style={{ fontSize: '16px', color: 'var(--color-butter-text)' }}
+          />
+          {searchLoading && <Loader2 size={12} style={{ color: 'var(--color-butter-muted)', opacity: 0.5 }} className="animate-spin shrink-0" />}
+          {query && !searchLoading && (
+            <button onClick={() => { setQuery(''); setResults([]); }} className="shrink-0 transition-opacity hover:opacity-50" style={{ color: 'var(--color-butter-muted)' }}>
+              <X size={12} strokeWidth={1.5} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 검색 결과 */}
+      <div className="overflow-y-auto flex-1 px-7 pb-2">
+        {results.length > 0 ? (
+          <ul>
+            {results.map((book, i) => (
+              <li
+                key={book.id}
+                className="flex items-center gap-4 py-3.5 cursor-pointer group"
+                style={{ borderBottom: i < results.length - 1 ? '1px solid var(--color-butter-rule)' : 'none' }}
+                onClick={() => onSelect({ bookId: book.id, bookTitle: book.title, bookAuthor: book.author, bookCover: book.cover })}
+              >
+                <div
+                  className="shrink-0 overflow-hidden"
+                  style={{ width: '28px', height: '40px', background: 'var(--color-butter-accent)', borderRadius: '1px', boxShadow: '0 2px 8px rgba(0,0,0,0.10)' }}
+                >
+                  {book.cover && (
+                    <img src={book.cover} alt={book.title} className="w-full h-full object-cover" referrerPolicy="no-referrer"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-serif font-light truncate transition-colors" style={{ fontSize: '13px', color: 'var(--color-butter-text)' }}>
+                    {book.title}
+                  </p>
+                  <p className="font-light italic truncate mt-0.5" style={{ fontSize: '11px', color: 'var(--color-butter-muted)', opacity: 0.6 }}>
+                    {book.author}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : query.length >= 2 && !searchLoading ? (
+          <p className="py-8 text-center font-serif italic font-light" style={{ fontSize: '13px', color: 'var(--color-butter-muted)', opacity: 0.45 }}>
+            {locale === 'ko' ? '검색 결과가 없습니다.' : 'Nothing found.'}
+          </p>
+        ) : null}
+      </div>
+
+      {/* 건너뛰기 */}
+      <div className="px-7 py-5 shrink-0 flex justify-end">
+        <button
+          onClick={onSkip}
+          className="font-light transition-opacity hover:opacity-70"
+          style={{ fontSize: '11px', letterSpacing: '0.05em', color: 'var(--color-butter-muted)', opacity: 0.5 }}
+        >
+          {locale === 'ko' ? '책 없이 저장' : 'Save without a book'}
+        </button>
+      </div>
+    </div>
   );
 };
 
@@ -1010,7 +1281,10 @@ const BookContextPanel = ({
   const handleQueryChange = (value: string) => {
     setQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!value.trim() || value.trim().length < 3) {
+    const trimmed = value.trim();
+    // 1글자 이하: 자동검색 없음 (한글 자음/모음 조합 중 상태 등 노이즈 방지)
+    // 2글자 이상: 자동검색 실행
+    if (!trimmed || trimmed.length < 2) {
       setResults([]);
       return;
     }
@@ -1018,7 +1292,7 @@ const BookContextPanel = ({
       setSearchLoading(true);
       setSearchError('');
       try {
-        const books = await getBooks({ search: value.trim(), lang: locale });
+        const books = await getBooks({ search: trimmed, lang: locale });
         setResults(books.slice(0, 6));
       } catch {
         setSearchError(t('journal.book.searchfail'));
@@ -1662,6 +1936,8 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
   const [copied, setCopied] = useState(false);
   const [editContent, setEditContent] = useState(entry.content);
   const [editMood, setEditMood] = useState(entry.mood || '');
+  const [confirmPublicOpen, setConfirmPublicOpen] = useState(false);
+  const [pendingPublic, setPendingPublic] = useState<boolean | null>(null);
   const [editIntensity, setEditIntensity] = useState(entry.intensity);
 
   // [4] 이 책에 연결된 엔트리 수
@@ -1893,14 +2169,14 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
           {/* ── 본문 ── */}
           <div className="mb-14">
             {sections.length > 0 ? (
-              <div className="space-y-7">
+              <div className="space-y-5">
                 {sections.map((s) => (
                   <p
                     key={s.label}
                     className="font-serif font-light"
                     style={{
                       fontSize: '1.0125rem',
-                      lineHeight: 2.0,
+                      lineHeight: 1.75,
                       color: 'var(--color-butter-text)',
                       opacity: 0.84,
                     }}
@@ -1914,7 +2190,7 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
                 className="font-serif font-light"
                 style={{
                   fontSize: '1.0125rem',
-                  lineHeight: 2.0,
+                  lineHeight: 1.75,
                   color: 'var(--color-butter-text)',
                   opacity: 0.84,
                 }}
@@ -1989,8 +2265,8 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
               {/* 공개/비공개 토글 */}
               <button
                 onClick={() => {
-                  const next = !entry.isPublic;
-                  onUpdate(entry.id, { content: entry.content, mood: entry.mood ?? '', intensity: entry.intensity, isPublic: next }).catch((e) => alert(e.message));
+                  setPendingPublic(!entry.isPublic);
+                  setConfirmPublicOpen(true);
                 }}
                 className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] transition-colors"
                 style={{ color: entry.isPublic ? 'var(--color-butter-primary)' : 'var(--color-butter-muted)', opacity: entry.isPublic ? 1 : 0.6 }}
@@ -2005,6 +2281,75 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
                   : <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>{locale === 'ko' ? '비공개' : 'Private'}</>
                 }
               </button>
+
+              {/* 공개/비공개 확인 모달 */}
+              <AnimatePresence>
+                {confirmPublicOpen && pendingPublic !== null && (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="fixed inset-0 z-50"
+                      style={{ background: 'rgba(0,0,0,0.15)', backdropFilter: 'blur(2px)' }}
+                      onClick={() => setConfirmPublicOpen(false)}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      className="fixed z-50"
+                      style={{
+                        background: 'var(--color-butter-surface)',
+                        boxShadow: '0 8px 40px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)',
+                        width: 'min(360px, calc(100vw - 2rem))',
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        margin: 'auto',
+                        height: 'fit-content',
+                        padding: '2rem',
+                        borderRadius: '3px',
+                      }}
+                    >
+                      <p className="text-[10px] uppercase tracking-[0.28em] font-semibold mb-3" style={{ color: 'var(--color-butter-primary)', opacity: 0.75 }}>
+                        {pendingPublic
+                          ? (locale === 'ko' ? '공개로 전환' : 'Make public')
+                          : (locale === 'ko' ? '비공개로 전환' : 'Make private')}
+                      </p>
+                      <p className="font-serif font-light leading-relaxed mb-8" style={{ fontSize: '15px', color: 'var(--color-butter-text)' }}>
+                        {pendingPublic
+                          ? (locale === 'ko' ? '홈과 책 페이지 피드에 노출됩니다.' : 'This entry will appear in home and book page feeds.')
+                          : (locale === 'ko' ? '피드에서 더 이상 표시되지 않습니다.' : 'This entry will no longer appear in any feeds.')}
+                      </p>
+                      <div className="flex items-center justify-end gap-4">
+                        <button
+                          onClick={() => setConfirmPublicOpen(false)}
+                          className="font-light transition-opacity hover:opacity-50"
+                          style={{ fontSize: '11px', letterSpacing: '0.05em', color: 'var(--color-butter-muted)' }}
+                        >
+                          {locale === 'ko' ? '취소' : 'Cancel'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            onUpdate(entry.id, { content: entry.content, mood: entry.mood ?? '', intensity: entry.intensity, isPublic: pendingPublic! }).catch((e) => alert(e.message));
+                            setConfirmPublicOpen(false);
+                            setPendingPublic(null);
+                          }}
+                          className="font-medium transition-all hover:brightness-110"
+                          style={{
+                            fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase',
+                            background: 'var(--color-butter-primary)',
+                            color: 'var(--color-butter-bg)',
+                            padding: '0.5rem 1.25rem',
+                            borderRadius: '2px',
+                          }}
+                        >
+                          {locale === 'ko' ? '확인' : 'Confirm'}
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* 우: 날짜 — quiet context note */}

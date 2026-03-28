@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-serif: "Newsreader", "Noto Serif KR", serif;
-  --font-sans: "Manrope", sans-serif;
+  --font-serif: "Newsreader", "Gowun Batang", serif;
+  --font-sans: "Pretendard", "Manrope", sans-serif;
   --color-butter-bg: #faf8f4;
   --color-butter-surface: #f5f2eb;
   --color-butter-primary: #6b5200;
@@ -18,6 +18,7 @@
     @apply bg-butter-bg text-butter-text font-sans antialiased;
     font-feature-settings: "kern" 1, "liga" 1;
     transition: background-color 0.3s ease, color 0.3s ease;
+    word-break: keep-all; /* 한글 단어 중간 줄바꿈 방지 */
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -53,4 +54,8 @@
   font-weight: 300;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Noto+Serif+KR:wght@200;300;400;500;600;700;900&display=swap');
+/* Pretendard — 한글 UI 최적화 sans-serif */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+/* Newsreader + Gowun Batang (serif), Manrope (영문 sans fallback) */
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Manrope:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap');
