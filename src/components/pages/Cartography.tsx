@@ -21,7 +21,7 @@ const C = {
 
 const TABS = ['shelf', 'wordcloud', 'score', 'arc'] as const;
 type Tab = typeof TABS[number];
-type ShelfSort = 'date' | 'emotion' | 'author' | 'genre';
+type ShelfSort = 'date' | 'title' | 'emotion' | 'author' | 'genre';
 type WCFilter  = 'all' | 'emotion' | 'author' | 'theme';
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -136,6 +136,7 @@ const ShelfTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
 
   const sorted = useMemo(() => {
     const arr = [...books];
+    if (sort === 'title')   arr.sort((a, b) => a.title.localeCompare(b.title));
     if (sort === 'emotion') arr.sort((a, b) => (a.emotions[0] ?? '').localeCompare(b.emotions[0] ?? ''));
     if (sort === 'author')  arr.sort((a, b) => a.author.localeCompare(b.author));
     if (sort === 'genre')   arr.sort((a, b) => (a.emotions[1] ?? a.emotions[0] ?? '').localeCompare(b.emotions[1] ?? b.emotions[0] ?? ''));
@@ -149,6 +150,7 @@ const ShelfTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
 
   const SORT_LABELS: Record<ShelfSort, { en: string; ko: string }> = {
     date:    { en: 'Recent',     ko: '최근순' },
+    title:   { en: 'By Title',   ko: '제목순' },
     emotion: { en: 'By Emotion', ko: '감정순' },
     author:  { en: 'By Author',  ko: '작가순' },
     genre:   { en: 'By Mood',    ko: '분위기순' },
@@ -181,7 +183,7 @@ const ShelfTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
         </div>
         {/* 정렬 버튼 */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          {(['date','emotion','author','genre'] as ShelfSort[]).map((s) => (
+          {(['date','title','emotion','author','genre'] as ShelfSort[]).map((s) => (
             <button key={s} onClick={() => setSort(s)}
               className="px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] font-medium transition-all"
               style={{
