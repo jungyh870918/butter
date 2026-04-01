@@ -13,21 +13,31 @@ import { NotFound } from './components/pages/NotFound';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
-  { path: '/share/journal/:entryId', element: <JournalShareCard /> },  // 구체적인 경로 먼저
+  { path: '/share/journal/:entryId', element: <JournalShareCard /> },
   { path: '/share/:bookId', element: <ShareCard /> },
   {
     path: '/',
-    element: (
-      <ProtectedRoute>
-        <RootLayout />
-      </ProtectedRoute>
-    ),
+    element: <RootLayout />,
     children: [
       { index: true, element: <Home /> },
       { path: 'explore', element: <Explore /> },
       { path: 'explore/:bookId', element: <BookDetail /> },
-      { path: 'journal', element: <Journal /> },
-      { path: 'cartography', element: <Cartography /> },
+      {
+        path: 'journal',
+        element: (
+          <ProtectedRoute>
+            <Journal />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'cartography',
+        element: (
+          <ProtectedRoute>
+            <Cartography />
+          </ProtectedRoute>
+        ),
+      },
       { path: '*', element: <NotFound /> },
     ],
   },

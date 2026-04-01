@@ -2,15 +2,12 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   'http://localhost:4000';
 
-const TOKEN_KEY = 'butter-token';
-
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const token = localStorage.getItem(TOKEN_KEY);
   const res = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
+    credentials: 'include', // httpOnly 쿠키 자동 전송
     ...options,
   });
   if (!res.ok) {

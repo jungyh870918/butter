@@ -150,8 +150,8 @@ export const Navbar = () => {
             {currentTheme.emoji}
           </button>
 
-          {/* 유저 + 로그아웃 */}
-          {user && (
+          {/* 유저 + 로그아웃 / 로그인 */}
+          {user ? (
             <div className="flex items-center gap-3">
               <span className="text-[11px] font-medium" style={{ color: 'var(--color-butter-muted)', opacity: 0.7 }}>
                 {user.username}
@@ -169,6 +169,18 @@ export const Navbar = () => {
                 {locale === 'ko' ? '로그아웃' : 'Sign out'}
               </button>
             </div>
+          ) : (
+            <button
+              onClick={() => navigate('/login')}
+              style={{
+                fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em',
+                color: 'var(--color-butter-muted)', opacity: 0.55,
+                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+              }}
+              className="transition-opacity hover:opacity-100"
+            >
+              {locale === 'ko' ? '로그인' : 'Sign in'}
+            </button>
           )}
         </div>
       </nav>
@@ -203,7 +215,7 @@ export const Navbar = () => {
             <button onClick={openMobileSearch} className="text-butter-muted hover:text-butter-text transition-colors">
               <Search size={16} />
             </button>
-            {user && (
+            {user ? (
               <button
                 onClick={handleLogout}
                 style={{
@@ -213,6 +225,17 @@ export const Navbar = () => {
                 }}
               >
                 {locale === 'ko' ? '로그아웃' : 'Sign out'}
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                style={{
+                  fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em',
+                  color: 'var(--color-butter-muted)', opacity: 0.55,
+                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                }}
+              >
+                {locale === 'ko' ? '로그인' : 'Sign in'}
               </button>
             )}
           </div>

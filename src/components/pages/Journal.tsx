@@ -1,5 +1,5 @@
 import { useLocale } from '../../hooks/useLocale';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2, Share2, Link as LinkIcon, Copy, Library, X as XIcon } from 'lucide-react';
@@ -181,7 +181,7 @@ const PROMPT_SETS: PromptSet[] = [
       },
       {
         id: 'emotion',
-        labels: { en: 'Body Response', ko: '몸의 반응' },
+        labels: { en: 'Body Response', ko: '감각' },
         questions: [
           { en: 'Did your reading pace change at any point — why?', ko: '읽는 속도가 달라진 지점이 있었나요 — 왜 그랬을 것 같나요?' },
           { en: 'Was there a moment you held your breath, or let it go?', ko: '숨을 참게 된 순간이 있었나요, 아니면 반대로 내쉬게 된 순간이?' },
@@ -636,20 +636,27 @@ interface WriteViewProps {
   bookContext: BookContext;
 }
 
-type WritePhase = 'prompts' | 'summary';
+type WritePhase = 'prompts' | 'free' | 'summary';
 
 const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   const { t, locale } = useLocale();
   const ATMOSPHERES = getAtmospheres(t);
   const [step, setStep] = useState(0);
-  // PROMPTS를 useState로 고정 — 세션 내에서 placeholder가 바뀌지 않도록
-  const [PROMPTS] = useState(() => getPrompts(t, locale));
+  // PROMPTS — locale 변경 시 재생성 (언어 전환 대응)
+  const PROMPTS = useMemo(() => getPrompts(t, locale), [locale]);
+
+  // locale 전환 시 step이 범위를 벗어나면 0으로 리셋
+  useEffect(() => {
+    if (step >= PROMPTS.length) setStep(0);
+  }, [PROMPTS]);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [answers, setAnswers] = useState<Record<PromptId, string>>({
     opening: '', highlight: '', emotion: '', mirror: '', linger: '', atmosphere: '',
   });
   const [selectedAtmospheres, setSelectedAtmospheres] = useState<string[]>([]);
   const [phase, setPhase] = useState<WritePhase>('prompts');
+  const [freeText, setFreeText] = useState('');           // 자유 작성 내용
+  const [freeAtmDone, setFreeAtmDone] = useState(false);  // 자유 작성 후 atmosphere 완료 여부
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isPublic, setIsPublic] = useState(true);
@@ -714,11 +721,13 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   const current = PROMPTS[step];
   const isFirst = step === 0;
   const isLast = step === PROMPTS.length - 1;
-  const progress = phase === 'summary' ? 100 : ((step + 1) / PROMPTS.length) * 100;
+  const progress = phase === 'summary' ? 100 : phase === 'free' ? 50 : ((step + 1) / PROMPTS.length) * 100;
 
-  const canProceed = current.isAtmosphere
-    ? selectedAtmospheres.length > 0
-    : answers[current.id as PromptId].trim().length > 0;
+  const canProceed = phase === 'free'
+    ? (freeAtmDone ? selectedAtmospheres.length > 0 : freeText.trim().length > 0)
+    : current.isAtmosphere
+      ? selectedAtmospheres.length > 0
+      : answers[current.id as PromptId].trim().length > 0;
 
   const goNext = () => { setDirection(1); setStep((s) => s + 1); };
   const goPrev = () => { setDirection(-1); setStep((s) => s - 1); };
@@ -741,28 +750,32 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   const doSave = async (bookOverride?: BookContext) => {
     setSaving(true);
     const book = bookOverride ?? activeBook;
+    const isFreeWrite = phase === 'free';
     try {
-      const journalContent = PROMPTS
-        .filter((p) => !p.isAtmosphere && answers[p.id as PromptId].trim())
-        .map((p) => `[${p.label}]\n${answers[p.id as PromptId].trim()}`)
-        .join('\n\n');
+      const journalContent = isFreeWrite
+        ? freeText.trim()
+        : PROMPTS
+            .filter((p) => !p.isAtmosphere && answers[p.id as PromptId].trim())
+            .map((p) => `[${p.label}]\n${answers[p.id as PromptId].trim()}`)
+            .join('\n\n');
 
       const primaryMood = selectedAtmospheres[0] ?? '';
       const intensity = Math.min(10, Math.max(1, selectedAtmospheres.length * 2 + 3));
 
       const entry = await onCreate({
-        content: journalContent || answers.opening.trim() || 'A quiet reflection.',
-        prompt: PROMPTS[step]?.question ?? '',
+        content: journalContent || (isFreeWrite ? 'A quiet reflection.' : answers.opening.trim() || 'A quiet reflection.'),
+        prompt: isFreeWrite ? '' : (PROMPTS[step]?.question ?? ''),
         mood: primaryMood,
         emotions: selectedAtmospheres,
         intensity,
-        highlight: answers.highlight.trim() || null,
+        highlight: isFreeWrite ? null : (answers.highlight.trim() || null),
         bookId: book.bookId ?? null,
         bookTitle: book.bookTitle ?? null,
         bookAuthor: book.bookAuthor ?? null,
         bookCover: book.bookCover ?? null,
         isPublic,
-      });
+        isFreeWrite,
+      } as any);
 
       // Reflection 생성 + EmotionLog 기록은 백엔드 journal POST에서 처리됨
 
@@ -932,7 +945,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
             />
 
             {/* GPT 질문 — 책이 선택됐을 때 좌측 패널에 표시 */}
-            {phase === 'prompts' && (activeBook.bookTitle) && (
+            {(phase === 'prompts' || phase === 'free') && (activeBook.bookTitle) && (
               <GptQuestionsPanel
                 questions={gptQuestions}
                 questionsKo={gptQuestionsKo}
@@ -1216,6 +1229,13 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                   </button>
 
                   <button
+                    onClick={() => { setPhase('free'); setFreeText(''); setFreeAtmDone(false); }}
+                    className="text-[11px] font-medium uppercase tracking-[0.14em] text-butter-muted/65 hover:text-butter-muted transition-colors px-3 py-2"
+                  >
+                    {locale === 'ko' ? '자유롭게 쓰기' : 'Write freely'}
+                  </button>
+
+                  <button
                     onClick={skipStep}
                     className={`text-[11px] font-medium uppercase tracking-[0.14em] text-butter-muted/65 hover:text-butter-muted transition-colors px-3 py-2 ${
                       isLast ? 'invisible' : ''
@@ -1244,6 +1264,127 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                     </button>
                   )}
                 </div>
+              </motion.div>
+            )}
+
+            {/* ── 자유 작성 모드 ── */}
+            {phase === 'free' && (
+              <motion.div
+                key="free"
+                initial={{ opacity: 0, x: 32 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -32 }}
+                transition={{ duration: 0.26, ease: 'easeInOut' }}
+              >
+                {/* 진행 바 */}
+                <div className="mb-5 md:mb-10" style={{ background: 'rgba(0,0,0,0.06)', height: '1px' }}>
+                  <motion.div
+                    style={{ background: 'var(--color-butter-primary)', height: '1px' }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.4, ease: 'easeInOut' }}
+                  />
+                </div>
+
+                {!freeAtmDone ? (
+                  <>
+                    {/* 자유 작성 헤더 */}
+                    <div className="flex items-center justify-between mb-6">
+                      <span className="text-[10px] uppercase tracking-[0.22em] font-medium text-butter-primary">
+                        {locale === 'ko' ? '자유 기록' : 'Free Write'}
+                      </span>
+                      <button
+                        onClick={() => setPhase('prompts')}
+                        className="text-[11px] font-medium uppercase tracking-[0.14em] transition-colors hover:text-butter-text"
+                        style={{ color: 'var(--color-butter-muted)' }}
+                      >
+                        {locale === 'ko' ? '단계별로 쓰기' : 'Use prompts'}
+                      </button>
+                    </div>
+
+                    <textarea
+                      autoFocus
+                      value={freeText}
+                      onChange={(e) => setFreeText(e.target.value)}
+                      rows={10}
+                      className="w-full bg-transparent text-[17px] font-serif leading-[1.9] resize-none focus:outline-none text-butter-text/85 placeholder:text-butter-muted/30 mb-6 md:mb-10"
+                      style={{ borderBottom: '1px solid rgba(0,0,0,0.07)', paddingBottom: '1.5rem' }}
+                    />
+
+                    <div className="flex items-center justify-end">
+                      <button
+                        onClick={() => setFreeAtmDone(false) || setFreeAtmDone(true)}
+                        disabled={freeText.trim().length === 0}
+                        className="flex items-center gap-2 px-7 py-2.5 bg-butter-primary text-white font-medium uppercase tracking-[0.14em] hover:brightness-110 transition-all text-[11px] disabled:opacity-40"
+                        style={{ borderRadius: '2px' }}
+                      >
+                        {locale === 'ko' ? '다음' : 'Next'} <ArrowRight size={12} />
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* atmosphere 단계 — 자유 작성 후 필수 */}
+                    <div className="mb-6">
+                      <span className="text-[10px] uppercase tracking-[0.22em] font-medium text-butter-primary">
+                        {locale === 'ko' ? '분위기' : 'Mood'}
+                      </span>
+                    </div>
+
+                    <h2 className="text-2xl md:text-[1.75rem] font-serif font-light leading-[1.35] mb-5 md:mb-8 text-butter-text">
+                      {locale === 'ko' ? '오늘 읽은 것의 분위기를 한 마디로 표현하면요?' : 'How would you describe the mood of today\'s reading?'}
+                    </h2>
+
+                    <div className="mb-10">
+                      <div className="flex flex-wrap gap-2.5">
+                        {ATMOSPHERES.map((a) => {
+                          const active = selectedAtmospheres.includes(a);
+                          return (
+                            <button
+                              key={a}
+                              onClick={() =>
+                                setSelectedAtmospheres((prev) =>
+                                  prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]
+                                )
+                              }
+                              className="px-4 py-1.5 text-[12px] font-medium transition-all duration-150"
+                              style={{
+                                borderRadius: '2px',
+                                border: active ? '1px solid var(--color-butter-primary)' : '1px solid rgba(0,0,0,0.12)',
+                                background: active ? 'var(--color-butter-primary)' : 'transparent',
+                                color: active ? '#ffffff' : 'var(--color-butter-muted)',
+                              }}
+                            >
+                              {a}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-6" style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}>
+                      <button
+                        onClick={() => setFreeAtmDone(false)}
+                        className="flex items-center gap-2 px-5 py-2.5 text-butter-muted hover:text-butter-text text-[11px] font-medium uppercase tracking-[0.14em] transition-colors"
+                        style={{ border: '1px solid rgba(0,0,0,0.10)', borderRadius: '2px' }}
+                      >
+                        <ArrowLeft size={12} /> {t('journal.edit')}
+                      </button>
+
+                      <button
+                        onClick={handleSave}
+                        disabled={saving || selectedAtmospheres.length === 0}
+                        className={`flex items-center gap-2.5 px-8 py-3 font-medium uppercase tracking-[0.14em] text-[11px] transition-all disabled:opacity-50 ${
+                          saveSuccess ? 'bg-green-600 text-white' : 'bg-butter-primary text-white hover:brightness-110'
+                        }`}
+                        style={{ borderRadius: '2px' }}
+                      >
+                        {saveSuccess ? (<><Check size={12} /> {t('journal.saved')}</>) : saving ? t('journal.saving') : (
+                          <><span style={{ fontSize: '14px' }}>📖</span> {t('journal.save')}</>
+                        )}
+                      </button>
+                    </div>
+                  </>
+                )}
               </motion.div>
             )}
 
