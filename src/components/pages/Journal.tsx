@@ -756,7 +756,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
         ? freeText.trim()
         : PROMPTS
             .filter((p) => !p.isAtmosphere && answers[p.id as PromptId].trim())
-            .map((p) => `[${p.label}]\n${answers[p.id as PromptId].trim()}`)
+            .map((p) => `[${p.label}]\n${p.question}\n${answers[p.id as PromptId].trim()}`)
             .join('\n\n');
 
       const primaryMood = selectedAtmospheres[0] ?? '';

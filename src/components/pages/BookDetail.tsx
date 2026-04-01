@@ -1,5 +1,5 @@
 import { useLocale } from '../../hooks/useLocale';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -284,6 +284,46 @@ const RightColumn = ({ book, reflections, refLoading, refError, loading, enrichi
   const authorNote        = book ? ((locale === 'ko' && book.authorNoteKo)        ? book.authorNoteKo        : book.authorNote)        : undefined;
   const historicalContext = book ? ((locale === 'ko' && book.historicalContextKo) ? book.historicalContextKo : book.historicalContext) : undefined;
 
+  // ripple refs
+  const quoteRef     = useRef<HTMLDivElement>(null);
+  const contextRef   = useRef<HTMLDivElement>(null);
+  const prevLoading  = useRef(loading);
+  const prevEnriching = useRef(enriching);
+
+  function fireRipple(el: HTMLElement) {
+    const rect = el.getBoundingClientRect();
+    const W = rect.width;
+    const H = rect.height;
+    const size = Math.max(W, H) * 1.6;
+    const ripple = document.createElement('span');
+    ripple.className = 'question-ripple';
+    ripple.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${W / 2 - size / 2}px; top:${H / 2 - size / 2}px;
+      animation-duration:1800ms;
+    `;
+    el.style.position = 'relative';
+    el.style.overflow = 'hidden';
+    el.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+  }
+
+  // quote: loading → false 전환 시
+  useEffect(() => {
+    if (prevLoading.current && !loading && quoteRef.current) {
+      setTimeout(() => { if (quoteRef.current) fireRipple(quoteRef.current); }, 100);
+    }
+    prevLoading.current = loading;
+  }, [loading]);
+
+  // historicalContext: enriching → false 전환 시
+  useEffect(() => {
+    if (prevEnriching.current && !enriching && contextRef.current) {
+      setTimeout(() => { if (contextRef.current) fireRipple(contextRef.current); }, 100);
+    }
+    prevEnriching.current = enriching;
+  }, [enriching]);
+
   return (
     <div className="flex-1 min-w-0">
 
@@ -362,7 +402,7 @@ const RightColumn = ({ book, reflections, refLoading, refError, loading, enrichi
       ) : (
         <>
           {quote && (
-            <div className="mb-12 relative pl-6" style={{ borderLeft: '2px solid rgba(107,82,0,0.3)' }}>
+            <div ref={quoteRef} className="mb-12 relative pl-6" style={{ borderLeft: '2px solid rgba(107,82,0,0.3)' }}>
               <p className="text-[10px] uppercase tracking-[0.25em] font-semibold text-butter-primary/80 mb-4">
                 {t('book.author_note')}
               </p>
@@ -404,7 +444,7 @@ const RightColumn = ({ book, reflections, refLoading, refError, loading, enrichi
           <Sk w="80%" h={14} />
         </div>
       ) : historicalContext ? (
-        <div className="mb-10">
+        <div ref={contextRef} className="mb-10">
           <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-butter-primary/80 mb-3">{t('book.historical')}</p>
           <p className="text-[15px] leading-[1.85] text-butter-muted font-light">{historicalContext}</p>
         </div>
@@ -440,7 +480,9 @@ const RightColumn = ({ book, reflections, refLoading, refError, loading, enrichi
                   </div>
                 </div>
                 <h4 className="font-serif text-lg font-light mb-2">{reflection.title}</h4>
-                <p className="text-[13px] text-butter-muted line-clamp-3 font-light leading-[1.8]">{reflection.content}</p>
+                <p className="text-[13px] text-butter-muted line-clamp-3 font-light leading-[1.8]">
+                  {reflection.content.replace(/^\[.+?\]\n/gm, '').replace(/\n{2,}/g, ' ').trim()}
+                </p>
               </div>
             ))}
           </div>

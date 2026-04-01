@@ -213,10 +213,42 @@ interface ReflectionCardProps {
 
 const ReflectionCard = ({ reflection, index, onBookClick }: ReflectionCardProps) => {
   const { locale } = useLocale();
+  const [expanded, setExpanded] = useState(false);
 
-  // reflection에 저장된 bookTitle 사용, 없으면 title 파싱으로 fallback
-  const bookTitleMatch = reflection.title.match(/^A reflection on:\s*(.+?)…?$/i);
-  const displayBookTitle = reflection.bookTitle || (bookTitleMatch ? bookTitleMatch[1].trim() : null);
+  const displayBookTitle = reflection.bookTitle
+    || reflection.title.match(/^A reflection on:\s*(.+?)…?$/i)?.[1]?.trim()
+    || null;
+
+  // title에 [레이블] 패턴이 포함된 구 데이터 처리
+  const displayTitle = reflection.title
+    .replace(/^A reflection on:\s*/i, '')  // 구 prefix 제거
+    .replace(/^\[.+?\]\s*/g, '')           // [레이블] 제거
+    .trim() || reflection.title;
+
+  // content를 [레이블]+질문+답변 쌍으로 파싱
+  const qaPairs: { label: string; question: string; text: string }[] = [];
+  const rawBlocks = reflection.content.split(/\n\n(?=\[)/);
+  rawBlocks.forEach((block) => {
+    // 새 형식: [레이블]\n질문\n답변
+    const newMatch = block.match(/^\[(.+?)\]\n(.+?)\n([\s\S]+)$/);
+    // 구 형식: [레이블]\n답변
+    const oldMatch = block.match(/^\[(.+?)\]\n([\s\S]+)$/);
+
+    if (newMatch) {
+      qaPairs.push({ label: newMatch[1], question: newMatch[2].trim(), text: newMatch[3].trim() });
+    } else if (oldMatch) {
+      qaPairs.push({ label: oldMatch[1], question: '', text: oldMatch[2].trim() });
+    } else if (block.trim()) {
+      qaPairs.push({ label: '', question: '', text: block.trim() });
+    }
+  });
+
+  const hasQA = qaPairs.some((p) => p.label.length > 0);
+
+  // 미리보기: 첫 번째 텍스트 단락만
+  const previewText = hasQA
+    ? qaPairs[0]?.text ?? ''
+    : reflection.content.replace(/^\[.+?\]\n/gm, '').replace(/\n{2,}/g, ' ').trim();
 
   return (
     <motion.article
@@ -234,40 +266,106 @@ const ReflectionCard = ({ reflection, index, onBookClick }: ReflectionCardProps)
         </p>
       )}
 
-      {/* 제목 */}
+      {/* 제목 (질문) */}
       <h2
         className="font-serif font-light leading-[1.2] mb-3 group-hover:text-butter-primary transition-colors duration-300"
         style={{ fontSize: 'clamp(1.3rem, 2.2vw, 1.65rem)', color: 'var(--color-butter-text)' }}
       >
-        {reflection.title}
+        {displayTitle}
       </h2>
 
-      {/* 책 제목 링크 — bookId가 있을 때 */}
+      {/* 책 제목 링크 */}
       {reflection.bookId && displayBookTitle && (
         <button
           onClick={() => onBookClick(reflection.bookId!)}
           className="flex items-center gap-1.5 mb-3 group/book"
         >
-          <span
-            className="font-serif italic font-light group-hover/book:text-butter-primary transition-colors duration-200"
-            style={{ fontSize: '12px', color: 'var(--color-butter-muted)', opacity: 0.7 }}
-          >
+          <span className="font-serif italic font-light group-hover/book:text-butter-primary transition-colors duration-200"
+            style={{ fontSize: '12px', color: 'var(--color-butter-muted)', opacity: 0.7 }}>
             {locale === 'ko' ? '— ' : '— from '}
           </span>
-          <span
-            className="font-serif italic font-light group-hover/book:text-butter-primary transition-colors duration-200 underline underline-offset-2"
-            style={{ fontSize: '12px', color: 'var(--color-butter-muted)', opacity: 0.7, textDecorationColor: 'var(--color-butter-rule)' }}
-          >
+          <span className="font-serif italic font-light group-hover/book:text-butter-primary transition-colors duration-200 underline underline-offset-2"
+            style={{ fontSize: '12px', color: 'var(--color-butter-muted)', opacity: 0.7, textDecorationColor: 'var(--color-butter-rule)' }}>
             {displayBookTitle}
           </span>
         </button>
       )}
 
-      {/* 본문 */}
-      <p className="font-light leading-[1.85] mb-6 line-clamp-3"
-        style={{ fontSize: '14px', color: 'var(--color-butter-muted)' }}>
-        {reflection.content}
-      </p>
+      {/* 본문 — 접힌 상태: 미리보기 / 펼친 상태: Q&A 전체 */}
+      <AnimatePresence initial={false}>
+        {!expanded ? (
+          <motion.p
+            key="preview"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="font-light leading-[1.85] mb-4 line-clamp-2"
+            style={{ fontSize: '14px', color: 'var(--color-butter-muted)' }}
+          >
+            {previewText}
+          </motion.p>
+        ) : (
+          <motion.div
+            key="full"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.28, ease: 'easeInOut' }}
+            className="mb-4 overflow-hidden"
+          >
+            {hasQA ? (
+              <div className="space-y-6">
+                {qaPairs.map((pair, i) => (
+                  <div key={i}>
+                    {pair.label && (
+                      <p className="uppercase tracking-[0.18em] font-semibold mb-1"
+                        style={{ fontSize: '9px', color: 'var(--color-butter-primary)', opacity: 0.7 }}>
+                        {pair.label}
+                      </p>
+                    )}
+                    {pair.question && (
+                      <p className="font-serif font-light italic mb-2 leading-[1.5]"
+                        style={{ fontSize: '13px', color: 'var(--color-butter-text)', opacity: 0.55 }}>
+                        {pair.question}
+                      </p>
+                    )}
+                    <p className="font-light leading-[1.85]"
+                      style={{ fontSize: '14px', color: 'var(--color-butter-muted)' }}>
+                      {pair.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {reflection.content
+                  .replace(/^\[.+?\]\n/gm, '')
+                  .split(/\n{2,}/)
+                  .filter((p) => p.trim())
+                  .map((para, i) => (
+                    <p key={i} className="font-light leading-[1.85]"
+                      style={{ fontSize: '14px', color: 'var(--color-butter-muted)' }}>
+                      {para.trim()}
+                    </p>
+                  ))
+                }
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 더보기 / 접기 버튼 */}
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="flex items-center gap-1 mb-5 transition-opacity hover:opacity-80"
+        style={{ fontSize: '11px', color: 'var(--color-butter-muted)', opacity: 0.5 }}
+      >
+        <span>{expanded ? (locale === 'ko' ? '접기' : 'Collapse') : (locale === 'ko' ? '더보기' : 'Read more')}</span>
+        <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown size={12} strokeWidth={1.5} />
+        </motion.span>
+      </button>
 
       {/* 메타 */}
       <div className="flex items-center justify-between">
