@@ -1,13 +1,91 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { useTheme, THEMES } from '../../hooks/useTheme';
 import { useLocale } from '../../hooks/useLocale';
 import { useAuth } from '../../hooks/useAuth';
 
+// ── 테마 선택 드롭다운 ────────────────────────────────────────────────────
+const ThemePicker = () => {
+  const { themeId, setTheme } = useTheme();
+  const { locale } = useLocale();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const currentTheme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen((p) => !p)}
+        title="Change theme"
+        style={{
+          display: 'flex', alignItems: 'center', gap: '0.35rem',
+          fontSize: '11px', fontWeight: 500, letterSpacing: '0.08em',
+          color: 'var(--color-butter-muted)',
+          padding: '2px 7px',
+          border: '1px solid var(--color-butter-rule)',
+          borderRadius: '2px', lineHeight: 1.6,
+          background: 'transparent', cursor: 'pointer',
+          transition: 'opacity 0.15s',
+        }}
+      >
+        <span>{currentTheme.emoji}</span>
+        <span style={{ opacity: 0.7 }}>{locale === 'ko' ? currentTheme.labelKo : currentTheme.label}</span>
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+          background: 'var(--color-butter-bg)',
+          border: '1px solid var(--color-butter-rule)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+          borderRadius: '3px', overflow: 'hidden',
+          minWidth: '160px', zIndex: 200,
+        }}>
+          {THEMES.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => { setTheme(t.id); setOpen(false); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.6rem',
+                width: '100%', padding: '0.65rem 1rem',
+                background: t.id === themeId ? 'var(--color-butter-surface)' : 'transparent',
+                border: 'none', cursor: 'pointer',
+                fontSize: '11px', fontWeight: t.id === themeId ? 600 : 400,
+                letterSpacing: '0.06em',
+                color: t.id === themeId ? 'var(--color-butter-text)' : 'var(--color-butter-muted)',
+                textAlign: 'left',
+                borderBottom: '1px solid var(--color-butter-rule)',
+              }}
+            >
+              {/* 테마 컬러 스와치 */}
+              <span style={{
+                width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+                background: t.vars['--color-butter-primary'],
+                border: '1px solid var(--color-butter-rule)',
+              }} />
+              <span>{locale === 'ko' ? t.labelKo : t.label}</span>
+              {t.id === themeId && (
+                <span style={{ marginLeft: 'auto', fontSize: '9px', opacity: 0.5 }}>✓</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const Navbar = () => {
   const navigate = useNavigate();
-  const { themeId, setTheme } = useTheme();
   const { locale, setLocale, t } = useLocale();
   const { user, logout } = useAuth();
 
@@ -20,15 +98,6 @@ export const Navbar = () => {
     logout();
     navigate('/login', { replace: true });
   };
-
-  const cycleTheme = () => {
-    const idx = THEMES.findIndex((t) => t.id === themeId);
-    const next = THEMES[(idx + 1) % THEMES.length];
-    setTheme(next.id);
-  };
-
-  const currentTheme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
-  const nextTheme = THEMES[(THEMES.findIndex((t) => t.id === themeId) + 1) % THEMES.length];
 
   const NAV_ITEMS = [
     { path: '/', label: t('nav.home') },
@@ -140,15 +209,8 @@ export const Navbar = () => {
             {locale === 'en' ? '한' : 'EN'}
           </button>
 
-          {/* 테마 토글 */}
-          <button
-            onClick={cycleTheme}
-            title={`Switch to ${nextTheme.label}`}
-            className="transition-all duration-200 hover:opacity-70"
-            style={{ fontSize: '15px', lineHeight: 1 }}
-          >
-            {currentTheme.emoji}
-          </button>
+          {/* 테마 선택기 */}
+          <ThemePicker />
 
           {/* 유저 + 로그아웃 / 로그인 */}
           {user ? (
@@ -208,9 +270,7 @@ export const Navbar = () => {
             >
               {locale === 'en' ? '한' : 'EN'}
             </button>
-            <button onClick={cycleTheme} style={{ fontSize: '16px', lineHeight: 1 }}>
-              {currentTheme.emoji}
-            </button>
+            <ThemePicker />
             {/* 모바일 검색 아이콘 — 클릭하면 검색창 열림 */}
             <button onClick={openMobileSearch} className="text-butter-muted hover:text-butter-text transition-colors">
               <Search size={16} />

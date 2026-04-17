@@ -1,13 +1,31 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { useLocale } from '../../hooks/useLocale';
+import { useLocale, LocaleContext, createT, initLocale, STORAGE_KEY, type Locale } from '../../hooks/useLocale';
 import { useTheme, THEMES } from '../../hooks/useTheme';
 
-export const Login = () => {
+// 간이 ThemePicker (Login 페이지용 — 이모지만)
+const LoginThemePicker = () => {
+  const { themeId, setTheme } = useTheme();
+  const idx = THEMES.findIndex((t) => t.id === themeId);
+  const current = THEMES[idx] ?? THEMES[0];
+  const next = THEMES[(idx + 1) % THEMES.length];
+  return (
+    <button
+      onClick={() => setTheme(next.id)}
+      title={`Switch to ${next.label}`}
+      className="transition-all duration-200 hover:opacity-70"
+      style={{ fontSize: '15px', lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}
+    >
+      {current.emoji}
+    </button>
+  );
+};
+
+// Login 페이지는 RootLayout 밖에 있어 LocaleProvider가 없으므로 자체 제공
+const LoginInner = () => {
   const { login } = useAuth();
   const { locale, setLocale } = useLocale();
-  const { themeId, setTheme } = useTheme();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
@@ -15,8 +33,6 @@ export const Login = () => {
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
 
-  const currentTheme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
-  const nextTheme    = THEMES[(THEMES.findIndex((t) => t.id === themeId) + 1) % THEMES.length];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,14 +78,7 @@ export const Login = () => {
         >
           {locale === 'en' ? '한' : 'EN'}
         </button>
-        <button
-          onClick={() => setTheme(nextTheme.id)}
-          title={`Switch to ${nextTheme.label}`}
-          className="transition-all duration-200 hover:opacity-70"
-          style={{ fontSize: '15px', lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}
-        >
-          {currentTheme.emoji}
-        </button>
+        <LoginThemePicker />
       </div>
 
       {/* 로고 */}
@@ -169,5 +178,23 @@ export const Login = () => {
         </p>
       </form>
     </div>
+  );
+};
+
+export const Login = () => {
+  const [locale, setLocaleState] = useState<Locale>(initLocale);
+  const setLocale = (l: Locale) => {
+    localStorage.setItem(STORAGE_KEY, l);
+    setLocaleState(l);
+  };
+  const localeValue = useMemo(
+    () => ({ locale, setLocale, t: createT(locale) }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [locale]
+  );
+  return (
+    <LocaleContext.Provider value={localeValue}>
+      <LoginInner />
+    </LocaleContext.Provider>
   );
 };

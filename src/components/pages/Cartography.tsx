@@ -19,9 +19,9 @@ const C = {
   rule:    () => getComputedStyle(document.documentElement).getPropertyValue('--color-butter-rule').trim()    || 'rgba(0,0,0,0.06)',
 };
 
-const TABS = ['shelf', 'wordcloud', 'score', 'arc'] as const;
+const TABS = ['shelf', 'magazine', 'wordcloud', 'score', 'arc'] as const;
 type Tab = typeof TABS[number];
-type ShelfSort = 'date' | 'title' | 'emotion' | 'author' | 'genre';
+type ShelfSort = 'date' | 'emotion' | 'author' | 'genre';
 type WCFilter  = 'all' | 'emotion' | 'author' | 'theme';
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -46,6 +46,7 @@ export const Cartography = () => {
 
   const TAB_LABELS: Record<Tab, { en: string; ko: string }> = {
     shelf:     { en: 'Shelf',      ko: '서재' },
+    magazine:  { en: 'Magazine',   ko: '잡지' },
     wordcloud: { en: 'Word Cloud', ko: '워드클라우드' },
     score:     { en: 'Score',      ko: '악보' },
     arc:       { en: 'Arc',        ko: '아크' },
@@ -54,30 +55,43 @@ export const Cartography = () => {
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-butter-bg)' }}>
       {/* 헤더 */}
-      <div className="pt-16 md:pt-24 pb-6 px-5 md:px-14 max-w-7xl mx-auto">
-        <p className="text-[10px] uppercase tracking-[0.3em] font-medium mb-4"
-          style={{ color: 'var(--color-butter-muted)', opacity: 0.7 }}>
+      <div className="pt-14 md:pt-32 pb-8 px-5 md:px-14 max-w-7xl mx-auto">
+        <p style={{ fontSize: '0.5rem', fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.5, marginBottom: '1.4rem' }}>
           {locale === 'ko' ? '감정 지도' : 'Emotional Cartography'}
         </p>
-        <h1 className="font-serif font-black leading-[1.1] tracking-tight mb-3"
-          style={{ fontSize: 'clamp(1.6rem, 4vw, 2.6rem)' }}>
-          {locale === 'ko' ? '나의 ' : 'Your '}
-          <em style={{ fontStyle: 'italic', color: 'var(--color-butter-primary)', fontWeight: 700 }}>
-            {locale === 'ko' ? '독서 여정' : 'reading arc'}
-          </em>
-        </h1>
-        <p className="font-light text-[15px]"
-          style={{ color: 'var(--color-butter-muted)', maxWidth: '28rem' }}>
-          {locale === 'ko'
-            ? '독서 생활의 패턴과 흐름을 시각화한 기록입니다.'
-            : 'A visual record of the patterns in your reading life.'}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '2rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+          <h1 style={{ fontWeight: 700, fontSize: 'clamp(2.6rem, 6vw, 4.5rem)', lineHeight: 0.95, letterSpacing: '-0.03em', color: 'var(--color-butter-text)', margin: 0 }}>
+            {locale === 'ko' ? '나의 독서 여정' : 'Your Reading Arc'}
+          </h1>
+          <div style={{ textAlign: 'right', flexShrink: 0, paddingBottom: '0.2rem' }}>
+            <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.65, marginBottom: '0.3rem' }}>
+              {locale === 'ko' ? '기록 기반 시각화' : 'Visualization based on journal'}
+            </p>
+            <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.6 }}>
+              {locale === 'ko' ? `마지막 업데이트 — ${new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}` : `LAST UPDATED — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}`}
+            </p>
+          </div>
+        </div>
+        <div style={{ paddingTop: '1.75rem', borderTop: '1px solid var(--color-butter-rule)', display: 'flex', alignItems: 'flex-start', gap: '2rem', flexWrap: 'wrap' }}>
+          <p style={{ fontSize: '0.85rem', fontWeight: 300, lineHeight: 1.9, color: 'var(--color-butter-muted)', maxWidth: '28rem', margin: 0 }}>
+            {locale === 'ko'
+              ? '독서 생활의 패턴과 흐름을 시각화한 기록입니다. 감정의 흐름, 자주 등장한 단어, 책과 감정의 연결망, 그리고 시간의 궤적을 한눈에 살펴보세요.'
+              : 'A visual record of the patterns in your reading life. Explore the arc of your emotions, recurring words, networks between books and feelings, and the trajectory of time.'}
+          </p>
+          <div style={{ marginLeft: 'auto', textAlign: 'right', paddingTop: '0.1rem' }}>
+            <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.6, marginBottom: '0.3rem' }}>
+              REF. ARC-VIZ
+            </p>
+            <p style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.5 }}>
+              {locale === 'ko' ? '5개 섹션 — 서재 / 잡지 / 워드클라우드 / 악보 / 아크' : '5 sections — Shelf / Magazine / Word Cloud / Score / Arc'}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* 탭 */}
-      <div className="px-5 md:px-14 max-w-7xl mx-auto"
-        style={{ borderTop: '1px solid var(--color-butter-rule)' }}>
-        <div className="flex items-center gap-6 pt-5">
+      <div className="px-5 md:px-14 max-w-7xl mx-auto">
+        <div className="flex items-center gap-8 pb-0">
           {TABS.map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className="pb-3 text-[11px] uppercase tracking-[0.18em] font-medium transition-all duration-200"
@@ -93,12 +107,13 @@ export const Cartography = () => {
       </div>
 
       {/* 콘텐츠 */}
-      <div className="px-5 md:px-14 max-w-7xl mx-auto py-10 md:py-14">
+      <div className="px-5 md:px-14 max-w-7xl mx-auto py-14 md:py-20">
         {loading ? (
           <LoadingSpinner />
         ) : (
           <>
             {activeTab === 'shelf'     && <ShelfTab     entries={entries} locale={locale} />}
+            {activeTab === 'magazine'  && <MagazineTab  entries={entries} locale={locale} />}
             {activeTab === 'wordcloud' && <WordCloudTab entries={entries} profile={profile} locale={locale} />}
             {activeTab === 'score'     && <ScoreTab     entries={entries} locale={locale} />}
             {activeTab === 'arc'       && <ArcTab       entries={entries} locale={locale} />}
@@ -136,7 +151,6 @@ const ShelfTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
 
   const sorted = useMemo(() => {
     const arr = [...books];
-    if (sort === 'title')   arr.sort((a, b) => a.title.localeCompare(b.title));
     if (sort === 'emotion') arr.sort((a, b) => (a.emotions[0] ?? '').localeCompare(b.emotions[0] ?? ''));
     if (sort === 'author')  arr.sort((a, b) => a.author.localeCompare(b.author));
     if (sort === 'genre')   arr.sort((a, b) => (a.emotions[1] ?? a.emotions[0] ?? '').localeCompare(b.emotions[1] ?? b.emotions[0] ?? ''));
@@ -150,7 +164,6 @@ const ShelfTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
 
   const SORT_LABELS: Record<ShelfSort, { en: string; ko: string }> = {
     date:    { en: 'Recent',     ko: '최근순' },
-    title:   { en: 'By Title',   ko: '제목순' },
     emotion: { en: 'By Emotion', ko: '감정순' },
     author:  { en: 'By Author',  ko: '작가순' },
     genre:   { en: 'By Mood',    ko: '분위기순' },
@@ -183,7 +196,7 @@ const ShelfTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
         </div>
         {/* 정렬 버튼 */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          {(['date','title','emotion','author','genre'] as ShelfSort[]).map((s) => (
+          {(['date','emotion','author','genre'] as ShelfSort[]).map((s) => (
             <button key={s} onClick={() => setSort(s)}
               className="px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] font-medium transition-all"
               style={{
@@ -273,6 +286,526 @@ const ShelfTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
           : 'Multiple entries for the same book are combined.'}
       </p>
     </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// MAGAZINE TAB — 패션 잡지 스타일 감상 아카이브
+// ══════════════════════════════════════════════════════════════════════════
+
+interface MagEntry {
+  id: string;
+  entryNo: string;
+  catalogCode: string;
+  date: string;
+  bookTitle: string;
+  bookAuthor: string;
+  bookCover?: string;
+  emotions: string[];
+  content: string;
+  highlight?: string;
+}
+
+// 각 카드의 고유 스펙 — 카드 자체 너비 + 표지 배치
+type CoverPos  = 'left' | 'right' | 'top' | 'none';
+
+interface MagCardSpec {
+  cardWidth:   string;   // 카드 자체 너비 (px or %)
+  coverWidth:  number;   // 표지 px 너비 (0 = 없음)
+  coverHeight: number;   // 표지 px 높이
+  coverPos:    CoverPos;
+  textWidth:   string;   // 텍스트 영역 너비 (cover 옆에 붙을 때)
+  titleSize:   string;   // 제목 font-size
+  accentNo:    boolean;  // 큰 인덱스 번호 강조 여부
+}
+
+// 카드 스펙 시퀀스 (반복 사용) — 각각 다른 너비와 배치
+const CARD_SPECS: MagCardSpec[] = [
+  // 0: 넓은 카드, 큰 커버 우측
+  { cardWidth: '680px', coverWidth: 200, coverHeight: 280, coverPos: 'right',
+    textWidth: '340px', titleSize: '1.7rem', accentNo: false },
+  // 1: 중간 카드, 커버 좌측
+  { cardWidth: '440px', coverWidth: 130, coverHeight: 182, coverPos: 'left',
+    textWidth: '260px', titleSize: '1.1rem', accentNo: false },
+  // 2: 좁은 카드, 커버 상단
+  { cardWidth: '300px', coverWidth: 140, coverHeight: 196, coverPos: 'top',
+    textWidth: '300px', titleSize: '1rem',   accentNo: false },
+  // 3: 중간 카드, 텍스트만 + 큰 번호
+  { cardWidth: '380px', coverWidth: 0,   coverHeight: 0,   coverPos: 'none',
+    textWidth: '380px', titleSize: '1.2rem', accentNo: true },
+  // 4: 넓은 카드, 커버 좌측 큰
+  { cardWidth: '600px', coverWidth: 175, coverHeight: 245, coverPos: 'left',
+    textWidth: '370px', titleSize: '1.5rem', accentNo: false },
+  // 5: 좁은 카드, 텍스트만
+  { cardWidth: '320px', coverWidth: 0,   coverHeight: 0,   coverPos: 'none',
+    textWidth: '320px', titleSize: '1.05rem', accentNo: false },
+  // 6: 중간-넓은 카드, 커버 우측 중간
+  { cardWidth: '520px', coverWidth: 150, coverHeight: 210, coverPos: 'right',
+    textWidth: '320px', titleSize: '1.25rem', accentNo: false },
+  // 7: 좁은 카드, 커버 상단 작은
+  { cardWidth: '280px', coverWidth: 110, coverHeight: 154, coverPos: 'top',
+    textWidth: '280px', titleSize: '0.95rem', accentNo: false },
+  // 8: 넓은 카드, 텍스트만 + 큰 번호
+  { cardWidth: '560px', coverWidth: 0,   coverHeight: 0,   coverPos: 'none',
+    textWidth: '560px', titleSize: '1.6rem', accentNo: true },
+  // 9: 중간 카드, 커버 우측 작은
+  { cardWidth: '400px', coverWidth: 100, coverHeight: 140, coverPos: 'right',
+    textWidth: '260px', titleSize: '1.1rem', accentNo: false },
+];
+
+const MagazineTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
+  const muted = C.muted();
+
+  const magEntries: MagEntry[] = useMemo(() => {
+    const filtered = entries
+      .filter((e) => e.bookTitle && e.content)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return filtered.map((e, i) => {
+      const dt = new Date(e.date);
+      const month = String(dt.getMonth() + 1).padStart(2, '0');
+      const day   = String(dt.getDate()).padStart(2, '0');
+      const year  = String(dt.getFullYear()).slice(2);
+      return {
+        id:          e.id,
+        entryNo:     `ENTRY NO. ${String(filtered.length - i).padStart(3, '0')}`,
+        catalogCode: `CATALOG. ${month}.${day}.${year}`,
+        date:        e.date,
+        bookTitle:   e.bookTitle,
+        bookAuthor:  e.bookAuthor ?? '—',
+        bookCover:   e.bookCover,
+        emotions:    e.emotions ?? [],
+        content:     e.content,
+        highlight:   e.highlight,
+      };
+    });
+  }, [entries]);
+
+  if (magEntries.length === 0) {
+    return (
+      <EmptyState message={locale === 'ko'
+        ? '책과 함께 저널을 작성하면 잡지가 채워집니다.'
+        : 'Write journal entries with books to fill the magazine.'} />
+    );
+  }
+
+  const formatDate = (d: string) => {
+    const dt = new Date(d);
+    return locale === 'ko'
+      ? `${dt.getFullYear()}. ${dt.getMonth() + 1}. ${dt.getDate()}.`
+      : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  return (
+    <div>
+      {/* 잡지 헤더 */}
+      <div style={{
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+        flexWrap: 'wrap', gap: '1rem',
+        borderBottom: `2px solid var(--color-butter-text)`,
+        paddingBottom: '1.25rem', marginBottom: '0',
+      }}>
+        <div>
+          <p style={{ fontSize: '0.5rem', letterSpacing: '0.32em', textTransform: 'uppercase',
+            color: muted, opacity: 0.45, marginBottom: '0.5rem', fontWeight: 600 }}>
+            {locale === 'ko' ? '독서 아카이브 매거진' : 'Reading Archive Magazine'}
+          </p>
+          <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.1rem)', fontWeight: 700,
+            letterSpacing: '-0.01em', color: 'var(--color-butter-text)', lineHeight: 1.05 }}>
+            THE READER'S ARCHIVE
+          </h2>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <p style={{ fontSize: '0.5rem', letterSpacing: '0.2em', textTransform: 'uppercase',
+            color: muted, opacity: 0.4, marginBottom: '0.25rem' }}>
+            {locale === 'ko' ? `총 ${magEntries.length}편의 기록` : `${magEntries.length} entries`}
+          </p>
+          <p style={{ fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase',
+            color: muted, opacity: 0.3, fontWeight: 300 }}>
+            ISSUE {String(magEntries.length).padStart(3, '0')}
+          </p>
+        </div>
+      </div>
+
+      {/* 카드 컨테이너 — flex-wrap으로 자연스럽게 흘러가기 */}
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        gap: '0',
+        // 모바일에서는 overflow hidden으로 카드 넘침 방지
+        overflow: 'hidden',
+      }}>
+        {magEntries.map((entry, i) => {
+          const spec = CARD_SPECS[i % CARD_SPECS.length];
+          return (
+            <MagCard
+              key={entry.id}
+              entry={entry}
+              spec={spec}
+              entryIndex={i}
+              locale={locale}
+              formatDate={formatDate}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ── 모달 컴포넌트 ─────────────────────────────────────────────────────────
+const MagModal = ({ entry, locale, formatDate, onClose }: {
+  entry: MagEntry; locale: string; formatDate: (d: string) => string; onClose: () => void;
+}) => {
+  const primary = C.primary();
+  const muted   = C.muted();
+  const rule    = C.rule();
+
+  // 바깥 클릭 시 닫기
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 300,
+        background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        padding: '0',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--color-butter-bg)',
+          width: '100%', maxWidth: '680px',
+          maxHeight: '88vh', overflowY: 'auto',
+          borderRadius: '16px 16px 0 0',
+          padding: '2rem 1.5rem 3rem',
+          boxShadow: '0 -8px 40px rgba(0,0,0,0.2)',
+        }}
+      >
+        {/* 드래그 핸들 */}
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: rule,
+          margin: '0 auto 1.5rem', opacity: 0.5 }} />
+
+        {/* 메타 */}
+        <p style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.16em',
+          textTransform: 'uppercase', color: muted, opacity: 0.55, marginBottom: '1rem', lineHeight: 1.6 }}>
+          {entry.entryNo}
+          <span style={{ margin: '0 0.4rem', opacity: 0.4 }}>/</span>
+          {entry.catalogCode}
+          <span style={{ margin: '0 0.4rem', opacity: 0.4 }}>/</span>
+          {formatDate(entry.date)}
+        </p>
+
+        {/* 표지 + 제목 */}
+        <div style={{ display: 'flex', gap: '1.2rem', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+          {entry.bookCover && (
+            <div style={{ width: 72, height: 100, flexShrink: 0,
+              background: 'var(--color-butter-surface)', boxShadow: '2px 3px 12px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
+              <img src={entry.bookCover} alt={entry.bookTitle}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                referrerPolicy="no-referrer" />
+            </div>
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.02em',
+              color: 'var(--color-butter-text)', lineHeight: 1.1, marginBottom: '0.35rem' }}>
+              {entry.bookTitle}
+            </p>
+            <p style={{ fontSize: '0.75rem', fontWeight: 300, fontStyle: 'italic',
+              color: muted, opacity: 0.6, marginBottom: '0.75rem' }}>
+              {entry.bookAuthor}
+            </p>
+            {entry.emotions.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+                {entry.emotions.slice(0, 3).map((em) => (
+                  <span key={em} style={{
+                    fontSize: '0.5rem', letterSpacing: '0.16em', textTransform: 'uppercase',
+                    border: `1px solid ${primary}`, color: primary, opacity: 0.5,
+                    padding: '0.15rem 0.45rem',
+                  }}>{em}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 인용구 */}
+        {entry.highlight && (
+          <p style={{
+            fontSize: '0.85rem', fontWeight: 300, lineHeight: 1.85,
+            color: 'var(--color-butter-text)', opacity: 0.5,
+            borderLeft: `1.5px solid ${primary}`, paddingLeft: '0.85rem',
+            fontStyle: 'italic', marginBottom: '1.2rem',
+          }}>
+            "{entry.highlight}"
+          </p>
+        )}
+
+        {/* 구분선 */}
+        <div style={{ height: 1, background: rule, marginBottom: '1.2rem' }} />
+
+        {/* 본문 전체 */}
+        <p style={{ fontSize: '0.88rem', fontWeight: 300, lineHeight: 1.92,
+          color: 'var(--color-butter-text)', opacity: 0.72 }}>
+          {entry.content}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// ── 개별 카드 컴포넌트 ────────────────────────────────────────────────────
+const MagCard = ({
+  entry, spec, entryIndex, locale, formatDate,
+}: {
+  entry: MagEntry;
+  spec: MagCardSpec;
+  entryIndex: number;
+  locale: string;
+  formatDate: (d: string) => string;
+}) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const primary = C.primary();
+  const muted   = C.muted();
+  const rule    = C.rule();
+
+  // 모바일 감지 (SSR safe)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  // 미리보기 길이 — 모바일은 60자, 데스크탑은 140자
+  const PREVIEW_LEN = isMobile ? 60 : 140;
+  const preview  = entry.content.length > PREVIEW_LEN ? entry.content.slice(0, PREVIEW_LEN) + '…' : entry.content;
+  const canExpand = entry.content.length > PREVIEW_LEN;
+  const hasCover = spec.coverWidth > 0;
+
+  // ── 커버 이미지 ──────────────────────────────────────────────────
+  const CoverImg = ({ w, h }: { w: number; h: number }) => (
+    <div style={{
+      width: w, height: h, flexShrink: 0,
+      background: 'var(--color-butter-surface)',
+      boxShadow: '2px 4px 16px rgba(0,0,0,0.13)',
+      overflow: 'hidden',
+    }}>
+      {entry.bookCover ? (
+        <img src={entry.bookCover} alt={entry.bookTitle}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          referrerPolicy="no-referrer"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+      ) : (
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', padding: '0.6rem' }}>
+          <p style={{ fontSize: '0.45rem', letterSpacing: '0.1em', textTransform: 'uppercase',
+            color: primary, opacity: 0.25, textAlign: 'center', lineHeight: 1.7 }}>
+            {entry.bookTitle.slice(0, 16)}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
+  // ── 메타 라인 ─────────────────────────────────────────────────────
+  const MetaLine = () => (
+    <p style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase',
+      color: muted, opacity: 0.55, marginBottom: '0.65rem', lineHeight: 1.6 }}>
+      {entry.entryNo}
+      <span style={{ margin: '0 0.4rem', opacity: 0.4 }}>/</span>
+      {entry.catalogCode}
+      <span style={{ margin: '0 0.4rem', opacity: 0.4 }}>/</span>
+      {formatDate(entry.date)}
+    </p>
+  );
+
+  // ── 텍스트 블록 ───────────────────────────────────────────────────
+  const TextBlock = ({ mobile = false }: { mobile?: boolean }) => (
+    <div style={{ width: mobile ? '100%' : spec.textWidth, minWidth: 0 }}>
+      <p style={{ fontSize: mobile ? '1.1rem' : spec.titleSize, fontWeight: 700, letterSpacing: '-0.02em',
+        color: 'var(--color-butter-text)', lineHeight: 1.1, marginBottom: '0.35rem' }}>
+        {entry.bookTitle}
+      </p>
+      <p style={{ fontSize: '0.7rem', fontWeight: 300, fontStyle: 'italic',
+        color: muted, opacity: 0.55, letterSpacing: '0.02em', marginBottom: '0.75rem' }}>
+        {entry.bookAuthor}
+      </p>
+      {entry.emotions.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '0.75rem' }}>
+          {entry.emotions.slice(0, 3).map((em) => (
+            <span key={em} style={{
+              fontSize: '0.48rem', letterSpacing: '0.14em', textTransform: 'uppercase',
+              border: `1px solid ${primary}`, color: primary, opacity: 0.48,
+              padding: '0.15rem 0.4rem',
+            }}>{em}</span>
+          ))}
+        </div>
+      )}
+      {entry.highlight && (
+        <p style={{
+          fontSize: '0.75rem', fontWeight: 300, lineHeight: 1.8,
+          color: 'var(--color-butter-text)', opacity: 0.48,
+          borderLeft: `1.5px solid ${primary}`, paddingLeft: '0.75rem',
+          fontStyle: 'italic', marginBottom: '0.8rem',
+        }}>
+          "{entry.highlight}"
+        </p>
+      )}
+      <p style={{ fontSize: '0.75rem', fontWeight: 300, lineHeight: 1.88,
+        color: 'var(--color-butter-text)', opacity: 0.65, marginBottom: '0.6rem',
+        wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+        {preview}
+      </p>
+      {canExpand && (
+        <button
+          onClick={() => setModalOpen(true)}
+          style={{
+            fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase',
+            color: primary, opacity: 0.65, background: 'none', border: 'none',
+            cursor: 'pointer', padding: 0,
+            textDecoration: 'underline', textUnderlineOffset: '3px',
+            fontFamily: 'inherit',
+          }}>
+          {locale === 'ko' ? '전문 보기' : 'VIEW ARCHIVE'}
+        </button>
+      )}
+    </div>
+  );
+
+  // ── IMG 번호 ─────────────────────────────────────────────────────
+  const ImgNo = () => (
+    <p style={{ fontSize: '0.55rem', fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase',
+      color: muted, opacity: 0.3, marginTop: '0.4rem', textAlign: 'center' }}>
+      IMG. {String(entryIndex + 1).padStart(3, '0')}
+    </p>
+  );
+
+  // ════════════════════════════════════════════════════
+  // 모바일 렌더 — 단일 컬럼, 표지 좌측 고정 작은 사이즈
+  // ════════════════════════════════════════════════════
+  if (isMobile) {
+    return (
+      <>
+        <div style={{
+          width: '100%', padding: '2rem 0 2rem',
+          borderBottom: `1px solid ${rule}`,
+          boxSizing: 'border-box',
+        }}>
+          <MetaLine />
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+            {hasCover && (
+              <div style={{ flexShrink: 0 }}>
+                <CoverImg w={72} h={100} />
+                <ImgNo />
+              </div>
+            )}
+            <TextBlock mobile />
+          </div>
+        </div>
+        {modalOpen && (
+          <MagModal entry={entry} locale={locale} formatDate={formatDate} onClose={() => setModalOpen(false)} />
+        )}
+      </>
+    );
+  }
+
+  // ════════════════════════════════════════════════════
+  // 데스크탑 렌더 — 기존 spec 기반
+  // ════════════════════════════════════════════════════
+  const cardStyle: React.CSSProperties = {
+    width: spec.cardWidth,
+    maxWidth: '100%',
+    padding: '2.8rem 2.4rem 2.8rem 0',
+    borderBottom: `1px solid ${rule}`,
+    boxSizing: 'border-box',
+    flexShrink: 0,
+  };
+
+  const coverW = spec.coverWidth;
+  const coverH = spec.coverHeight;
+
+  if (!hasCover) {
+    return (
+      <>
+        <div style={cardStyle}>
+          <MetaLine />
+          {spec.accentNo && (
+            <p style={{ fontSize: 'clamp(2.8rem, 6vw, 4.5rem)', fontWeight: 700,
+              letterSpacing: '-0.05em', lineHeight: 1,
+              color: 'var(--color-butter-text)', opacity: 0.05, marginBottom: '-0.6rem' }}>
+              {String(entryIndex + 1).padStart(2, '0')}
+            </p>
+          )}
+          <TextBlock />
+        </div>
+        {modalOpen && (
+          <MagModal entry={entry} locale={locale} formatDate={formatDate} onClose={() => setModalOpen(false)} />
+        )}
+      </>
+    );
+  }
+
+  if (spec.coverPos === 'top') {
+    return (
+      <>
+        <div style={cardStyle}>
+          <MetaLine />
+          <CoverImg w={coverW} h={coverH} />
+          <ImgNo />
+          <div style={{ marginTop: '1rem' }}><TextBlock /></div>
+        </div>
+        {modalOpen && (
+          <MagModal entry={entry} locale={locale} formatDate={formatDate} onClose={() => setModalOpen(false)} />
+        )}
+      </>
+    );
+  }
+
+  if (spec.coverPos === 'right') {
+    return (
+      <>
+        <div style={cardStyle}>
+          <MetaLine />
+          <div style={{ display: 'flex', gap: '1.4rem', alignItems: 'flex-start' }}>
+            <TextBlock />
+            <div><CoverImg w={coverW} h={coverH} /><ImgNo /></div>
+          </div>
+        </div>
+        {modalOpen && (
+          <MagModal entry={entry} locale={locale} formatDate={formatDate} onClose={() => setModalOpen(false)} />
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div style={cardStyle}>
+        <MetaLine />
+        <div style={{ display: 'flex', gap: '1.4rem', alignItems: 'flex-start' }}>
+          <div><CoverImg w={coverW} h={coverH} /><ImgNo /></div>
+          <TextBlock />
+        </div>
+      </div>
+      {modalOpen && (
+        <MagModal entry={entry} locale={locale} formatDate={formatDate} onClose={() => setModalOpen(false)} />
+      )}
+    </>
   );
 };
 
@@ -1244,20 +1777,31 @@ const IntensityTab = ({ emotions, summary, locale }: {
 const ArcTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(760);
+  const [dims, setDims] = useState({ w: 760, h: 500 });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([e]) => setWidth(Math.floor(e.contentRect.width)));
+    const ro = new ResizeObserver(([e]) => {
+      const w = Math.floor(e.contentRect.width);
+      setDims({ w, h: isMobile ? w * 1.1 : Math.max(420, w * 0.55) });
+    });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [isMobile]);
 
   const { nodes, links } = useMemo(() => {
     const bookFreq  = new Map<string, number>();
     const emotionFreq = new Map<string, number>();
-    const linkSet = new Map<string, number>(); // "book||emotion" → count
+    const linkSet = new Map<string, number>();
 
     entries.forEach((e) => {
       if (!e.bookTitle) return;
@@ -1269,7 +1813,6 @@ const ArcTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
       });
     });
 
-    // 상위 책 10개, 감정 8개
     const books = [...bookFreq.entries()]
       .sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id]) => ({ id, type: 'book' as const }));
     const emotions = [...emotionFreq.entries()]
@@ -1287,117 +1830,185 @@ const ArcTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
     return { nodes, links };
   }, [entries]);
 
+  // 감정별 고유 색상 팔레트
+  const EMOTION_COLORS = [
+    '#e05c5c', '#e08a3c', '#d4b432', '#5aaa6a', '#3a8fbf',
+    '#7060c8', '#c050a0', '#3fbfb0', '#9a6040', '#708090',
+  ];
+
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     if (!svg || !nodes.length) return;
     svg.selectAll('*').remove();
 
-    const NODE_H = 26; // 노드 간격
-    const LABEL_W = 160;
-    const ARC_W = width - LABEL_W - 20;
-    const H = nodes.length * NODE_H + 40;
-    svg.attr('height', H);
-
-    // Y 위치
-    const yPos = new Map<string, number>(
-      nodes.map((n, i) => [n.id, 24 + i * NODE_H])
+    const emotionNodes = nodes.filter(n => n.type === 'emotion');
+    const emotionColorMap = new Map<string, string>(
+      emotionNodes.map((n, i) => [n.id, EMOTION_COLORS[i % EMOTION_COLORS.length]])
     );
 
-    // 호 색상 — 책/감정 연결 강도에 따라
     const maxVal = Math.max(...links.map(l => l.value), 1);
 
-    // 아크 그리기 — data attribute로 source/target 추적
-    const arcG = svg.append('g').attr('transform', `translate(${LABEL_W},0)`);
-    links.forEach(({ source, target, value }) => {
-      const y1 = yPos.get(source);
-      const y2 = yPos.get(target);
-      if (y1 === undefined || y2 === undefined) return;
+    if (isMobile) {
+      // ── 모바일: 세로 아크 (기존 방식) ──────────────────────────
+      const NODE_H = 28;
+      const LABEL_W = 160;
+      const ARC_W = dims.w - LABEL_W - 16;
+      const H = nodes.length * NODE_H + 48;
+      svg.attr('height', H);
 
-      const span = Math.abs(y2 - y1);
-      const rx = Math.min(span * 0.55, ARC_W * 0.9);
-      const ry = span / 2;
-      const baseOpacity = 0.12 + (value / maxVal) * 0.42;
-      const strokeW = 0.8 + (value / maxVal) * 1.4;
+      const yPos = new Map<string, number>(
+        nodes.map((n, i) => [n.id, 28 + i * NODE_H])
+      );
 
-      arcG.append('path')
-        .attr('d', `M 0 ${y1} A ${rx} ${ry} 0 0 1 0 ${y2}`)
-        .attr('fill', 'none')
-        .attr('stroke', '#6b5200')
-        .attr('stroke-opacity', baseOpacity)
-        .attr('stroke-width', strokeW)
-        .attr('data-source', source)
-        .attr('data-target', target)
-        .attr('data-base-opacity', baseOpacity);
-    });
-
-    // 노드 점 + 레이블 + hover 인터랙션
-    const labelG = svg.append('g');
-
-    const allArcs = () => arcG.selectAll<SVGPathElement, unknown>('path');
-
-    const onNodeEnter = (nodeId: string) => {
-      allArcs().each(function() {
-        const el = d3.select(this);
-        const src = el.attr('data-source');
-        const tgt = el.attr('data-target');
-        const base = parseFloat(el.attr('data-base-opacity') ?? '0.3');
-        const connected = src === nodeId || tgt === nodeId;
-        el.attr('stroke-opacity', connected ? Math.min(base * 2.8, 0.92) : base * 0.15);
-        el.attr('stroke', connected ? '#6b5200' : '#6b5200');
+      const arcG = svg.append('g').attr('transform', `translate(${LABEL_W},0)`);
+      links.forEach(({ source, target, value }) => {
+        const y1 = yPos.get(source); const y2 = yPos.get(target);
+        if (y1 === undefined || y2 === undefined) return;
+        const span = Math.abs(y2 - y1);
+        const rx = Math.min(span * 0.55, ARC_W * 0.85);
+        const ry = span / 2;
+        const strokeW = 0.8 + (value / maxVal) * 2.2;
+        const color = emotionColorMap.get(target) ?? emotionColorMap.get(source) ?? '#6b5200';
+        arcG.append('path')
+          .attr('d', `M 0 ${y1} A ${rx} ${ry} 0 0 1 0 ${y2}`)
+          .attr('fill', 'none').attr('stroke', color)
+          .attr('stroke-opacity', 0.35 + (value / maxVal) * 0.45)
+          .attr('stroke-width', strokeW)
+          .attr('data-source', source).attr('data-target', target)
+          .attr('data-color', color)
+          .attr('data-base-opacity', String(0.35 + (value / maxVal) * 0.45));
       });
-    };
 
-    const onNodeLeave = () => {
-      allArcs().each(function() {
+      const labelG = svg.append('g');
+      const allArcs = () => arcG.selectAll<SVGPathElement, unknown>('path');
+      const onEnter = (id: string) => allArcs().each(function() {
         const el = d3.select(this);
+        const connected = el.attr('data-source') === id || el.attr('data-target') === id;
         const base = parseFloat(el.attr('data-base-opacity') ?? '0.3');
-        el.attr('stroke-opacity', base);
+        el.attr('stroke-opacity', connected ? Math.min(base * 2.2, 0.95) : base * 0.12);
       });
-    };
+      const onLeave = () => allArcs().each(function() {
+        const el = d3.select(this);
+        el.attr('stroke-opacity', el.attr('data-base-opacity'));
+      });
 
-    nodes.forEach((n) => {
-      const y = yPos.get(n.id)!;
-      const isBook = n.type === 'book';
+      nodes.forEach((n) => {
+        const y = yPos.get(n.id)!;
+        const isBook = n.type === 'book';
+        const color = isBook ? 'var(--color-butter-primary)' : (emotionColorMap.get(n.id) ?? '#6b5200');
+        labelG.append('rect').attr('x', 0).attr('y', y - 11)
+          .attr('width', LABEL_W - 2).attr('height', 22)
+          .attr('fill', 'transparent').style('cursor', 'default')
+          .on('mouseenter', () => onEnter(n.id)).on('mouseleave', onLeave);
+        labelG.append('circle').attr('cx', LABEL_W - 7).attr('cy', y)
+          .attr('r', isBook ? 3.8 : 3).attr('fill', color).attr('fill-opacity', 0.8)
+          .style('pointer-events', 'none');
+        labelG.append('text').attr('x', LABEL_W - 14).attr('y', y + 1)
+          .attr('text-anchor', 'end').attr('dominant-baseline', 'middle')
+          .attr('font-size', isBook ? 10 : 9.5).attr('font-style', isBook ? 'normal' : 'italic')
+          .attr('fill', isBook ? 'rgba(28,26,23,0.78)' : color).attr('fill-opacity', 0.75)
+          .text(n.id.length > 16 ? n.id.slice(0, 15) + '…' : n.id);
+      });
 
-      // 히트 영역 (투명 rect — 클릭/호버 감도 향상)
-      labelG.append('rect')
-        .attr('x', 0).attr('y', y - 10)
-        .attr('width', LABEL_W - 2).attr('height', 20)
-        .attr('fill', 'transparent')
-        .style('cursor', 'default')
-        .on('mouseenter', () => onNodeEnter(n.id))
-        .on('mouseleave', onNodeLeave);
+      const bookCount = nodes.filter(n => n.type === 'book').length;
+      svg.append('line').attr('x1', 0).attr('y1', 28 + bookCount * NODE_H - NODE_H / 2)
+        .attr('x2', LABEL_W - 2).attr('y2', 28 + bookCount * NODE_H - NODE_H / 2)
+        .attr('stroke', 'rgba(107,82,0,0.12)').attr('stroke-dasharray', '3,4');
 
-      // 점
-      labelG.append('circle')
-        .attr('cx', LABEL_W - 6).attr('cy', y)
-        .attr('r', isBook ? 3.5 : 2.8)
-        .attr('fill', '#6b5200')
-        .attr('fill-opacity', isBook ? 0.7 : 0.45)
-        .style('pointer-events', 'none');
+    } else {
+      // ── 데스크탑: 가로 아크 ──────────────────────────────────────
+      // 노드를 가로(X축)로 배치, 아크는 위로 솟는 반원
+      const NODE_W = Math.max(60, Math.min(90, (dims.w - 40) / nodes.length));
+      const LABEL_H = 72; // 레이블 영역 (하단)
+      const ARC_AREA_H = dims.h - LABEL_H - 20;
+      const W = nodes.length * NODE_W + 40;
+      const totalW = Math.max(dims.w, W);
+      svg.attr('height', dims.h);
 
-      // 레이블
-      const label = n.id.length > 18 ? n.id.slice(0, 17) + '…' : n.id;
-      labelG.append('text')
-        .attr('x', LABEL_W - 14).attr('y', y + 1)
-        .attr('text-anchor', 'end').attr('dominant-baseline', 'middle')
-        .attr('font-size', isBook ? 10 : 9.5)
-        .attr('font-style', isBook ? 'normal' : 'italic')
-        .attr('font-family', isBook ? 'var(--font-sans)' : 'var(--font-serif)')
-        .attr('fill', isBook ? 'rgba(28,26,23,0.75)' : 'rgba(94,87,79,0.6)')
-        .text(label);
-    });
+      const xPos = new Map<string, number>(
+        nodes.map((n, i) => [n.id, 24 + i * NODE_W + NODE_W / 2])
+      );
 
-    // 구분선 (책/감정 경계)
-    const bookCount = nodes.filter(n => n.type === 'book').length;
-    const divY = 24 + bookCount * NODE_H - NODE_H / 2;
-    svg.append('line')
-      .attr('x1', 0).attr('y1', divY)
-      .attr('x2', LABEL_W - 2).attr('y2', divY)
-      .attr('stroke', 'rgba(107,82,0,0.12)')
-      .attr('stroke-dasharray', '3,4');
+      // 노드 배치 Y (레이블 위쪽)
+      const nodeY = dims.h - LABEL_H;
 
-  }, [nodes, links, width]);
+      const arcG = svg.append('g');
+      links.forEach(({ source, target, value }) => {
+        const x1 = xPos.get(source); const x2 = xPos.get(target);
+        if (x1 === undefined || x2 === undefined) return;
+        const span = Math.abs(x2 - x1);
+        // rx = 가로 반지름, ry = 세로 반지름 (아크 높이)
+        const ry = Math.min(span * 0.6, ARC_AREA_H * 0.88);
+        const rx = span / 2;
+        const strokeW = 0.8 + (value / maxVal) * 2.5;
+        const color = emotionColorMap.get(target) ?? emotionColorMap.get(source) ?? '#6b5200';
+        const baseOp = 0.3 + (value / maxVal) * 0.5;
+        arcG.append('path')
+          // 위쪽으로 솟는 반타원 아크
+          .attr('d', `M ${x1} ${nodeY} A ${rx} ${ry} 0 0 1 ${x2} ${nodeY}`)
+          .attr('fill', 'none').attr('stroke', color)
+          .attr('stroke-opacity', baseOp).attr('stroke-width', strokeW)
+          .attr('data-source', source).attr('data-target', target)
+          .attr('data-color', color).attr('data-base-opacity', String(baseOp));
+      });
+
+      // 노드 점 + 레이블
+      const labelG = svg.append('g');
+      const allArcs = () => arcG.selectAll<SVGPathElement, unknown>('path');
+      const onEnter = (id: string) => allArcs().each(function() {
+        const el = d3.select(this);
+        const connected = el.attr('data-source') === id || el.attr('data-target') === id;
+        const base = parseFloat(el.attr('data-base-opacity') ?? '0.3');
+        el.attr('stroke-opacity', connected ? Math.min(base * 2.2, 0.95) : base * 0.1);
+      });
+      const onLeave = () => allArcs().each(function() {
+        d3.select(this).attr('stroke-opacity', d3.select(this).attr('data-base-opacity'));
+      });
+
+      // 책/감정 구분선
+      const bookCount = nodes.filter(n => n.type === 'book').length;
+      const divX = 24 + bookCount * NODE_W;
+      svg.append('line')
+        .attr('x1', divX).attr('y1', nodeY - 18)
+        .attr('x2', divX).attr('y2', dims.h - 8)
+        .attr('stroke', 'rgba(107,82,0,0.12)').attr('stroke-dasharray', '3,4');
+
+      nodes.forEach((n) => {
+        const x = xPos.get(n.id)!;
+        const isBook = n.type === 'book';
+        const color = isBook
+          ? C.primary()
+          : (emotionColorMap.get(n.id) ?? '#6b5200');
+
+        // 히트 영역
+        labelG.append('rect').attr('x', x - NODE_W / 2).attr('y', nodeY - 12)
+          .attr('width', NODE_W).attr('height', LABEL_H + 12)
+          .attr('fill', 'transparent').style('cursor', 'default')
+          .on('mouseenter', () => onEnter(n.id)).on('mouseleave', onLeave);
+
+        // 점
+        labelG.append('circle').attr('cx', x).attr('cy', nodeY)
+          .attr('r', isBook ? 4.5 : 3.5).attr('fill', color).attr('fill-opacity', 0.85)
+          .style('pointer-events', 'none');
+
+        // 레이블 — 세로로 꺾어서 표시 (rotate)
+        const label = n.id.length > 12 ? n.id.slice(0, 11) + '…' : n.id;
+        labelG.append('text')
+          .attr('x', x).attr('y', nodeY + 10)
+          .attr('text-anchor', 'start')
+          .attr('transform', `rotate(38, ${x}, ${nodeY + 10})`)
+          .attr('font-size', isBook ? 9.5 : 9)
+          .attr('font-style', isBook ? 'normal' : 'italic')
+          .attr('fill', isBook ? 'rgba(28,26,23,0.72)' : color)
+          .attr('fill-opacity', 0.8)
+          .style('pointer-events', 'none')
+          .text(label);
+      });
+
+      svg.attr('width', totalW);
+    }
+
+  }, [nodes, links, dims, isMobile]);
 
   if (!nodes.length) {
     return <EmptyState message={locale === 'ko'
@@ -1405,8 +2016,12 @@ const ArcTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
       : 'Log books and emotions to build the arc diagram.'} />;
   }
 
-  const bookCount = nodes.filter(n => n.type === 'book').length;
+  const bookCount   = nodes.filter(n => n.type === 'book').length;
   const emotionCount = nodes.filter(n => n.type === 'emotion').length;
+  const emotionNodes = nodes.filter(n => n.type === 'emotion');
+  const emotionColorMap = new Map<string, string>(
+    emotionNodes.map((n, i) => [n.id, EMOTION_COLORS[i % EMOTION_COLORS.length]])
+  );
 
   return (
     <div>
@@ -1416,37 +2031,39 @@ const ArcTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
         </h2>
         <p className="text-[12px] font-light mt-1" style={{ color: 'var(--color-butter-muted)', opacity: 0.6 }}>
           {locale === 'ko'
-            ? '호의 굵기는 연결 빈도를 나타냅니다. 같은 감정으로 자주 읽힌 책들이 두꺼운 호로 이어집니다.'
-            : 'Arc thickness shows connection frequency. Books frequently read with the same emotion are linked by thicker arcs.'}
+            ? '호의 굵기는 연결 빈도. 색상은 감정을 나타냅니다.'
+            : 'Arc thickness shows frequency. Colors represent distinct emotions.'}
         </p>
       </div>
 
       <div ref={containerRef}
-        style={{ background: '#ffffff', borderRadius: '3px', border: '1px solid rgba(107,82,0,0.08)', overflowX: 'auto' }}>
-        <svg ref={svgRef} width={width} height={100} style={{ display: 'block' }} />
+        style={{ background: 'var(--color-butter-surface)', borderRadius: '3px',
+          border: '1px solid var(--color-butter-rule)', overflowX: 'auto' }}>
+        <svg ref={svgRef} width={dims.w} height={dims.h} style={{ display: 'block' }} />
       </div>
 
-      <div className="flex items-center gap-6 mt-4 flex-wrap">
+      {/* 범례 */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4">
         <div className="flex items-center gap-2">
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#6b5200', opacity: 0.7 }} />
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: C.primary(), opacity: 0.8 }} />
           <span className="text-[11px] font-light" style={{ color: 'var(--color-butter-muted)', opacity: 0.7 }}>
             {locale === 'ko' ? `책 (${bookCount})` : `Books (${bookCount})`}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <div style={{ width: 5.5, height: 5.5, borderRadius: '50%', background: '#6b5200', opacity: 0.45 }} />
-          <span className="text-[11px] font-light" style={{ color: 'var(--color-butter-muted)', opacity: 0.7 }}>
-            {locale === 'ko' ? `감정 (${emotionCount})` : `Emotions (${emotionCount})`}
+        {emotionNodes.slice(0, 6).map((n, i) => (
+          <div key={n.id} className="flex items-center gap-1.5">
+            <div style={{ width: 6, height: 6, borderRadius: '50%',
+              background: EMOTION_COLORS[i % EMOTION_COLORS.length], opacity: 0.8 }} />
+            <span className="text-[10px] font-light" style={{ color: 'var(--color-butter-muted)', opacity: 0.65 }}>
+              {n.id}
+            </span>
+          </div>
+        ))}
+        {emotionCount > 6 && (
+          <span className="text-[10px]" style={{ color: 'var(--color-butter-muted)', opacity: 0.45 }}>
+            +{emotionCount - 6} more
           </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <svg width={30} height={10}>
-            <line x1={0} y1={5} x2={30} y2={5} stroke="#6b5200" strokeWidth={2} strokeOpacity={0.5} />
-          </svg>
-          <span className="text-[11px] font-light" style={{ color: 'var(--color-butter-muted)', opacity: 0.7 }}>
-            {locale === 'ko' ? '연결 (굵을수록 빈도 높음)' : 'Connection (thicker = more frequent)'}
-          </span>
-        </div>
+        )}
       </div>
     </div>
   );

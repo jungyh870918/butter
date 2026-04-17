@@ -4,15 +4,18 @@
 export interface Theme {
   id: string;
   label: string;
+  labelKo: string;
   emoji: string;
   vars: Record<string, string>;
 }
 
 export const THEMES: Theme[] = [
+  // ① THE ARCHIVIST — 현재 기본 (따뜻한 크림/버터)
   {
-    id: 'solarized',
-    label: 'Solarized',
-    emoji: '☀️',
+    id: 'archivist',
+    label: 'The Archivist',
+    labelKo: '아키비스트',
+    emoji: '📜',
     vars: {
       '--color-butter-bg':      '#faf8f4',
       '--color-butter-surface': '#f5f2eb',
@@ -24,24 +27,94 @@ export const THEMES: Theme[] = [
       '--color-butter-rule':    'rgba(0,0,0,0.06)',
     },
   },
+  // ② BOTANICAL — 아이보리 + 짙은 초록
   {
-    id: 'dracula',
-    label: 'Dracula Night',
-    emoji: '🌙',
+    id: 'botanical',
+    label: 'Botanical',
+    labelKo: '보태니컬',
+    emoji: '🌿',
     vars: {
-      '--color-butter-bg':      '#1e1b2e',
-      '--color-butter-surface': '#2a2640',
-      '--color-butter-primary': '#c4a882',
-      '--color-butter-text':    '#e8e4f0',
-      '--color-butter-muted':   '#a09abc',
-      '--color-butter-faint':   '#2f2b45',
-      '--color-butter-accent':  '#3d3659',
-      '--color-butter-rule':    'rgba(255,255,255,0.07)',
+      '--color-butter-bg':      '#f7f5ef',
+      '--color-butter-surface': '#eeeadf',
+      '--color-butter-primary': '#2d5a3d',
+      '--color-butter-text':    '#1a2e22',
+      '--color-butter-muted':   '#5a6b5e',
+      '--color-butter-faint':   '#e4e0d4',
+      '--color-butter-accent':  '#c8d9c4',
+      '--color-butter-rule':    'rgba(45,90,61,0.09)',
+    },
+  },
+  // ③ OCEANIC — 짙은 네이비 + 청록
+  {
+    id: 'oceanic',
+    label: 'Oceanic',
+    labelKo: '오셔닉',
+    emoji: '🌊',
+    vars: {
+      '--color-butter-bg':      '#0d1b2a',
+      '--color-butter-surface': '#142235',
+      '--color-butter-primary': '#4ab8c4',
+      '--color-butter-text':    '#d6eaf0',
+      '--color-butter-muted':   '#6d9aaa',
+      '--color-butter-faint':   '#1a2d3e',
+      '--color-butter-accent':  '#1e3448',
+      '--color-butter-rule':    'rgba(74,184,196,0.12)',
+    },
+  },
+  // ④ BRUTALIST — 흰 배경 + 강한 흑백
+  {
+    id: 'brutalist',
+    label: 'Brutalist',
+    labelKo: '브루탈리스트',
+    emoji: '🏗️',
+    vars: {
+      '--color-butter-bg':      '#ffffff',
+      '--color-butter-surface': '#f0f0f0',
+      '--color-butter-primary': '#111111',
+      '--color-butter-text':    '#0a0a0a',
+      '--color-butter-muted':   '#555555',
+      '--color-butter-faint':   '#e4e4e4',
+      '--color-butter-accent':  '#d0d0d0',
+      '--color-butter-rule':    'rgba(0,0,0,0.12)',
+    },
+  },
+  // ⑤ BLUEPRINT — 밝은 회색 + 파랑
+  {
+    id: 'blueprint',
+    label: 'Blueprint',
+    labelKo: '블루프린트',
+    emoji: '📐',
+    vars: {
+      '--color-butter-bg':      '#f2f4f7',
+      '--color-butter-surface': '#e6eaf0',
+      '--color-butter-primary': '#1a4fd6',
+      '--color-butter-text':    '#0d1b3e',
+      '--color-butter-muted':   '#4a6080',
+      '--color-butter-faint':   '#dce2ec',
+      '--color-butter-accent':  '#c4d0e8',
+      '--color-butter-rule':    'rgba(26,79,214,0.1)',
+    },
+  },
+  // ⑥ EMERALD — 다크 + 에메랄드 그린
+  {
+    id: 'emerald',
+    label: 'Emerald',
+    labelKo: '에메랄드',
+    emoji: '💎',
+    vars: {
+      '--color-butter-bg':      '#0f1a14',
+      '--color-butter-surface': '#172210',
+      '--color-butter-primary': '#2ecc8a',
+      '--color-butter-text':    '#d4ede0',
+      '--color-butter-muted':   '#6aaa88',
+      '--color-butter-faint':   '#1c2e1f',
+      '--color-butter-accent':  '#1e3525',
+      '--color-butter-rule':    'rgba(46,204,138,0.12)',
     },
   },
 ];
 
-export const DEFAULT_THEME_ID = 'solarized';
+export const DEFAULT_THEME_ID = 'archivist';
 
 // ── CSS 변수 적용 ───────────────────────────────────────────────────────────
 

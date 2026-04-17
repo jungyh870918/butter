@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-// 토큰은 더 이상 localStorage에 저장하지 않음 — httpOnly 쿠키로 관리
-const USER_KEY = 'butter-user';
+const TOKEN_KEY = 'butter-token';
+const USER_KEY  = 'butter-user';
 
 export interface AuthUser {
   id: string;
@@ -28,21 +28,39 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
+// ── 토큰 헬퍼 (localStorage 기반) ─────────────────────────────────────────
+export function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+function setToken(token: string) {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser]     = useState<AuthUser | null>(null);
+  const [user, setUser]       = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 앱 시작 시 — 쿠키 토큰으로 /me 검증
-  // localStorage의 user 캐시는 빠른 렌더용으로만 사용, 실제 인증은 서버에서 확인
+  // 앱 시작 시 — localStorage 토큰으로 /me 검증
   useEffect(() => {
     const cachedUser = localStorage.getItem(USER_KEY);
     if (cachedUser) {
       try { setUser(JSON.parse(cachedUser)); } catch { /* ignore */ }
     }
 
-    // 쿠키 토큰 서버 검증
+    const token = getToken();
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     fetch(`${API_BASE}/api/auth/me`, {
-      credentials: 'include', // 쿠키 전송
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
         if (!res.ok) throw new Error('not authenticated');
@@ -53,9 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(USER_KEY, JSON.stringify(serverUser));
       })
       .catch(() => {
-        // 쿠키가 없거나 만료됨
+        clearToken();
         setUser(null);
-        localStorage.removeItem(USER_KEY);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -64,7 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // 응답 쿠키 저장
       body: JSON.stringify({ username, password }),
     });
 
@@ -74,19 +90,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await res.json();
-    // 토큰은 쿠키에 저장됨 — user 정보만 캐시
+    // 서버가 token을 응답에 포함해서 돌려주면 저장
+    if (data.token) {
+      setToken(data.token);
+    }
     localStorage.setItem(USER_KEY, JSON.stringify(data.user));
     setUser(data.user);
   };
 
   const logout = () => {
-    // 서버에 로그아웃 요청 → 쿠키 삭제
-    fetch(`${API_BASE}/api/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    }).catch(() => { /* 조용히 실패 */ });
-
-    localStorage.removeItem(USER_KEY);
+    clearToken();
     setUser(null);
   };
 
@@ -96,4 +109,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
-

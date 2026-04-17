@@ -1,13 +1,16 @@
+import { getToken } from '../hooks/useAuth';
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   'http://localhost:4000';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getToken();
   const res = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    credentials: 'include', // httpOnly 쿠키 자동 전송
     ...options,
   });
   if (!res.ok) {
@@ -44,17 +47,12 @@ export const getBookReflections = (bookId: string) =>
 
 export const getReflections = (params?: { bookId?: string; limit?: number }) => {
   const qs = params
-    ? '?' +
-      new URLSearchParams(
-        Object.entries(params)
-          .filter(([, v]) => v !== undefined)
-          .map(([k, v]) => [k, String(v)]),
+    ? '?' + new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v != null) as string[][]
       ).toString()
     : '';
   return request<any[]>(`/api/reflections${qs}`);
 };
-
-export const getReflection = (id: string) => request<any>(`/api/reflections/${id}`);
 
 // ── BookShelf ──────────────────────────────────────────────────────────────
 
@@ -67,72 +65,63 @@ export const addToBookShelf = (payload: {
 export const removeFromBookShelf = (bookId: string) =>
   request<any>(`/api/bookshelf/${encodeURIComponent(bookId)}`, { method: 'DELETE' });
 
+// ── Journal ────────────────────────────────────────────────────────────────
+
 export const getJournalEntries = (params?: { bookId?: string }) => {
   const qs = params?.bookId ? `?bookId=${encodeURIComponent(params.bookId)}` : '';
   return request<any[]>(`/api/journal${qs}`);
 };
 
-export const getJournalEntry = (id: string) =>
-  request<any>(`/api/journal/${id}`);
+export const getJournalEntry = (id: string) => request<any>(`/api/journal/${id}`);
 
 export const createJournalEntry = (payload: {
   content: string;
-  prompt?: string | null;
-  mood?: string | null;
-  emotions?: string[];
+  prompt: string | null;
+  mood: string | null;
+  emotions: string[];
   intensity: number;
-  bookId?: string | null;
-  bookTitle?: string | null;
-  bookAuthor?: string | null;
-  bookCover?: string | null;
-  highlight?: string | null;
-  isPublic?: boolean;
+  bookId: string | null;
+  bookTitle: string | null;
+  bookAuthor: string | null;
+  bookCover: string | null;
+  highlight: string | null;
+  isPublic: boolean;
 }) => request<any>('/api/journal', { method: 'POST', body: JSON.stringify(payload) });
 
 export const updateJournalEntry = (
   id: string,
-  payload: Partial<{
+  payload: {
     content: string;
-    prompt: string;
     mood: string;
-    emotions: string[];
+    emotions?: string[];
     intensity: number;
-    bookId: string | null;
-    bookTitle: string | null;
-    bookAuthor: string | null;
-    bookCover: string | null;
-    highlight: string | null;
-    isPublic: boolean;
-  }>,
+    highlight?: string | null;
+    isPublic?: boolean;
+  },
 ) => request<any>(`/api/journal/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 
 export const deleteJournalEntry = (id: string) =>
   request<any>(`/api/journal/${id}`, { method: 'DELETE' });
-
-// ── Insights (GPT pipeline) ────────────────────────────────────────────────
-
-export const getUserProfile = () =>
-  request<any>('/api/insights/profile');
-
-export const refreshUserProfile = () =>
-  request<any>('/api/insights/profile', { method: 'POST' });
-
-export const getReflectionQuestions = (payload: {
-  bookTitle: string;
-  bookAuthor: string;
-  bookDescription?: string;
-  bookTags?: string[];
-}) => request<{
-  questions: string[];
-  questionsKo: string[];
-  meta: { profileUsed: boolean; readingVolumeLevel: string; sourceEntryCount: number };
-}>(
-  '/api/insights/questions',
-  { method: 'POST', body: JSON.stringify(payload) }
-);
 
 // ── Emotions ───────────────────────────────────────────────────────────────
 
 export const getEmotions = () => request<any[]>('/api/emotions');
 
 export const getEmotionSummary = () => request<any>('/api/emotions/summary');
+
+// ── Insights / Profile ────────────────────────────────────────────────────
+
+export const getUserProfile = () => request<any>('/api/insights/profile');
+
+// ── GPT Questions ─────────────────────────────────────────────────────────
+
+export const getReflectionQuestions = (params: {
+  bookId?: string;
+  bookTitle: string;
+  bookAuthor: string;
+  lang?: string;
+}) =>
+  request<any>('/api/insights/questions', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });

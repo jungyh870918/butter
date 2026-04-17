@@ -127,19 +127,38 @@ export const Explore = () => {
     <div className="min-h-screen bg-butter-bg">
 
       {/* ── Hero 헤더 ── */}
-      <div className="pt-24 pb-6 px-8 md:px-14 max-w-7xl mx-auto">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-butter-muted/70 font-medium mb-4">
+      <div className="pt-14 md:pt-32 pb-8 px-5 md:px-14 max-w-7xl mx-auto">
+        <p style={{ fontSize: '0.5rem', fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.5, marginBottom: '1.4rem' }}>
           {t('explore.label')}
         </p>
-        <h1 className="text-[1.6rem] md:text-[2.6rem] font-serif font-black leading-[1.1] tracking-tight mb-5">
-          {t('explore.title')}{' '}
-          <em style={{ fontStyle: 'italic', color: 'var(--color-butter-primary)', fontWeight: 700 }}>
-            {t('explore.title.em')}
-          </em>
-        </h1>
-        <p className="text-butter-muted leading-[1.75] max-w-md font-light text-[15px]">
-          {t('explore.subtitle')}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '2rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+          <h1 style={{ fontWeight: 700, fontSize: 'clamp(2.6rem, 6vw, 4.5rem)', lineHeight: 0.95, letterSpacing: '-0.03em', color: 'var(--color-butter-text)', margin: 0 }}>
+            {t('explore.title')} {t('explore.title.em')}
+          </h1>
+          <div style={{ textAlign: 'right', flexShrink: 0, paddingBottom: '0.2rem' }}>
+            <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.65, marginBottom: '0.3rem' }}>
+              {locale === 'ko' ? '검색 엔진 — 카카오 도서 API / Google Books' : 'Search Engine — Kakao Books API / Google Books'}
+            </p>
+            <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.6 }}>
+              {locale === 'ko'
+                ? `업데이트 — ${new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}`
+                : `UPDATED — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}`}
+            </p>
+          </div>
+        </div>
+        <div style={{ borderTop: '1px solid var(--color-butter-rule)', paddingTop: '1.75rem', display: 'flex', alignItems: 'flex-start', gap: '2rem', flexWrap: 'wrap' }}>
+          <p style={{ fontSize: '0.85rem', fontWeight: 300, lineHeight: 1.9, color: 'var(--color-butter-muted)', maxWidth: '28rem', margin: 0 }}>
+            {t('explore.subtitle')}
+          </p>
+          <div style={{ marginLeft: 'auto', textAlign: 'right', paddingTop: '0.1rem' }}>
+            <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.6, marginBottom: '0.3rem' }}>
+              REF. LIB-EXP
+            </p>
+            <p style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.5 }}>
+              {locale === 'ko' ? '소설 / 시선집 / 철학 / SF / 고전 / 에세이 外' : 'Fiction / Poetry / Philosophy / Sci-Fi / Classic / Essay +'}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* ── 검색 결과 배너 ── */}
