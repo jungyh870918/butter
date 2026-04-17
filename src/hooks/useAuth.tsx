@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+const API_BASE  = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
 const TOKEN_KEY = 'butter-token';
 const USER_KEY  = 'butter-user';
 
@@ -18,60 +18,80 @@ interface AuthContextValue {
 }
 
 export const AuthContext = createContext<AuthContextValue>({
-  user: null,
-  loading: true,
-  login: async () => {},
-  logout: () => {},
+  user: null, loading: true,
+  login: async () => {}, logout: () => {},
 });
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export function useAuth() { return useContext(AuthContext); }
 
-// ── 토큰 헬퍼 (localStorage 기반) ─────────────────────────────────────────
 export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  // 1순위: localStorage (로그인 후 저장된 Bearer 토큰)
+  const lsToken = localStorage.getItem(TOKEN_KEY);
+  if (lsToken) return lsToken;
+
+  // 2순위: 쿠키 fallback (httpOnly: false 설정된 경우 동작)
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)butter-token=([^;]+)/);
+    if (match) {
+      const cookieToken = decodeURIComponent(match[1]);
+      localStorage.setItem(TOKEN_KEY, cookieToken); // 다음부터 빠르게
+      return cookieToken;
+    }
+  } catch { /* ignore */ }
+
+  return null;
 }
 
 function setToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
 }
 
-function clearToken() {
+function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+}
+
+// ── 인증 헤더 헬퍼 ────────────────────────────────────────────────────────
+function authHeaders(): Record<string, string> {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser]       = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 앱 시작 시 — localStorage 토큰으로 /me 검증
   useEffect(() => {
+    // 캐시된 유저 정보로 빠른 렌더
     const cachedUser = localStorage.getItem(USER_KEY);
     if (cachedUser) {
       try { setUser(JSON.parse(cachedUser)); } catch { /* ignore */ }
     }
 
     const token = getToken();
+
+    // 토큰 없으면 비로그인 처리
     if (!token) {
+      setUser(null);
+      localStorage.removeItem(USER_KEY);
       setLoading(false);
       return;
     }
 
+    // 토큰 유효성 서버에서 검증
     fetch(`${API_BASE}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
     })
-      .then((res) => {
-        if (!res.ok) throw new Error('not authenticated');
-        return res.json();
-      })
+      .then(res => { if (!res.ok) throw new Error('invalid'); return res.json(); })
       .then(({ user: serverUser }) => {
         setUser(serverUser);
         localStorage.setItem(USER_KEY, JSON.stringify(serverUser));
       })
       .catch(() => {
-        clearToken();
+        clearAuth();
         setUser(null);
       })
       .finally(() => setLoading(false));
@@ -90,16 +110,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await res.json();
-    // 서버가 token을 응답에 포함해서 돌려주면 저장
+
+    // 서버가 token을 body에 포함하면 저장 (Bearer 방식)
     if (data.token) {
       setToken(data.token);
     }
+
     localStorage.setItem(USER_KEY, JSON.stringify(data.user));
     setUser(data.user);
   };
 
   const logout = () => {
-    clearToken();
+    // 서버에 로그아웃 (쿠키 삭제 — 하위 호환)
+    fetch(`${API_BASE}/api/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    }).catch(() => {});
+    clearAuth();
     setUser(null);
   };
 
