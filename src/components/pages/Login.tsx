@@ -59,6 +59,22 @@ const LoginInner = () => {
       className="min-h-screen flex flex-col items-center justify-center px-6"
       style={{ background: 'var(--color-butter-bg)' }}
     >
+      {/* 좌측 상단 — 홈으로 돌아가기 */}
+      <div className="fixed top-5 left-6">
+        <button
+          onClick={() => navigate('/')}
+          className="transition-all duration-200 hover:opacity-70"
+          style={{
+            fontSize: '11px', fontWeight: 500, letterSpacing: '0.1em',
+            color: 'var(--color-butter-muted)', background: 'none',
+            border: 'none', cursor: 'pointer', padding: 0,
+            display: 'flex', alignItems: 'center', gap: '0.35rem',
+          }}
+        >
+          ← {locale === 'ko' ? '둘러보기로' : 'Explore'}
+        </button>
+      </div>
+
       {/* 우측 상단 — 언어 + 테마 토글 */}
       <div className="fixed top-5 right-6 flex items-center gap-3">
         <button
@@ -84,8 +100,9 @@ const LoginInner = () => {
       {/* 로고 */}
       <div className="mb-12 text-center">
         <span
+          onClick={() => navigate('/')}
           className="font-serif font-bold italic tracking-tight"
-          style={{ fontSize: '2rem', color: 'var(--color-butter-text)' }}
+          style={{ fontSize: '2rem', color: 'var(--color-butter-text)', cursor: 'pointer' }}
         >
           Butter
         </span>
