@@ -38,7 +38,6 @@ export function useJournal(bookId?: string) {
     bookTitle?: string | null;
     bookAuthor?: string | null;
     bookCover?: string | null;
-    isPublic?: boolean;
   }): Promise<{ id: string }> => {
     const entry = await createJournalEntry({
       content: payload.content,
@@ -51,7 +50,9 @@ export function useJournal(bookId?: string) {
       bookAuthor: payload.bookAuthor ?? null,
       bookCover: payload.bookCover ?? null,
       highlight: payload.highlight ?? null,
-      isPublic: payload.isPublic ?? true,
+      // ⚠️ 커뮤니티 노출을 제거했으므로 항상 비공개.
+      //    Prisma 스키마 기본값이 true 라 생략하면 공개글(Reflection)이 계속 생성된다.
+      isPublic: false,
     });
 
     // 로컬 상태에 즉시 추가
@@ -68,10 +69,9 @@ export function useJournal(bookId?: string) {
       emotions?: string[];
       intensity: number;
       highlight?: string | null;
-      isPublic?: boolean;
     },
   ) => {
-    await updateJournalEntry(id, payload);
+    await updateJournalEntry(id, { ...payload, isPublic: false });
     setEntries((prev) =>
       prev.map((e) => (e.id === id ? { ...e, ...payload } : e)),
     );

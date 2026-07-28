@@ -37,16 +37,16 @@ export const Support = () => {
         <P>
           <strong>Q. 내가 쓴 기록을 다른 사람이 볼 수 있나요?</strong>
           <br />
-          아니요. Butter에는 피드·팔로우가 없고, 작성한 기록을 공개하는 기능도 없습니다.
-          기록은 본인만 볼 수 있습니다. (책 소개를 링크로 공유하는 기능은 있지만,
+          아니요. Butter에는 피드·팔로우·좋아요가 없고, 기록을 공개하는 수단 자체가 없습니다.
+          작성한 기록은 본인만 볼 수 있습니다. (책 소개를 링크로 공유하는 기능은 있지만,
           그 링크에는 책 정보만 담기고 회원님의 기록은 포함되지 않습니다.)
         </P>
         <Sub>
           <strong>Q. Can anyone else see my entries?</strong>
           <br />
-          No. Butter has no feed or followers, and no way to publish your entries — they are
-          visible only to you. (You can share a link to a book's info page, but that link
-          contains book details only, never your writing.)
+          No. Butter has no feed, followers, or likes, and there is no way to publish an
+          entry — your writing is visible only to you. (You can share a link to a book's
+          info page, but that link contains book details only, never your writing.)
         </Sub>
 
         <P>

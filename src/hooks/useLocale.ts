@@ -83,8 +83,6 @@ const translations = {
   'book.author_note': { en: "Author's Note", ko: '저자 한마디' },
   'book.historical': { en: 'Historical Context', ko: '배경 정보' },
   'book.about': { en: 'About the Author', ko: '저자 소개' },
-  'book.reflections': { en: 'Reader Notes', ko: '독자 감상' },
-  'book.no_reflections': { en: 'No notes for this book yet', ko: '아직 이 책에 남긴 감상이 없습니다.' },
   'book.collection': { en: 'More Like This', ko: '비슷한 책' },
   'book.back': { en: 'Explore', ko: '둘러보기로' },
 
