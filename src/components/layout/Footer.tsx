@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useLocale } from '../../hooks/useLocale';
+import { SUPPORT_EMAIL } from '../legal/LegalPage';
 
 export const Footer = () => {
   const { t } = useLocale();
@@ -39,6 +40,13 @@ export const Footer = () => {
                 {label}
               </span>
             ))}
+            <a
+              href={`mailto:${SUPPORT_EMAIL}`}
+              className="transition-colors duration-200 hover:text-butter-text"
+              style={{ fontSize: '12px', letterSpacing: '0.03em', color: 'var(--color-butter-muted)' }}
+            >
+              {t('footer.contact')}
+            </a>
             {FOOTER_LINKS.map((link) => (
               <Link
                 key={link.to}
