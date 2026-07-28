@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Butter 브랜드 컬러 (src/index.css 의 archivist 테마와 일치) -->
+    <color name="colorPrimary">#6b5200</color>
+    <color name="colorPrimaryDark">#4d3b00</color>
+    <color name="colorAccent">#6b5200</color>
+
+    <!-- Android 12+ 스플래시 배경. 단색만 허용됨 -->
+    <color name="splash_background">#faf8f4</color>
+</resources>

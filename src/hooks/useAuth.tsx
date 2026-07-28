@@ -15,11 +15,13 @@ interface AuthContextValue {
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
+  deleteAccount: (password: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue>({
   user: null, loading: true,
   login: async () => {}, logout: () => {},
+  deleteAccount: async () => {},
 });
 
 export function useAuth() { return useContext(AuthContext); }
@@ -130,8 +132,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  /**
+   * 계정 영구 삭제. ⚠️ 되돌릴 수 없음.
+   * 서버가 비밀번호를 재확인하고, 성공하면 로컬 세션도 정리한다.
+   */
+  const deleteAccount = async (password: string) => {
+    const res = await fetch(`${API_BASE}/api/auth/me`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ password }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message ?? 'Failed to delete account');
+    }
+
+    // 계정이 사라졌으므로 로컬에 남은 토큰·캐시도 전부 제거
+    clearAuth();
+    setUser(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

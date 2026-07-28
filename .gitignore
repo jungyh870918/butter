@@ -6,3 +6,30 @@ coverage/
 *.log
 .env*
 !.env.example
+# 모바일 빌드용 API 주소 — 비밀값이 아니라 빌드 설정이므로 커밋
+!.env.mobile
+
+# ── 서명 관련 (⚠️ 절대 커밋 금지 — 유출 시 앱 위조 가능) ──────────────
+*.keystore
+*.jks
+keystore.properties
+*.p12
+*.mobileprovision
+*.cer
+
+# ── Capacitor / 네이티브 빌드 산출물 ──────────────────────────────────
+android/app/src/main/assets/public/
+android/app/src/main/res/xml/config.xml
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/app/release/
+ios/App/App/public/
+ios/App/Pods/
+ios/App/build/
+ios/App/output/
+ios/DerivedData/
+*.xcuserdatad
+xcuserdata/

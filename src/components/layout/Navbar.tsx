@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Search, X } from 'lucide-react';
+import { Search, X, Settings as SettingsIcon } from 'lucide-react';
 import { useTheme, THEMES } from '../../hooks/useTheme';
 import { useLocale } from '../../hooks/useLocale';
 import { useAuth } from '../../hooks/useAuth';
@@ -134,7 +134,10 @@ export const Navbar = () => {
       {/* ── 데스크탑 ── */}
       <nav
         className="hidden md:flex fixed top-0 left-0 right-0 z-50 bg-butter-bg/95 backdrop-blur-sm px-8 md:px-14 py-4 items-center gap-10"
-        style={{ boxShadow: '0 1px 0 var(--color-butter-rule)' }}
+        style={{
+          boxShadow: '0 1px 0 var(--color-butter-rule)',
+          paddingTop: 'calc(1rem + var(--safe-top))',
+        }}
       >
         <div className="flex items-center cursor-pointer shrink-0" onClick={() => navigate('/')}>
           <span className="font-serif text-[1.15rem] font-bold italic tracking-tight text-butter-text">Butter</span>
@@ -215,9 +218,15 @@ export const Navbar = () => {
           {/* 유저 + 로그아웃 / 로그인 */}
           {user ? (
             <div className="flex items-center gap-3">
-              <span className="text-[11px] font-medium" style={{ color: 'var(--color-butter-muted)', opacity: 0.7 }}>
+              {/* 계정 설정 — 계정 삭제 진입점 (스토어 정책상 앱 내 경로 필요) */}
+              <NavLink
+                to="/settings"
+                title={t('nav.settings')}
+                className="text-[11px] font-medium transition-opacity hover:opacity-100"
+                style={{ color: 'var(--color-butter-muted)', opacity: 0.7, textDecoration: 'none' }}
+              >
                 {user.username}
-              </span>
+              </NavLink>
               <button
                 onClick={handleLogout}
                 className="transition-opacity hover:opacity-100"
@@ -250,7 +259,11 @@ export const Navbar = () => {
       {/* ── 모바일 상단 ── */}
       <div
         className="md:hidden fixed top-0 left-0 right-0 z-50 bg-butter-bg/95 backdrop-blur-sm"
-        style={{ boxShadow: '0 1px 0 var(--color-butter-rule)' }}
+        style={{
+          boxShadow: '0 1px 0 var(--color-butter-rule)',
+          // 노치·상태바 아래로 헤더를 밀어냄
+          paddingTop: 'var(--safe-top)',
+        }}
       >
         {/* 기본 헤더 */}
         <div className="px-5 py-3.5 flex justify-between items-center">
@@ -276,16 +289,26 @@ export const Navbar = () => {
               <Search size={16} />
             </button>
             {user ? (
-              <button
-                onClick={handleLogout}
-                style={{
-                  fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em',
-                  color: 'var(--color-butter-muted)', opacity: 0.5,
-                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                }}
-              >
-                {locale === 'ko' ? '로그아웃' : 'Sign out'}
-              </button>
+              <>
+                {/* 계정 설정 — 계정 삭제 진입점 */}
+                <NavLink
+                  to="/settings"
+                  title={t('nav.settings')}
+                  className="text-butter-muted hover:text-butter-text transition-colors"
+                >
+                  <SettingsIcon size={15} />
+                </NavLink>
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em',
+                    color: 'var(--color-butter-muted)', opacity: 0.5,
+                    background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                  }}
+                >
+                  {locale === 'ko' ? '로그아웃' : 'Sign out'}
+                </button>
+              </>
             ) : (
               <button
                 onClick={() => navigate('/login')}
@@ -339,7 +362,11 @@ export const Navbar = () => {
       {/* ── 모바일 하단 탭 ── */}
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-butter-bg/97 backdrop-blur-sm"
-        style={{ boxShadow: '0 -1px 0 var(--color-butter-rule)' }}
+        style={{
+          boxShadow: '0 -1px 0 var(--color-butter-rule)',
+          // 홈 인디케이터 영역만큼 탭바 아래 여백 (안드로이드는 34px로 클램프됨)
+          paddingBottom: 'var(--safe-bottom)',
+        }}
       >
         <div className="flex justify-around items-center py-2 px-2">
           {NAV_ITEMS.map((item) => (

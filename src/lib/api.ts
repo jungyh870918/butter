@@ -19,6 +19,18 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+// ── Account ────────────────────────────────────────────────────────────────
+
+/**
+ * 계정 및 모든 관련 데이터 영구 삭제. ⚠️ 되돌릴 수 없음.
+ * 서버가 비밀번호를 재확인한다.
+ */
+export const deleteAccount = (password: string) =>
+  request<{ message: string }>('/api/auth/me', {
+    method: 'DELETE',
+    body: JSON.stringify({ password }),
+  });
+
 // ── Books ──────────────────────────────────────────────────────────────────
 
 export const getBooks = (params?: { tag?: string; search?: string; lang?: string; offset?: number }) => {
@@ -39,20 +51,6 @@ export const getBook = (id: string) => request<any>(`/api/books/${id}`);
 export const getBookEnrich = (id: string, title: string, author: string) =>
   request<any>(`/api/books/${id}/enrich?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}`);
 
-
-export const getBookReflections = (bookId: string) =>
-  request<any[]>(`/api/books/${bookId}/reflections`);
-
-// ── Reflections ────────────────────────────────────────────────────────────
-
-export const getReflections = (params?: { bookId?: string; limit?: number }) => {
-  const qs = params
-    ? '?' + new URLSearchParams(
-        Object.entries(params).filter(([, v]) => v != null) as string[][]
-      ).toString()
-    : '';
-  return request<any[]>(`/api/reflections${qs}`);
-};
 
 // ── BookShelf ──────────────────────────────────────────────────────────────
 

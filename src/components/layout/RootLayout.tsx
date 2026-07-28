@@ -31,8 +31,12 @@ export const RootLayout = () => {
       <div className="min-h-screen flex flex-col">
         <Navbar />
 
-        {/* 모바일: 상단바 + 하단탭바 여백, 데스크탑: 상단바 여백만 */}
-        <main className="flex-1 pb-20 md:pb-0">
+        {/*
+          모바일: 상단바 + 하단탭바 여백, 데스크탑: 상단바 여백만.
+          고정 헤더/탭바가 안전영역만큼 두꺼워지므로 본문 여백도 같이 늘린다.
+          (각 페이지의 pt-20 은 헤더 기본 높이만 가정하므로, 노치 높이는 여기서 더해줌)
+        */}
+        <main className="flex-1 pt-[var(--safe-top)] pb-[calc(5rem+var(--safe-bottom))] md:pb-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

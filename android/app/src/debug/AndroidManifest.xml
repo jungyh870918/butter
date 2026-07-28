@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  debug 빌드 전용 오버레이 — release 빌드에는 절대 병합되지 않는다.
+
+  로컬 백엔드(에뮬레이터에서 호스트는 10.0.2.2)를 http 로 붙기 위한 예외.
+  운영 빌드는 여전히 https 만 허용한다.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application
+        android:networkSecurityConfig="@xml/network_security_config_debug" />
+</manifest>

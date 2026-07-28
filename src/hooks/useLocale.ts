@@ -18,11 +18,9 @@ const translations = {
   'nav.search.placeholder': { en: 'Search the library…', ko: '책 검색…' },
 
   // ── Footer ──
-  'footer.manifesto': { en: 'The Manifesto', ko: '선언문' },
-  'footer.archive': { en: 'Library Archive', ko: '도서관 기록 보관함' },
-  'footer.ethics': { en: 'Journaling Ethics', ko: '기록 윤리' },
   'footer.privacy': { en: 'Privacy', ko: '개인정보' },
   'footer.contact': { en: 'Contact', ko: '문의' },
+  'footer.deletion': { en: 'Delete Account', ko: '계정 삭제' },
   'footer.tagline': { en: 'For readers who like to think while they read.', ko: '읽으면서 생각하는 사람들을 위해.' },
   'footer.quiet': { en: 'A quiet place on the internet.', ko: '인터넷 속 조용한 공간.' },
 
@@ -51,22 +49,22 @@ const translations = {
   'explore.didyouknow': { en: 'Did you know?', ko: '알고 계셨나요?' },
 
   // ── Home ──
-  'home.label': { en: 'Community', ko: '커뮤니티' },
-  'home.title': { en: 'What people are', ko: '지금 쓰이고' },
-  'home.title.em': { en: 'writing', ko: '있는 것들' },
-  'home.subtitle': { en: 'Notes, reactions, and passing thoughts from readers in the community.', ko: '독자들이 남긴 감상과 짧은 기록들.' },
+  'home.label': { en: 'Your Journal', ko: '내 기록' },
+  'home.title': { en: 'What you have', ko: '내가 쓴' },
+  'home.title.em': { en: 'been writing', ko: '기록들' },
+  'home.subtitle': { en: 'Your reading notes, kept private — only you can see them.', ko: '나만 볼 수 있는 독서 기록입니다.' },
+  'home.tagline': { en: 'Your reflections · passing notes · book-based entries', ko: '내 감상 · 짧은 메모 · 책 기반 기록' },
+  'home.ref': { en: 'REF. MY-JOURNAL', ko: 'REF. MY-JOURNAL' },
   'home.empty': { en: 'Nothing written yet', ko: '아직 남긴 기록이 없습니다.' },
-  'home.from': { en: 'from', ko: '' },
+  'home.write': { en: 'Write your first entry', ko: '첫 기록 남기기' },
+  'home.signin': { en: 'Sign in to see your journal', ko: '로그인하면 내 기록을 볼 수 있습니다.' },
+  'home.signin.cta': { en: 'Sign in', ko: '로그인하기' },
 
   // ── BookDetail ──
   'book.start': { en: 'Start Reading', ko: '읽기 시작' },
   'book.add': { en: 'Add to Library', ko: '서재에 추가' },
   'book.write': { en: 'Add your thoughts', ko: '감상 남기기' },
   'book.save': { en: 'Save', ko: '보관하기' },
-  'book.share': { en: 'Share', ko: '공유하기' },
-  'book.share.link': { en: 'Share link', ko: '링크 공유' },
-  'book.copy': { en: 'Copy', ko: '복사' },
-  'book.copied': { en: 'Done', ko: '완료' },
   'book.readmore': { en: 'Read more', ko: '더 보기' },
   'book.readless': { en: 'Show less', ko: '접기' },
   'book.published': { en: 'Published', ko: '출판' },
@@ -77,8 +75,6 @@ const translations = {
   'book.author_note': { en: "Author's Note", ko: '저자 한마디' },
   'book.historical': { en: 'Historical Context', ko: '배경 정보' },
   'book.about': { en: 'About the Author', ko: '저자 소개' },
-  'book.reflections': { en: 'Reader Notes', ko: '독자 감상' },
-  'book.no_reflections': { en: 'No notes for this book yet', ko: '아직 이 책에 남긴 감상이 없습니다.' },
   'book.collection': { en: 'More Like This', ko: '비슷한 책' },
   'book.back': { en: 'Explore', ko: '둘러보기로' },
 
@@ -202,6 +198,37 @@ const translations = {
   '404.back': { en: 'Back to Home', ko: '홈으로' },
 
   // ── Common ──
+  // ── Settings / 계정 ──
+  'nav.settings': { en: 'Settings', ko: '설정' },
+  'settings.label': { en: 'Your Account', ko: '내 계정' },
+  'settings.title': { en: 'Settings', ko: '설정' },
+  'settings.account': { en: 'Account', ko: '계정' },
+  'settings.username': { en: 'Username', ko: '아이디' },
+  'settings.signout': { en: 'Sign out', ko: '로그아웃' },
+  'settings.danger': { en: 'Danger Zone', ko: '위험 구역' },
+  'settings.delete.title': { en: 'Delete account', ko: '계정 삭제' },
+  'settings.delete.desc': {
+    en: 'Permanently deletes your account and everything in it — journal entries, emotion logs, and your bookshelf. This cannot be undone.',
+    ko: '계정과 그 안의 모든 것을 영구히 삭제합니다 — 저널 기록, 감정 로그, 책장까지. 되돌릴 수 없습니다.',
+  },
+  'settings.delete.button': { en: 'Delete my account', ko: '내 계정 삭제하기' },
+  'settings.delete.confirm.title': { en: 'This cannot be undone', ko: '되돌릴 수 없습니다' },
+  'settings.delete.confirm.desc': {
+    en: 'Enter your password to permanently delete your account and all of your data.',
+    ko: '계정과 모든 데이터를 영구 삭제하려면 비밀번호를 입력하세요.',
+  },
+  'settings.delete.password': { en: 'Password', ko: '비밀번호' },
+  'settings.delete.confirm': { en: 'Permanently delete', ko: '영구 삭제' },
+  'settings.delete.cancel': { en: 'Cancel', ko: '취소' },
+  'settings.delete.deleting': { en: 'Deleting…', ko: '삭제 중…' },
+  'settings.delete.done': { en: 'Your account has been deleted.', ko: '계정이 삭제되었습니다.' },
+  'settings.delete.what': { en: 'What gets deleted', ko: '삭제되는 항목' },
+  'settings.delete.item.account': { en: 'Account and login details', ko: '계정 및 로그인 정보' },
+  'settings.delete.item.journal': { en: 'All journal entries', ko: '모든 저널 기록' },
+  'settings.delete.item.emotions': { en: 'All emotion logs', ko: '모든 감정 기록' },
+  'settings.delete.item.shelf': { en: 'Your bookshelf', ko: '내 책장' },
+  'settings.delete.item.profile': { en: 'Your generated reading profile', ko: '생성된 독서 프로파일' },
+
   'common.something_wrong': { en: 'Something went wrong', ko: '오류가 발생했습니다' },
   'common.error': { en: 'error', ko: '오류' },
   'common.by': { en: 'by', ko: '저자' },

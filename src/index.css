@@ -13,12 +13,43 @@
   --color-butter-rule: rgba(0,0,0,0.06);
 }
 
+/* ── 안전 영역(노치·홈 인디케이터) ────────────────────────────────────────
+   ⚠️ 안드로이드에서 env(safe-area-inset-bottom)이 과도하게 잡혀
+   탭바 아래가 뜨는 문제가 있어 상한을 클램프한다. (배포 플레이북 10번) */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: min(env(safe-area-inset-bottom, 0px), 34px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
 @layer base {
   body {
     @apply bg-butter-bg text-butter-text font-sans antialiased;
     font-feature-settings: "kern" 1, "liga" 1;
     transition: background-color 0.3s ease, color 0.3s ease;
     word-break: keep-all; /* 한글 단어 중간 줄바꿈 방지 */
+
+    /* 노치 뒤로 배경색이 이어지도록 */
+    background-color: var(--color-butter-bg);
+    /* WebView 바운스 스크롤 시 흰 띠 방지 */
+    overscroll-behavior-y: none;
+  }
+
+  /* 네이티브 앱에서 길게 눌러 텍스트 선택·확대되는 것 방지.
+     입력 필드와 본문 텍스트는 예외로 둔다. */
+  .capacitor-native body {
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .capacitor-native input,
+  .capacitor-native textarea,
+  .capacitor-native [contenteditable="true"],
+  .capacitor-native p,
+  .capacitor-native blockquote {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   h1, h2, h3, h4, h5, h6 {
