@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 배경은 inset 없이 풀블리드. inset 을 주면 런처의 확대/패럴랙스 효과에서
-         가장자리 투명 영역이 드러날 수 있음. -->
-    <background android:drawable="@mipmap/ic_launcher_background" />
+    <background>
+        <!-- ⚠️ inset 없음(풀블리드). npm run assets 가 이 파일을 덮어쓰며
+             inset 16.7% 를 다시 넣으므로, 재생성할 때마다 여기를 확인할 것.
+             배경에 inset 이 들어가면 런처 아이콘 가장자리에 흰 테가 생긴다. -->
+        <inset android:drawable="@mipmap/ic_launcher_background" android:inset="0%" />
+    </background>
     <foreground>
         <inset android:drawable="@mipmap/ic_launcher_foreground" android:inset="16.7%" />
     </foreground>

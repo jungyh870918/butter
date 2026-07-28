@@ -16,7 +16,8 @@ ASSETS = os.path.join(ROOT, "assets")
 STORE = os.path.join(ROOT, "store-assets")
 
 # ── 브랜드 컬러 (src/index.css 의 archivist 테마와 일치) ──────────────────
-CREAM = (250, 248, 244)       # --color-butter-bg   #faf8f4
+CREAM = (250, 248, 244)       # 아이콘 글자·배너 텍스트용 (브랜드 크림)
+WHITE = (255, 255, 255)       # 스플래시 배경 — 기본 테마(브루탈리스트)와 맞춤
 PRIMARY = (107, 82, 0)        # --color-butter-primary #6b5200
 GOLD_TOP = (125, 95, 0)       # 아이콘 배경 그라디언트 상단
 GOLD_BOTTOM = (92, 70, 0)     # 아이콘 배경 그라디언트 하단
@@ -75,8 +76,13 @@ def make_icon_foreground(size=1024):
 
 # ── 3) 스플래시 (iOS / Android 11 이하) ──────────────────────────────────
 def make_splash(size=2732):
-    """크림 배경 + 중앙 워드마크. 어느 방향으로 잘려도 중앙은 살아남는 정사각."""
-    img = Image.new("RGB", (size, size), CREAM)
+    """흰 배경 + 중앙 워드마크. 어느 방향으로 잘려도 중앙은 살아남는 정사각.
+
+    ⚠️ 배경은 기본 테마(브루탈리스트 #ffffff)와 맞춘다. 스플래시가 크림이면
+       앱이 뜨는 순간 배경색이 바뀌어 깜빡이는 것처럼 보인다.
+       워드마크의 골드는 브랜드 식별자라 테마와 무관하게 유지.
+    """
+    img = Image.new("RGB", (size, size), WHITE)
     fnt = font(SERIF_BOLD_ITALIC, int(size * 0.085))
     draw_centered(img, "Butter", fnt, PRIMARY)
     return img

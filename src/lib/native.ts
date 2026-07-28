@@ -44,7 +44,7 @@ async function syncStatusBarToTheme() {
     const bg =
       getComputedStyle(document.documentElement)
         .getPropertyValue('--color-butter-bg')
-        .trim() || '#faf8f4';
+        .trim() || '#ffffff';
 
     // Butter 테마는 전부 밝은 배경 → 상태바 글자는 어둡게(Style.Light)
     await StatusBar.setStyle({ style: Style.Light });

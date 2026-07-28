@@ -6,5 +6,5 @@
     <color name="colorAccent">#6b5200</color>
 
     <!-- Android 12+ 스플래시 배경. 단색만 허용됨 -->
-    <color name="splash_background">#faf8f4</color>
+    <color name="splash_background">#ffffff</color>
 </resources>

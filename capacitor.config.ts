@@ -10,7 +10,7 @@ const config: CapacitorConfig = {
     SplashScreen: {
       // 웹 앱이 실제로 그려진 뒤 코드에서 hide() 하므로 자동 숨김은 끔.
       launchAutoHide: false,
-      backgroundColor: '#faf8f4',
+      backgroundColor: '#ffffff',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,
       // Android 12+ 는 OS 스플래시(values-v31/styles.xml)가 우선함
@@ -18,9 +18,9 @@ const config: CapacitorConfig = {
       splashImmersive: false,
     },
     StatusBar: {
-      // 밝은 크림 배경이므로 상태바 글자는 어둡게
+      // 밝은 배경이므로 상태바 글자는 어둡게
       style: 'LIGHT',
-      backgroundColor: '#faf8f4',
+      backgroundColor: '#ffffff',
       overlaysWebView: false,
     },
     Keyboard: {

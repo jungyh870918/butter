@@ -182,9 +182,16 @@ Organizer → **Distribute App ▸ App Store Connect ▸ Upload**
 ### 스플래시 / 아이콘
 - 원본은 [scripts/make-assets.py](scripts/make-assets.py) 가 생성 (Georgia Italic "B" + 골드 그라디언트)
 - **Android 12+**: [values-v31/styles.xml](android/app/src/main/res/values-v31/styles.xml) —
-  단색 배경(`#faf8f4`) + 중앙 원형 아이콘. 캔버스 1152 중 **가운데 원만 보이므로 심볼 "B" 만** 사용
+  단색 배경(`#ffffff`) + 중앙 원형 아이콘. 캔버스 1152 중 **가운데 원만 보이므로 심볼 "B" 만** 사용
   (워드마크 "Butter" 를 넣으면 양끝이 잘림). iOS 스플래시는 워드마크라 **완전히 동일하지 않음 — OS 제약**
 - **Play 아이콘 512** 는 [store-assets/play-icon-512.png](store-assets/play-icon-512.png) — 알파 없음, 풀블리드
+
+⚠️ **스플래시 배경은 흰색(`#ffffff`)** — 기본 테마(브루탈리스트)와 맞춘 값이다.
+크림으로 되돌리면 앱이 뜨는 순간 배경색이 바뀌어 깜빡이는 것처럼 보인다.
+색을 바꾸려면 네 곳을 함께 고칠 것:
+`scripts/make-assets.py`(WHITE) · `package.json`의 `assets` 스크립트 ·
+`capacitor.config.ts` · `values/colors.xml`(splash_background).
+워드마크·아이콘의 골드는 테마와 무관한 브랜드 식별자라 유지한다.
 
 ⚠️ `npm run assets` 는 `mipmap-anydpi-v26/ic_launcher*.xml` 을 **덮어쓴다.**
 배경 레이어의 `inset 16.7%` 를 제거해둔 상태이므로, 재생성 후 아래로 되돌아갔는지 확인:

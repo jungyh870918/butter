@@ -16,7 +16,7 @@
     "sync:android": "npm run build:mobile && cap sync android",
     "open:ios": "cap open ios",
     "open:android": "cap open android",
-    "assets": "capacitor-assets generate --ios --android --iconBackgroundColor '#faf8f4' --iconBackgroundColorDark '#faf8f4' --splashBackgroundColor '#faf8f4' --splashBackgroundColorDark '#faf8f4'",
+    "assets": "capacitor-assets generate --ios --android --iconBackgroundColor '#faf8f4' --iconBackgroundColorDark '#faf8f4' --splashBackgroundColor '#ffffff' --splashBackgroundColorDark '#ffffff'",
     "build:android:aab": "npm run sync:android && cd android && ./gradlew clean && ./gradlew bundleRelease"
   },
   "dependencies": {
