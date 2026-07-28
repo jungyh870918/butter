@@ -21,12 +21,15 @@ SRC = os.path.join(ROOT, "scripts", "screenshot-src")
 OUT_A = os.path.join(ROOT, "store-assets", "screenshots", "android")
 OUT_I = os.path.join(ROOT, "store-assets", "screenshots", "ios-6.9")
 
-# ── 브랜드 컬러 ───────────────────────────────────────────────────────────
-CREAM = (250, 248, 244)
-SURFACE = (245, 242, 235)
-PRIMARY = (107, 82, 0)
-TEXT = (28, 26, 23)
-MUTED = (94, 87, 79)
+# ── 캔버스 팔레트 ─────────────────────────────────────────────────────────
+# 기본 테마(브루탈리스트 = 흰 배경)에 맞춘 중립 톤.
+# ⚠️ 캔버스를 순백으로 하면 흰 기기 화면이 배경에 묻혀 경계가 사라진다.
+#    그래서 배경은 살짝 어두운 회색으로 두고 기기를 흰색으로 띄운다.
+CREAM = (243, 243, 243)     # 캔버스 상단
+SURFACE = (232, 232, 232)   # 캔버스 하단
+PRIMARY = (17, 17, 17)      # 강조 (인용부호·감정칩)
+TEXT = (10, 10, 10)
+MUTED = (85, 85, 85)
 
 KR_BOLD = "/System/Library/Fonts/AppleSDGothicNeo.ttc"
 KR_SERIF = "/System/Library/Fonts/Supplemental/AppleMyungjo.ttf"
