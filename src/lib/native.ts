@@ -12,6 +12,20 @@ export const isNative = Capacitor.isNativePlatform();
 export const platform = Capacitor.getPlatform(); // 'ios' | 'android' | 'web'
 
 /**
+ * 공유용 공개 링크의 베이스 주소.
+ *
+ * ⚠️ 네이티브에서 window.location.origin 은 WebView 내부 주소다
+ *    (Android `https://localhost`, iOS `capacitor://localhost`).
+ *    그대로 공유하면 받은 사람이 열 수 없으므로 공개 웹 주소를 써야 한다.
+ *    웹에서는 현재 origin 이 곧 공개 주소라 그대로 쓴다.
+ */
+export function publicBaseUrl(): string {
+  const configured = import.meta.env.VITE_PUBLIC_WEB_URL;
+  if (isNative && configured) return configured.replace(/\/$/, '');
+  return window.location.origin;
+}
+
+/**
  * 외부 URL 열기.
  * ⚠️ WebView 안에서 window.open 은 무시되거나 빈 창이 뜨는 경우가 있어
  *    네이티브에서는 in-app browser 로 연다. (플레이북 10번 항목)

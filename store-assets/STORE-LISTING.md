@@ -1,8 +1,10 @@
 # Butter — 스토어 등록 문구
 
 > 그대로 복사해서 Play Console / App Store Connect 에 붙여넣으면 되도록 정리했다.
-> ⚠️ 앱에 **커뮤니티·공유 기능이 없다.** 문구에 "공유", "다른 독자와" 같은 표현을 넣으면
-> 실제 기능과 달라 심사에서 문제가 되므로 쓰지 말 것.
+> ⚠️ 앱에 **커뮤니티가 없다** — 피드·팔로우·좋아요·댓글이 없고, 쓴 기록을 공개할 수 없다.
+> "다른 독자와 감상을 나눠보세요" 같은 표현은 실제 기능과 달라 쓰지 말 것.
+> 단, **책 소개를 링크로 공유하는 기능은 있다**(`/share/:bookId` — 책 정보만, 기록은 미포함).
+> "공유"를 아예 없는 것처럼 쓰면 그것도 부정확하므로 주의.
 
 ---
 
@@ -74,8 +76,8 @@ Butter에는 피드도, 팔로우도, 좋아요도 없습니다.
 쓴 기록은 다른 사람에게 보이지 않습니다. 눈치 보지 않고 솔직하게 쓰기 위한 앱입니다.
 
 ■ 읽기 좋은 화면
-종이책 같은 크림색 배경과 세리프 서체. 취향에 맞는 테마를 고를 수 있고,
-한국어와 영어를 오갈 수 있습니다.
+글이 주인공이 되도록 덜어낸 화면과 세리프 서체. 크림·초록·다크 등
+여섯 가지 테마를 고를 수 있고, 한국어와 영어를 오갈 수 있습니다.
 
 ---
 
@@ -174,8 +176,10 @@ There is no separate sign-up step and we do not collect email addresses.
 Entering any username and password on the login screen creates that account.
 
 ■ No social features
-Butter has no feed, followers, likes, comments, or sharing. Nothing a user
-writes is visible to anyone else. All entries are private to their author.
+Butter has no feed, followers, likes, or comments, and there is no way to
+publish an entry. All entries are private to their author.
+The only sharing feature is a link to a book's info page (title, author, cover,
+description) — it never contains any user's writing.
 
 ■ Account deletion
 In the app: Settings (gear icon in the header) → Delete account → confirm
@@ -259,8 +263,8 @@ No feed, no followers, no likes. Nothing you write is visible to anyone else —
 so you can write honestly.
 
 ■ Made for reading
-A cream, paper-like interface with serif type, selectable themes, and Korean or
-English.
+A pared-back interface with serif type that puts your words first. Six themes to
+choose from, in Korean or English.
 
 ---
 

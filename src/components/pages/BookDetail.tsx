@@ -3,14 +3,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ArrowLeft, Heart, BookOpen, Bookmark, MessageSquare, PenLine
+  ArrowLeft, Heart, BookOpen, Bookmark, MessageSquare, PenLine,
+  Share2, Link, Check, Copy
 } from 'lucide-react';
 import { Book } from '../../types';
 import { useBook } from '../../hooks/useBook';
 import { useBooks } from '../../hooks/useBooks';
 import { ErrorMessage, BookCoverImage, AvatarImage } from '../ui';
 import { addToBookShelf } from '../../lib/api';
-import { openExternal } from '../../lib/native';
+import { openExternal, publicBaseUrl } from '../../lib/native';
 import { formatDate } from '../../lib/format';
 
 
@@ -121,10 +122,11 @@ export const BookDetail = () => {
             {(book.tags || []).length > 0 && (
               <p className="text-[11px] text-butter-muted font-light mb-2">{book.tags!.join(' · ')}</p>
             )}
-            <p className="text-[9px] uppercase tracking-[0.2em] text-butter-muted opacity-60">
-              ARCHIVE NO. {bookId!.replace(/-/g, '').slice(0, 8).toUpperCase()}
-              {book.publishedDate ? ` · ED. ${new Date(book.publishedDate).getFullYear()}` : ''}
-            </p>
+            {book.publishedDate && (
+              <p className="text-[9px] uppercase tracking-[0.2em] text-butter-muted opacity-60">
+                ED. {new Date(book.publishedDate).getFullYear()}
+              </p>
+            )}
           </div>
         )}
 
@@ -194,6 +196,9 @@ const MobileActions = ({ book, bookId, locale, t }: {
   const [liked, setLiked] = useState(false);
   const [shelved, setShelved] = useState(false);
   const [shelving, setShelving] = useState(false);
+  const [copied, setCopied] = useState(false);
+  // 책 정보 공유용 링크 — 개인 기록이 아니라 책 소개 페이지를 가리킨다.
+  const pageUrl = `${publicBaseUrl()}/share/${bookId}`;
 
   const handleShelf = async () => {
     if (shelved || shelving) return;
@@ -202,6 +207,12 @@ const MobileActions = ({ book, bookId, locale, t }: {
       await addToBookShelf({ bookId, bookTitle: book.title, bookAuthor: book.author, bookCover: book.cover });
       setShelved(true);
     } catch { setShelved(true); } finally { setShelving(false); }
+  };
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(pageUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -218,13 +229,18 @@ const MobileActions = ({ book, bookId, locale, t }: {
       >
         {t('book.start')}
       </button>
-      {/* 보관 + 기록 */}
+      {/* 보관 + 공유 + 기록 */}
       <div className="flex gap-2">
         <button onClick={handleShelf} disabled={shelving}
           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium transition-all"
           style={{ border: '1px solid var(--color-butter-rule)', color: shelved ? 'var(--color-butter-primary)' : 'var(--color-butter-muted)', background: 'transparent' }}>
           <Heart size={13} strokeWidth={1.5} fill={shelved ? 'currentColor' : 'none'} />
           {shelving ? '…' : shelved ? t('book.add') + ' ✓' : t('book.add')}
+        </button>
+        <button onClick={handleCopy}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium transition-all"
+          style={{ border: '1px solid var(--color-butter-rule)', color: 'var(--color-butter-muted)', background: 'transparent' }}>
+          {copied ? <><Check size={12} /> {t('book.copied')}</> : <><Share2 size={12} strokeWidth={1.5} /> {t('book.share')}</>}
         </button>
         <button
           onClick={() => navigate('/journal', { state: { bookId, bookTitle: book.title, bookAuthor: book.author, bookCover: book.cover } })}
@@ -238,11 +254,21 @@ const MobileActions = ({ book, bookId, locale, t }: {
 };
 
 // ══════════════════════════════════════════════════════════════════════════
-// LEFT COLUMN — 커버 + ARCHIVE NO. + 액션(보관)
+// LEFT COLUMN — 커버 + 액션(보관 / 책 정보 공유)
 // ══════════════════════════════════════════════════════════════════════════
 const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: string; loading: boolean }) => {
   const { t } = useLocale();
   const [liked, setLiked] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  // 책 소개 페이지 링크. 개인 감상은 포함되지 않는다.
+  const pageUrl = `${publicBaseUrl()}/share/${bookId}`;
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(pageUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div>
@@ -262,7 +288,7 @@ const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: stri
         </p>
       )}
 
-      {/* ARCHIVE NO. + EDITION */}
+      {/* EDITION */}
       <div className="space-y-1 mb-5">
         {loading ? (
           <><Sk w="70%" h={9} /><Sk w="55%" h={9} /></>
@@ -277,7 +303,7 @@ const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: stri
         )}
       </div>
 
-      {/* 보관 */}
+      {/* 보관 + 책 정보 공유 */}
       <div className="flex gap-2">
         <button
           onClick={() => setLiked(p => !p)}
@@ -289,7 +315,36 @@ const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: stri
           <Heart size={13} strokeWidth={1.5} fill={liked ? 'currentColor' : 'none'} />
           {t('book.save')}
         </button>
+        <button
+          onClick={() => setLinkOpen(p => !p)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-medium transition-all ${
+            linkOpen ? 'text-butter-primary' : 'text-butter-muted hover:text-butter-text'
+          }`}
+          style={{ background: linkOpen ? 'rgba(107,82,0,0.06)' : 'rgba(0,0,0,0.04)' }}
+        >
+          <Share2 size={13} strokeWidth={1.5} />
+          {t('book.share')}
+        </button>
       </div>
+
+      {/* 링크 패널 */}
+      <AnimatePresence>
+        {linkOpen && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.18 }} className="overflow-hidden">
+            <div className="pt-2 pb-1 mt-2">
+              <p className="text-[10px] uppercase tracking-widest text-butter-muted mb-2 flex items-center gap-1">
+                <Link size={9} /> {t('book.share.link')}
+              </p>
+              <div className="flex gap-2">
+                <input readOnly value={pageUrl} className="flex-1 bg-butter-surface rounded px-2.5 py-1.5 text-[11px] font-mono truncate focus:outline-none text-butter-muted" onFocus={(e) => e.target.select()} />
+                <button onClick={handleCopy} className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded text-[11px] font-medium transition-all ${copied ? 'bg-green-500 text-white' : 'bg-butter-primary text-white'}`}>
+                  {copied ? <><Check size={10} /> {t('book.copied')}</> : <><Copy size={10} /> {t('book.copy')}</>}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

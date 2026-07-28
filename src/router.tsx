@@ -12,6 +12,7 @@ import { Settings } from './components/pages/Settings';
 import { AccountDeletion } from './components/pages/AccountDeletion';
 import { Privacy } from './components/pages/Privacy';
 import { Support } from './components/pages/Support';
+import { ShareCard } from './components/pages/ShareCard';
 import { NotFound } from './components/pages/NotFound';
 
 // 네이티브(WebView)에서는 hash 라우터를 쓴다.
@@ -21,6 +22,8 @@ const createRouter = isNative ? createHashRouter : createBrowserRouter;
 
 export const router = createRouter([
   { path: '/login', element: <Login /> },
+  // 책 정보 공유 — 개인 기록이 아니라 책 소개만 담는다 (로그인 불필요)
+  { path: '/share/:bookId', element: <ShareCard /> },
   // 법적 고지 — 스토어 심사자가 로그인 없이 열어봐야 하므로 공개 라우트
   { path: '/privacy', element: <Privacy /> },
   { path: '/account-deletion', element: <AccountDeletion /> },
