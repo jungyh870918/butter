@@ -151,9 +151,6 @@ export const Explore = () => {
             {t('explore.subtitle')}
           </p>
           <div style={{ marginLeft: 'auto', textAlign: 'right', paddingTop: '0.1rem' }}>
-            <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.6, marginBottom: '0.3rem' }}>
-              REF. LIB-EXP
-            </p>
             <p style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.5 }}>
               {locale === 'ko' ? '소설 / 시선집 / 철학 / SF / 고전 / 에세이 外' : 'Fiction / Poetry / Philosophy / Sci-Fi / Classic / Essay +'}
             </p>

@@ -1,4 +1,4 @@
-import { useLocale } from '../../hooks/useLocale';
+import { useLocale , localizeEmotion } from '../../hooks/useLocale';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useEmotions } from '../../hooks/useEmotions';
 import { useJournal } from '../../hooks/useJournal';
@@ -79,9 +79,6 @@ export const Cartography = () => {
               : 'A visual record of the patterns in your reading life. Explore the arc of your emotions, recurring words, networks between books and feelings, and the trajectory of time.'}
           </p>
           <div style={{ marginLeft: 'auto', textAlign: 'right', paddingTop: '0.1rem' }}>
-            <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.6, marginBottom: '0.3rem' }}>
-              REF. ARC-VIZ
-            </p>
             <p style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.5 }}>
               {locale === 'ko' ? '5개 섹션 — 서재 / 잡지 / 워드클라우드 / 악보 / 아크' : '5 sections — Shelf / Magazine / Word Cloud / Score / Arc'}
             </p>
@@ -268,7 +265,7 @@ const ShelfTab = ({ entries, locale }: { entries: any[]; locale: string }) => {
                 <span key={em}
                   className="text-[9px] uppercase tracking-[0.08em] px-1.5 py-0.5"
                   style={{ color: primary, border: `1px solid ${primary}`, borderRadius: '2px', opacity: 0.65 }}>
-                  {em}
+                  {localizeEmotion(em, locale as 'en' | 'ko')}
                 </span>
               ))}
             </div>

@@ -286,6 +286,7 @@ reading journal,book log,reading diary,book notes,reading tracker,mood journal,b
 | Play 앱 아이콘 | 512×512, 알파 없음 | `store-assets/play-icon-512.png` |
 | Play 그래픽 이미지 | 1024×500 | `store-assets/play-feature-graphic-1024x500.png` |
 | Play 스크린샷 | **1080×1920 (9:16)** ×5 | `store-assets/screenshots/android/01~05.png` |
+| ↳ 순서 | 1 6단계 질문 · 2 인용문 · 3 기록 피드 · 4 감정으로 찾기 · 5 책 검색 | ⚠️ 첫 장은 반드시 6단계 화면 |
 | App Store 아이콘 | 1024×1024 | `store-assets/appstore-icon-1024.png` |
 | iOS 스크린샷 6.9" | **1320×2868** ×5 | `store-assets/screenshots/ios-6.9/01~05.png` |
 

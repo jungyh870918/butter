@@ -1,4 +1,4 @@
-import { useLocale } from '../../hooks/useLocale';
+import { useLocale , localizeEmotion } from '../../hooks/useLocale';
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -290,9 +290,6 @@ export const Journal = () => {
             {t('journal.title')} {t('journal.title.em')}
           </h1>
           <div style={{ textAlign: 'right', flexShrink: 0, paddingBottom: '0.2rem' }}>
-            <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.65, marginBottom: '0.5rem' }}>
-              REF. JNL-REC
-            </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.4rem', justifyContent: 'flex-end' }}>
               {(['write', 'archive'] as const).map((v) => (
                 <button
@@ -1891,7 +1888,7 @@ const ArchiveView = ({ entries, loading, error, onUpdate, onDelete, onSwitchToWr
                               className="text-[9px] uppercase tracking-[0.1em] font-semibold"
                               style={{ color: 'var(--color-butter-muted)', opacity: 0.7 }}
                             >
-                              {em}
+                              {localizeEmotion(em, locale)}
                             </span>
                           ))}
                           {isSelected && (
@@ -2089,7 +2086,7 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
                   key={em}
                   style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.2rem 0.5rem', background: 'var(--color-butter-accent)', color: 'var(--color-butter-primary)', borderRadius: '2px' }}
                 >
-                  {em}
+                  {localizeEmotion(em, locale)}
                 </span>
               ))}
             </div>

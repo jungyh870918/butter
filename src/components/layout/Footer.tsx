@@ -44,6 +44,21 @@ export const Footer = () => {
             </a>
           </div>
         </div>
+        {/* 콜로폰 — 페이지마다 흩어져 있던 REF 코드를 여기 한 곳으로 모았다.
+            헤더 안에 있으면 조작 가능한 UI 메타데이터처럼 읽히지만,
+            푸터의 발행 표식 자리에 있으면 인쇄물의 판권 표시처럼 읽힌다. */}
+        <p
+          className="uppercase mb-5"
+          style={{
+            fontSize: '9px',
+            letterSpacing: '0.22em',
+            color: 'var(--color-butter-muted)',
+            opacity: 0.4,
+          }}
+        >
+          {t('footer.colophon')}
+        </p>
+
         <div
           className="pt-7 flex flex-col md:flex-row md:justify-between md:items-center gap-2"
           style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}

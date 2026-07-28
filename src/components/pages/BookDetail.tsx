@@ -243,7 +243,6 @@ const MobileActions = ({ book, bookId, locale, t }: {
 const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: string; loading: boolean }) => {
   const { t } = useLocale();
   const [liked, setLiked] = useState(false);
-  const archiveNo = bookId ? bookId.replace(/-/g, '').slice(0, 8).toUpperCase() : '—';
 
   return (
     <div>
@@ -269,9 +268,6 @@ const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: stri
           <><Sk w="70%" h={9} /><Sk w="55%" h={9} /></>
         ) : (
           <>
-            <p className="text-[9px] uppercase tracking-[0.2em] text-butter-muted">
-              ARCHIVE NO. {archiveNo}
-            </p>
             <p className="text-[9px] uppercase tracking-[0.2em] text-butter-muted">
               {book!.publishedDate
                 ? `ED. ${new Date(book!.publishedDate).getFullYear()}`

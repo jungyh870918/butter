@@ -22,6 +22,7 @@ const translations = {
   'footer.contact': { en: 'Contact', ko: '문의' },
   'footer.deletion': { en: 'Delete Account', ko: '계정 삭제' },
   'footer.support': { en: 'Support', ko: '고객 지원' },
+  'footer.colophon': { en: 'Butter Reading Journal · Personal Edition', ko: 'Butter Reading Journal · Personal Edition' },
   'footer.tagline': { en: 'For readers who like to think while they read.', ko: '읽으면서 생각하는 사람들을 위해.' },
   'footer.quiet': { en: 'A quiet place on the internet.', ko: '인터넷 속 조용한 공간.' },
 
@@ -55,7 +56,6 @@ const translations = {
   'home.title.em': { en: 'been writing', ko: '기록들' },
   'home.subtitle': { en: 'Your reading notes, kept private — only you can see them.', ko: '나만 볼 수 있는 독서 기록입니다.' },
   'home.tagline': { en: 'Your reflections · passing notes · book-based entries', ko: '내 감상 · 짧은 메모 · 책 기반 기록' },
-  'home.ref': { en: 'REF. MY-JOURNAL', ko: 'REF. MY-JOURNAL' },
   'home.empty': { en: 'Nothing written yet', ko: '아직 남긴 기록이 없습니다.' },
   'home.write': { en: 'Write your first entry', ko: '첫 기록 남기기' },
   'home.signin': { en: 'Sign in to see your journal', ko: '로그인하면 내 기록을 볼 수 있습니다.' },
@@ -245,6 +245,44 @@ export function createT(locale: Locale) {
     if (!entry) return key;
     return entry[locale] ?? entry.en;
   };
+}
+
+// ── 감정 라벨 정규화 ────────────────────────────────────────────────────────
+// ⚠️ 저장된 감정 값은 안정적인 키가 아니라 **작성 당시 UI 언어의 표시 문자열**이다.
+//    (Journal 의 getAtmospheres 가 t() 결과를 그대로 저장한다)
+//    → 한국어로 쓴 기록엔 "차분한", 영어로 쓴 기록엔 "Calm" 이 들어있다.
+//    그래서 표시할 때 어느 쪽이 들어와도 키로 되돌린 뒤 현재 언어로 다시 그린다.
+//
+//    근본 해결은 키를 저장하도록 바꾸고 기존 데이터를 마이그레이션하는 것.
+//    이 함수는 그때도 그대로 동작하므로 먼저 표시만 바로잡는다.
+
+const ATMOSPHERE_KEYS = [
+  'contemplative', 'moved', 'melancholy', 'nostalgic', 'inspired',
+  'unsettled', 'joyful', 'awe', 'anxious', 'pensive', 'calm',
+] as const;
+
+/** 언어 무관 표시 문자열 → 감정 키 */
+const EMOTION_KEY_BY_VALUE: Map<string, string> = (() => {
+  const map = new Map<string, string>();
+  for (const key of ATMOSPHERE_KEYS) {
+    const entry = translations[`atm.${key}` as TranslationKey];
+    if (!entry) continue;
+    map.set(entry.en.trim().toLowerCase(), key);
+    map.set(entry.ko.trim().toLowerCase(), key);
+  }
+  return map;
+})();
+
+/**
+ * 저장된 감정 값을 현재 언어의 라벨로 바꾼다.
+ * 알 수 없는 값(구버전·자유 입력)은 데이터 보존을 위해 그대로 돌려준다.
+ */
+export function localizeEmotion(raw: string | null | undefined, locale: Locale): string {
+  if (!raw) return '';
+  const key = EMOTION_KEY_BY_VALUE.get(raw.trim().toLowerCase());
+  if (!key) return raw;
+  const entry = translations[`atm.${key}` as TranslationKey];
+  return entry[locale] ?? entry.en;
 }
 
 // ── useLocale hook ──────────────────────────────────────────────────────────

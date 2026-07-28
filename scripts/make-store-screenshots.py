@@ -29,14 +29,36 @@ TEXT = (28, 26, 23)
 MUTED = (94, 87, 79)
 
 KR_BOLD = "/System/Library/Fonts/AppleSDGothicNeo.ttc"
+KR_SERIF = "/System/Library/Fonts/Supplemental/AppleMyungjo.ttf"
 
-# 각 화면의 헤드라인 — 한 줄에 하나씩
+# 슬라이드 정의
+#   ("shot", 파일, 제목, 부제)  → 기기 목업 슬라이드
+#   ("quote", 인용문, 출처, 감정) → 텍스트 슬라이드 (기록 자체가 주인공)
+#
+# ⚠️ 순서는 "제품의 차별점 → 결과물" 흐름. 첫 장이 완성된 목록이면
+#    "또 하나의 독서 기록 앱"으로 보이므로 6단계 질문을 앞에 둔다.
+# ⚠️ 카피는 분위기어보다 행위를 먼저 말한다.
 SLIDES = [
-    ("s1-home.png",      "읽은 것을 잊지 않게",        "감정과 문장을 함께 남기는 독서 기록"),
-    ("s3-journal.png",   "6단계 가이드가\n대신 물어봅니다", "무엇을 써야 할지 막막하지 않게"),
-    ("s2-explore.png",   "오늘 읽을 책을 고르고",      "바로 기록으로 이어지게"),
-    ("s5-wordcloud.png", "내 독서의 언어",            "자주 쓴 단어로 보는 나의 취향"),
-    ("s4-map.png",       "감정으로 다시 찾는 책",      "무슨 기분이었는지로 기억하기"),
+    ("shot", "s3-journal.png",
+     "질문에 하나씩 답하면\n한 편의 기록이 완성됩니다",
+     "빈 페이지 앞에서 막막하지 않게"),
+
+    ("quote",
+     "아름다움은 자주\n늦게 도착한다.",
+     "『나의 완벽한 장례식』에 남긴 기록",
+     "그리운"),
+
+    ("shot", "s1-home.png",
+     "책을 덮은 뒤,\n기억하고 싶은 문장을 남기세요",
+     "그날의 감정과 함께 보관됩니다"),
+
+    ("shot", "s4-map.png",
+     "제목이 기억나지 않아도\n그날의 감정으로 찾습니다",
+     "감정 · 작가 · 시기로 되짚는 내 서재"),
+
+    ("shot", "s2-explore.png",
+     "읽은 책을 찾아\n바로 기록으로",
+     "국내외 도서를 검색해 표지와 함께"),
 ]
 
 
@@ -46,6 +68,11 @@ def font(size, index=1):
         return ImageFont.truetype(KR_BOLD, size, index=index)
     except Exception:
         return ImageFont.truetype(KR_BOLD, size)
+
+
+def serif(size):
+    """인용문용 명조체 — 앱의 세리프 톤과 맞춘다."""
+    return ImageFont.truetype(KR_SERIF, size)
 
 
 def rounded(img, radius):
@@ -134,29 +161,85 @@ def compose(shot_path, title, subtitle, canvas_size):
     return canvas.convert("RGB")
 
 
+def compose_quote(quote, source, emotion, canvas_size):
+    """기록 자체가 주인공인 텍스트 슬라이드.
+
+    5장이 모두 같은 문법(제목+기기)이면 리듬이 없어 한 장의 변주처럼 보인다.
+    Butter 는 UI 보다 사용자가 남긴 문장이 더 매력적인 앱이므로 한 장은 문장을 앞세운다.
+    """
+    W, H = canvas_size
+    scale = W / 1080
+    canvas = gradient_bg((W, H))
+    d = ImageDraw.Draw(canvas)
+
+    f_quote = serif(int(74 * scale))
+    f_src = font(int(28 * scale), index=0)
+    f_emo = font(int(24 * scale), index=1)
+    f_mark = serif(int(120 * scale))
+
+    lines = quote.split("\n")
+    gap = int(28 * scale)
+    quote_h = sum(d.textbbox((0, 0), l, font=f_quote)[3] -
+                  d.textbbox((0, 0), l, font=f_quote)[1] for l in lines) + gap * (len(lines) - 1)
+
+    # 따옴표 · 구분선 · 출처 · 감정칩까지 포함한 전체 높이를 재서 세로 가운데 정렬한다.
+    mark_h = int(90 * scale)
+    trailing_h = int(70 * scale) + int(46 * scale) + int(34 * scale) + int(70 * scale)
+    total_h = mark_h + quote_h + trailing_h
+    top = (H - total_h) // 2
+
+    # 여는 따옴표 — 인용문 위 가운데
+    mb = d.textbbox((0, 0), '"', font=f_mark)
+    d.text((W / 2 - (mb[0] + mb[2]) / 2, top), '"', font=f_mark, fill=PRIMARY)
+
+    y = draw_multiline_centered(d, quote, f_quote, TEXT, W / 2, top + mark_h, gap)
+
+    rule_y = y + int(70 * scale)
+    d.line([(W * 0.34, rule_y), (W * 0.66, rule_y)], fill=(0, 0, 0, 30), width=max(1, int(scale)))
+
+    y = draw_multiline_centered(d, source, f_src, MUTED, W / 2, rule_y + int(46 * scale), 0)
+
+    l, t, r, b = d.textbbox((0, 0), emotion, font=f_emo)
+    tw, th = r - l, b - t
+    pad_x, pad_y = int(24 * scale), int(12 * scale)
+    cx0 = W / 2 - tw / 2 - pad_x
+    cy0 = y + int(34 * scale)
+    d.rounded_rectangle(
+        [cx0, cy0, cx0 + tw + pad_x * 2, cy0 + th + pad_y * 2],
+        radius=int(4 * scale), outline=PRIMARY, width=max(1, int(1.5 * scale)),
+    )
+    d.text((W / 2 - (l + r) / 2, cy0 + pad_y), emotion, font=f_emo, fill=PRIMARY)
+
+    return canvas.convert("RGB")
+
+
 def main():
     os.makedirs(OUT_A, exist_ok=True)
     os.makedirs(OUT_I, exist_ok=True)
 
-    for i, (fname, title, sub) in enumerate(SLIDES, start=1):
-        src = os.path.join(SRC, fname)
-        if not os.path.exists(src):
-            print(f"  !! 원본 없음: {fname}")
-            continue
+    for i, slide in enumerate(SLIDES, start=1):
+        kind = slide[0]
 
-        # Android — ⚠️ 반드시 9:16 (1080×1920)
-        a = compose(src, title, sub, (1080, 1920))
-        pa = os.path.join(OUT_A, f"{i:02d}.png")
-        a.save(pa, "PNG")
+        if kind == "quote":
+            _, quote, source, emotion = slide
+            a = compose_quote(quote, source, emotion, (1080, 1920))
+            b = compose_quote(quote, source, emotion, (1320, 2868))
+            label = quote.splitlines()[0]
+        else:
+            _, fname, title, sub = slide
+            src = os.path.join(SRC, fname)
+            if not os.path.exists(src):
+                print(f"  !! 원본 없음: {fname}")
+                continue
+            a = compose(src, title, sub, (1080, 1920))
+            # iOS 6.9" — 1320×2868 (iPhone 16 Pro Max)
+            # ⚠️ App Store Connect 는 6.9" 를 요구하고 나머지 크기는 이걸로 자동 축소한다.
+            b = compose(src, title, sub, (1320, 2868))
+            label = title.splitlines()[0]
 
-        # iOS 6.9" — 1320×2868 (iPhone 16 Pro Max)
-        # ⚠️ App Store Connect 는 6.9" 를 요구하고 나머지 크기는 이걸로 자동 축소한다.
-        #    6.7"(1290×2796) 로 만들면 6.9" 칸을 채우지 못한다.
-        b = compose(src, title, sub, (1320, 2868))
-        pb = os.path.join(OUT_I, f"{i:02d}.png")
-        b.save(pb, "PNG")
-
-        print(f"  {i:02d}  {title.splitlines()[0]:<18} → android {a.size}  ios {b.size}")
+        a.save(os.path.join(OUT_A, f"{i:02d}.png"), "PNG")
+        b.save(os.path.join(OUT_I, f"{i:02d}.png"), "PNG")
+        print(f"  {i:02d}  [{kind:5}] {label:<24} android {a.size}  ios {b.size}")
 
 
 if __name__ == "__main__":

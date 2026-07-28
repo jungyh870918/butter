@@ -1,4 +1,4 @@
-import { useLocale } from '../../hooks/useLocale';
+import { useLocale, localizeEmotion } from '../../hooks/useLocale';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, ChevronDown, Bookmark, PenLine } from 'lucide-react';
@@ -192,7 +192,7 @@ const MyEntryCard = ({ entry, index }: MyEntryCardProps) => {
           className="uppercase tracking-[0.18em] mb-3"
           style={{ fontSize: '10px', color: 'var(--color-butter-primary)', opacity: 0.8 }}
         >
-          {mood}
+          {localizeEmotion(mood, locale)}
         </p>
       )}
 
@@ -362,9 +362,6 @@ export const Home = () => {
                 {t('home.title')} {t('home.title.em')}
               </h1>
               <div style={{ textAlign: 'right', flexShrink: 0, paddingBottom: '0.15rem' }}>
-                <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.65, marginBottom: '0.25rem' }}>
-                  {t('home.ref')}
-                </p>
                 <p style={{ fontSize: '0.5rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.32 }}>
                   {locale === 'ko'
                     ? new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
