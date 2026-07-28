@@ -52,6 +52,20 @@ export const getBookEnrich = (id: string, title: string, author: string) =>
   request<any>(`/api/books/${id}/enrich?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}`);
 
 
+export const getBookReflections = (bookId: string) =>
+  request<any[]>(`/api/books/${bookId}/reflections`);
+
+// ── Reflections ────────────────────────────────────────────────────────────
+
+export const getReflections = (params?: { bookId?: string; limit?: number }) => {
+  const qs = params
+    ? '?' + new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v != null) as string[][]
+      ).toString()
+    : '';
+  return request<any[]>(`/api/reflections${qs}`);
+};
+
 // ── BookShelf ──────────────────────────────────────────────────────────────
 
 export const getBookShelf = () => request<any[]>('/api/bookshelf');

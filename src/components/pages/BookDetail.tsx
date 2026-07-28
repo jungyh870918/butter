@@ -3,16 +3,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ArrowLeft, Heart, BookOpen, Bookmark, MessageSquare, PenLine,
-  Share2, Link, Check, Copy
+  ArrowLeft, Heart, BookOpen, Bookmark,
+  Share2, Link, Check, Copy, MessageSquare, PenLine
 } from 'lucide-react';
-import { Book } from '../../types';
+import { Book, Reflection } from '../../types';
 import { useBook } from '../../hooks/useBook';
 import { useBooks } from '../../hooks/useBooks';
+import { useReflections } from '../../hooks/useReflections';
 import { ErrorMessage, BookCoverImage, AvatarImage } from '../ui';
 import { addToBookShelf } from '../../lib/api';
-import { openExternal, publicBaseUrl } from '../../lib/native';
 import { formatDate } from '../../lib/format';
+import { openExternal, publicBaseUrl } from '../../lib/native';
 
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -81,6 +82,7 @@ export const BookDetail = () => {
   const { bookId } = useParams<{ bookId: string }>();
   const navigate = useNavigate();
   const { book, loading: bookLoading, enriching, error: bookError } = useBook(bookId);
+  const { reflections, loading: refLoading, error: refError } = useReflections({ bookId });
 
   if (bookError) return (
     <div className="pt-24 flex items-center justify-center min-h-[60vh]">
@@ -122,11 +124,10 @@ export const BookDetail = () => {
             {(book.tags || []).length > 0 && (
               <p className="text-[11px] text-butter-muted font-light mb-2">{book.tags!.join(' · ')}</p>
             )}
-            {book.publishedDate && (
-              <p className="text-[9px] uppercase tracking-[0.2em] text-butter-muted opacity-60">
-                ED. {new Date(book.publishedDate).getFullYear()}
-              </p>
-            )}
+            <p className="text-[9px] uppercase tracking-[0.2em] text-butter-muted opacity-60">
+              ARCHIVE NO. {bookId!.replace(/-/g, '').slice(0, 8).toUpperCase()}
+              {book.publishedDate ? ` · ED. ${new Date(book.publishedDate).getFullYear()}` : ''}
+            </p>
           </div>
         )}
 
@@ -144,7 +145,7 @@ export const BookDetail = () => {
 
         {/* 본문 내용 (이 책에 대해, 배경 정보, 메타, CTA, 카드) */}
         <div className="mt-6">
-          <RightColumn book={book} loading={bookLoading} enriching={enriching} />
+          <RightColumn book={book} reflections={reflections} refLoading={refLoading} refError={refError} loading={bookLoading} enriching={enriching} />
         </div>
 
         {/* 같은 장르 */}
@@ -165,7 +166,7 @@ export const BookDetail = () => {
             </div>
           </div>
           <div className="col-span-7 lg:col-span-8">
-            <RightColumn book={book} loading={bookLoading} enriching={enriching} />
+            <RightColumn book={book} reflections={reflections} refLoading={refLoading} refError={refError} loading={bookLoading} enriching={enriching} />
           </div>
         </div>
       </div>
@@ -197,7 +198,6 @@ const MobileActions = ({ book, bookId, locale, t }: {
   const [shelved, setShelved] = useState(false);
   const [shelving, setShelving] = useState(false);
   const [copied, setCopied] = useState(false);
-  // 책 정보 공유용 링크 — 개인 기록이 아니라 책 소개 페이지를 가리킨다.
   const pageUrl = `${publicBaseUrl()}/share/${bookId}`;
 
   const handleShelf = async () => {
@@ -229,7 +229,7 @@ const MobileActions = ({ book, bookId, locale, t }: {
       >
         {t('book.start')}
       </button>
-      {/* 보관 + 공유 + 기록 */}
+      {/* 보관 + 공유 */}
       <div className="flex gap-2">
         <button onClick={handleShelf} disabled={shelving}
           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium transition-all"
@@ -254,15 +254,15 @@ const MobileActions = ({ book, bookId, locale, t }: {
 };
 
 // ══════════════════════════════════════════════════════════════════════════
-// LEFT COLUMN — 커버 + 액션(보관 / 책 정보 공유)
+// LEFT COLUMN — 커버 + ARCHIVE NO. + 액션(하트/공유)
 // ══════════════════════════════════════════════════════════════════════════
 const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: string; loading: boolean }) => {
   const { t } = useLocale();
   const [liked, setLiked] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  // 책 소개 페이지 링크. 개인 감상은 포함되지 않는다.
   const pageUrl = `${publicBaseUrl()}/share/${bookId}`;
+  const archiveNo = bookId ? bookId.replace(/-/g, '').slice(0, 8).toUpperCase() : '—';
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(pageUrl);
@@ -288,12 +288,15 @@ const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: stri
         </p>
       )}
 
-      {/* EDITION */}
+      {/* ARCHIVE NO. + EDITION */}
       <div className="space-y-1 mb-5">
         {loading ? (
           <><Sk w="70%" h={9} /><Sk w="55%" h={9} /></>
         ) : (
           <>
+            <p className="text-[9px] uppercase tracking-[0.2em] text-butter-muted">
+              ARCHIVE NO. {archiveNo}
+            </p>
             <p className="text-[9px] uppercase tracking-[0.2em] text-butter-muted">
               {book!.publishedDate
                 ? `ED. ${new Date(book!.publishedDate).getFullYear()}`
@@ -303,7 +306,7 @@ const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: stri
         )}
       </div>
 
-      {/* 보관 + 책 정보 공유 */}
+      {/* 하트 + 공유 */}
       <div className="flex gap-2">
         <button
           onClick={() => setLiked(p => !p)}
@@ -355,8 +358,8 @@ const LeftColumn = ({ book, bookId, loading }: { book: Book | null; bookId: stri
 const DESCRIPTION_LIMIT = 500;
 const DESCRIPTION_LIMIT_KO = 150;
 
-const RightColumn = ({ book, loading, enriching = false }: {
-  book: Book | null; loading: boolean; enriching?: boolean;
+const RightColumn = ({ book, reflections, refLoading, refError, loading, enriching = false }: {
+  book: Book | null; reflections: Reflection[]; refLoading: boolean; refError: string; loading: boolean; enriching?: boolean;
 }) => {
   const { locale, t } = useLocale();
   const navigate = useNavigate();
@@ -526,7 +529,7 @@ const RightColumn = ({ book, loading, enriching = false }: {
 
       {!loading && book && (
         <div className="mt-10 md:mt-14">
-          <ChapterCards book={book} />
+          <ChapterCards book={book} reflections={reflections} refLoading={refLoading} />
         </div>
       )}
 
@@ -537,17 +540,20 @@ const RightColumn = ({ book, loading, enriching = false }: {
 // ══════════════════════════════════════════════════════════════════════════
 // CHAPTER CARDS — 하단 회색 3개 섹션
 // ══════════════════════════════════════════════════════════════════════════
-const ChapterCards = ({ book }: { book: Book }) => {
+const ChapterCards = ({ book, reflections, refLoading }: {
+  book: Book; reflections: Reflection[]; refLoading: boolean;
+}) => {
   const { locale, t } = useLocale();
   const navigate = useNavigate();
   const { bookId } = useParams<{ bookId: string }>();
 
   const historicalContext = (locale === 'ko' && book.historicalContextKo)
     ? book.historicalContextKo : book.historicalContext;
+  const firstReflection = reflections[0];
 
   return (
     <div className="pb-6 md:pb-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
 
         {/* I — 독서 여정 */}
         <motion.div
@@ -607,10 +613,50 @@ const ChapterCards = ({ book }: { book: Book }) => {
             {/* 내용 없을 때 fallback */}
             {!book.quote && !book.quoteKo && (
               <p className="text-[12px] font-light leading-[1.85] text-butter-muted">
-                {locale === 'ko' ? '이 책에 대한 기록을 남겨보세요.' : 'Write your own note on this book.'}
+                {locale === 'ko' ? '이 책에 대한 첫 번째 독자 기록이 되어보세요.' : 'Be the first to leave a reader note.'}
               </p>
             )}
           </div>
+          {!refLoading && firstReflection && (
+            <div className="flex items-center gap-2 mt-4">
+              <AvatarImage src={firstReflection.authorAvatar} alt={firstReflection.author} className="w-6 h-6 rounded-full opacity-80" />
+              <span className="text-[10px] text-butter-muted">{firstReflection.author} · {formatDate(firstReflection.date)}</span>
+            </div>
+          )}
+        </motion.div>
+
+        {/* III — 독자 감상 */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.19, duration: 0.4 }}
+          style={{ background: 'var(--color-butter-accent)', padding: '1.2rem', minHeight: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}
+        >
+          {/* 상단: 아이콘 + 라벨 */}
+          <div className="flex items-center gap-2">
+            <BookOpen size={16} strokeWidth={1.5} className="text-butter-muted shrink-0" />
+            <p className="text-[9px] uppercase tracking-[0.2em] text-butter-muted">
+              {locale === 'ko' ? 'III — 독자 감상' : 'III — The Exhibition'}
+            </p>
+          </div>
+          {/* 하단: 내용 */}
+          <div>
+            <h3 className="font-sans text-[1rem] font-medium leading-snug mb-3 text-butter-text">
+              {locale === 'ko'
+                ? `${reflections.length}개의 감상이 모였습니다`
+                : `${reflections.length} Reflection${reflections.length !== 1 ? 's' : ''} Archived`}
+            </h3>
+            <p className="text-[12px] text-butter-muted leading-[1.75] font-light">
+              {locale === 'ko'
+                ? '같은 책을 읽은 독자들의 시선과 언어를 탐색하세요.'
+                : 'Explore the language of readers who shared this text.'}
+            </p>
+          </div>
+          {reflections.length > 0 && (
+            <div className="flex gap-2 mt-4">
+              {reflections.slice(0, 3).map(r => (
+                <AvatarImage key={r.id} src={r.authorAvatar} alt={r.author} className="w-6 h-6 rounded-full opacity-70" />
+              ))}
+            </div>
+          )}
         </motion.div>
 
       </div>

@@ -79,6 +79,9 @@ export const Cartography = () => {
               : 'A visual record of the patterns in your reading life. Explore the arc of your emotions, recurring words, networks between books and feelings, and the trajectory of time.'}
           </p>
           <div style={{ marginLeft: 'auto', textAlign: 'right', paddingTop: '0.1rem' }}>
+            <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.6, marginBottom: '0.3rem' }}>
+              REF. ARC-VIZ
+            </p>
             <p style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.5 }}>
               {locale === 'ko' ? '5개 섹션 — 서재 / 잡지 / 워드클라우드 / 악보 / 아크' : '5 sections — Shelf / Magazine / Word Cloud / Score / Arc'}
             </p>

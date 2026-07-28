@@ -18,6 +18,19 @@ export interface Book {
   historicalContextKo?: string;
 }
 
+export interface Reflection {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  authorAvatar: string;
+  date: string;
+  tags: string[];
+  image?: string;
+  bookId?: string;
+  bookTitle?: string;
+  bookAuthor?: string;
+}
 
 export interface JournalEntry {
   id: string;

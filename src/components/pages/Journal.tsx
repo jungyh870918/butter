@@ -2,7 +2,7 @@ import { useLocale , localizeEmotion } from '../../hooks/useLocale';
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2, Library, X as XIcon } from 'lucide-react';
+import { Pencil, Trash2, Check, X, ArrowRight, ArrowLeft, BookOpen, Search, Loader2, Share2, Link as LinkIcon, Copy, Library, X as XIcon } from 'lucide-react';
 import { JournalEntry, Book } from '../../types';
 import { useJournal } from '../../hooks/useJournal';
 import { getBooks, getBookShelf, removeFromBookShelf } from '../../lib/api';
@@ -290,6 +290,9 @@ export const Journal = () => {
             {t('journal.title')} {t('journal.title.em')}
           </h1>
           <div style={{ textAlign: 'right', flexShrink: 0, paddingBottom: '0.2rem' }}>
+            <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.65, marginBottom: '0.5rem' }}>
+              REF. JNL-REC
+            </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.4rem', justifyContent: 'flex-end' }}>
               {(['write', 'archive'] as const).map((v) => (
                 <button
@@ -501,6 +504,7 @@ interface WriteViewProps {
     bookTitle?: string | null;
     bookAuthor?: string | null;
     bookCover?: string | null;
+    isPublic?: boolean;   // 공개/비공개 토글 값. 실제로 넘기고 있는데 타입에서 빠져 있었다.
   }) => Promise<{ id: string }>;
   onSaved: () => void;
   bookContext: BookContext;
@@ -522,7 +526,10 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
   const [phase, setPhase] = useState<WritePhase>('prompts');
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
   const [bookRequiredOpen, setBookRequiredOpen] = useState(false);
+  const [confirmPublicOpen, setConfirmPublicOpen] = useState(false);
+  const [pendingPublic, setPendingPublic] = useState<boolean | null>(null);
 
   // activeBook: navigation에서 전달된 bookContext로 초기화, 검색으로 교체 가능
   const [activeBook, setActiveBook] = useState<BookContext>(bookContext);
@@ -623,6 +630,7 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
         bookTitle: book.bookTitle ?? null,
         bookAuthor: book.bookAuthor ?? null,
         bookCover: book.bookCover ?? null,
+        isPublic,
       });
 
       // Reflection 생성 + EmotionLog 기록은 백엔드 journal POST에서 처리됨
@@ -705,6 +713,74 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
       )}
     </AnimatePresence>
 
+    {/* ── 공개/비공개 전환 확인 모달 ── */}
+    <AnimatePresence>
+      {confirmPublicOpen && pendingPublic !== null && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50"
+            style={{ background: 'rgba(0,0,0,0.15)', backdropFilter: 'blur(2px)' }}
+            onClick={() => setConfirmPublicOpen(false)}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="fixed z-50"
+            style={{
+              background: 'var(--color-butter-surface)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)',
+              width: 'min(360px, calc(100vw - 2rem))',
+              top: 0, left: 0, right: 0, bottom: 0,
+              margin: 'auto',
+              height: 'fit-content',
+              padding: '2rem',
+              borderRadius: '3px',
+            }}
+          >
+            <p className="text-[10px] uppercase tracking-[0.28em] font-semibold mb-3" style={{ color: 'var(--color-butter-primary)', opacity: 0.75 }}>
+              {pendingPublic
+                ? (locale === 'ko' ? '공개로 전환' : 'Make public')
+                : (locale === 'ko' ? '비공개로 전환' : 'Make private')}
+            </p>
+            <p className="font-serif font-light leading-relaxed mb-8" style={{ fontSize: '15px', color: 'var(--color-butter-text)' }}>
+              {pendingPublic
+                ? (locale === 'ko' ? '홈과 책 페이지 피드에 노출됩니다.' : 'This entry will appear in home and book page feeds.')
+                : (locale === 'ko' ? '피드에서 더 이상 표시되지 않습니다.' : 'This entry will no longer appear in any feeds.')}
+            </p>
+            <div className="flex items-center justify-end gap-4">
+              <button
+                onClick={() => setConfirmPublicOpen(false)}
+                className="font-light transition-opacity hover:opacity-50"
+                style={{ fontSize: '11px', letterSpacing: '0.05em', color: 'var(--color-butter-muted)' }}
+              >
+                {locale === 'ko' ? '취소' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => {
+                  setIsPublic(pendingPublic!);
+                  setConfirmPublicOpen(false);
+                  setPendingPublic(null);
+                }}
+                className="font-medium transition-all hover:brightness-110"
+                style={{
+                  fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase',
+                  background: 'var(--color-butter-primary)',
+                  color: 'var(--color-butter-bg)',
+                  padding: '0.5rem 1.25rem',
+                  borderRadius: '2px',
+                }}
+              >
+                {locale === 'ko' ? '확인' : 'Confirm'}
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
 
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -843,6 +919,54 @@ const WriteView = ({ onCreate, onSaved, bookContext }: WriteViewProps) => {
                       })}
                     </div>
 
+                    {/* ── 공개/비공개 토글 ── */}
+                    <div
+                      className="mt-8 flex items-center justify-between px-4 py-3"
+                      style={{
+                        border: '1px solid var(--color-butter-rule)',
+                        borderRadius: '4px',
+                        background: 'var(--color-butter-surface)',
+                      }}
+                    >
+                      <div>
+                        <p className="text-[12px] font-medium" style={{ color: 'var(--color-butter-text)' }}>
+                          {isPublic
+                            ? (locale === 'ko' ? '커뮤니티에 공개' : 'Share with community')
+                            : (locale === 'ko' ? '나만 보기' : 'Only visible to me')}
+                        </p>
+                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-butter-muted)' }}>
+                          {isPublic
+                            ? (locale === 'ko' ? '홈과 책 페이지 피드에 노출됩니다' : 'Appears in home & book page feeds')
+                            : (locale === 'ko' ? '피드에 노출되지 않습니다' : 'Won\'t appear in any feeds')}
+                        </p>
+                      </div>
+                      {/* 토글 스위치 */}
+                      <button
+                        onClick={() => {
+                          setPendingPublic(!isPublic);
+                          setConfirmPublicOpen(true);
+                        }}
+                        className="relative shrink-0 transition-all duration-200"
+                        style={{
+                          width: '40px',
+                          height: '22px',
+                          borderRadius: '11px',
+                          background: isPublic ? 'var(--color-butter-primary)' : 'var(--color-butter-accent)',
+                          border: '1px solid var(--color-butter-rule)',
+                        }}
+                      >
+                        <span
+                          className="absolute top-[2px] transition-all duration-200"
+                          style={{
+                            width: '16px',
+                            height: '16px',
+                            borderRadius: '50%',
+                            background: isPublic ? '#ffffff' : 'var(--color-butter-muted)',
+                            left: isPublic ? '20px' : '2px',
+                          }}
+                        />
+                      </button>
+                    </div>
                   </div>
                 ) : current.isHighlight ? (
                   // Highlight input — borderLeft quote style
@@ -1961,9 +2085,12 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
   const { locale, t } = useLocale();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editContent, setEditContent] = useState(entry.content);
   const [editMood, setEditMood] = useState(entry.mood || '');
+  const [confirmPublicOpen, setConfirmPublicOpen] = useState(false);
+  const [pendingPublic, setPendingPublic] = useState<boolean | null>(null);
   const [editIntensity, setEditIntensity] = useState(entry.intensity);
 
   // [4] 이 책에 연결된 엔트리 수
@@ -2287,6 +2414,103 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
               >
                 <Trash2 size={12} /> {t('archive.delete')}
               </button>
+              <button
+                onClick={() => setLinkOpen(p => !p)}
+                className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] transition-colors"
+                style={{ color: linkOpen ? 'var(--color-butter-primary)' : 'var(--color-butter-muted)', opacity: linkOpen ? 1 : 0.6 }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-primary)'; }}
+                onMouseLeave={(e) => { if (!linkOpen) { (e.currentTarget as HTMLElement).style.opacity = '0.6'; (e.currentTarget as HTMLElement).style.color = 'var(--color-butter-muted)'; }}}
+              >
+                <Share2 size={12} /> {locale === 'ko' ? '공유하기' : 'Share'}
+              </button>
+              {/* 공개/비공개 토글 */}
+              <button
+                onClick={() => {
+                  setPendingPublic(!entry.isPublic);
+                  setConfirmPublicOpen(true);
+                }}
+                className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] transition-colors"
+                style={{ color: entry.isPublic ? 'var(--color-butter-primary)' : 'var(--color-butter-muted)', opacity: entry.isPublic ? 1 : 0.6 }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
+                onMouseLeave={(e) => { if (!entry.isPublic) (e.currentTarget as HTMLElement).style.opacity = '0.6'; }}
+                title={entry.isPublic
+                  ? (locale === 'ko' ? '클릭하면 비공개로 전환' : 'Click to make private')
+                  : (locale === 'ko' ? '클릭하면 공개로 전환' : 'Click to make public')}
+              >
+                {entry.isPublic
+                  ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>{locale === 'ko' ? '공개' : 'Public'}</>
+                  : <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>{locale === 'ko' ? '비공개' : 'Private'}</>
+                }
+              </button>
+
+              {/* 공개/비공개 확인 모달 */}
+              <AnimatePresence>
+                {confirmPublicOpen && pendingPublic !== null && (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="fixed inset-0 z-50"
+                      style={{ background: 'rgba(0,0,0,0.15)', backdropFilter: 'blur(2px)' }}
+                      onClick={() => setConfirmPublicOpen(false)}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      className="fixed z-50"
+                      style={{
+                        background: 'var(--color-butter-surface)',
+                        boxShadow: '0 8px 40px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)',
+                        width: 'min(360px, calc(100vw - 2rem))',
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        margin: 'auto',
+                        height: 'fit-content',
+                        padding: '2rem',
+                        borderRadius: '3px',
+                      }}
+                    >
+                      <p className="text-[10px] uppercase tracking-[0.28em] font-semibold mb-3" style={{ color: 'var(--color-butter-primary)', opacity: 0.75 }}>
+                        {pendingPublic
+                          ? (locale === 'ko' ? '공개로 전환' : 'Make public')
+                          : (locale === 'ko' ? '비공개로 전환' : 'Make private')}
+                      </p>
+                      <p className="font-serif font-light leading-relaxed mb-8" style={{ fontSize: '15px', color: 'var(--color-butter-text)' }}>
+                        {pendingPublic
+                          ? (locale === 'ko' ? '홈과 책 페이지 피드에 노출됩니다.' : 'This entry will appear in home and book page feeds.')
+                          : (locale === 'ko' ? '피드에서 더 이상 표시되지 않습니다.' : 'This entry will no longer appear in any feeds.')}
+                      </p>
+                      <div className="flex items-center justify-end gap-4">
+                        <button
+                          onClick={() => setConfirmPublicOpen(false)}
+                          className="font-light transition-opacity hover:opacity-50"
+                          style={{ fontSize: '11px', letterSpacing: '0.05em', color: 'var(--color-butter-muted)' }}
+                        >
+                          {locale === 'ko' ? '취소' : 'Cancel'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            onUpdate(entry.id, { content: entry.content, mood: entry.mood ?? '', intensity: entry.intensity, isPublic: pendingPublic! }).catch((e) => alert(e.message));
+                            setConfirmPublicOpen(false);
+                            setPendingPublic(null);
+                          }}
+                          className="font-medium transition-all hover:brightness-110"
+                          style={{
+                            fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase',
+                            background: 'var(--color-butter-primary)',
+                            color: 'var(--color-butter-bg)',
+                            padding: '0.5rem 1.25rem',
+                            borderRadius: '2px',
+                          }}
+                        >
+                          {locale === 'ko' ? '확인' : 'Confirm'}
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* 우: 날짜 — quiet context note */}
@@ -2303,6 +2527,48 @@ const ArchiveDetailView = ({ entry, allEntries, onUpdate, onDelete, onSwitchToWr
             </p>
           </footer>
 
+          {/* 링크 패널 — BookDetail과 동일한 패턴 */}
+          <AnimatePresence>
+            {linkOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden"
+              >
+                <div className="pt-4 pb-1">
+                  <p
+                    className="text-[10px] uppercase tracking-widest mb-2 flex items-center gap-1"
+                    style={{ color: 'var(--color-butter-muted)' }}
+                  >
+                    <LinkIcon size={9} /> {locale === 'ko' ? '공유 링크' : 'Share Link'}
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      readOnly
+                      value={`${window.location.origin}/share/journal/${entry.id}`}
+                      className="flex-1 rounded px-2.5 py-1.5 text-[11px] font-mono truncate focus:outline-none"
+                      style={{ background: 'var(--color-butter-surface)', color: 'var(--color-butter-muted)', border: 'none' }}
+                      onFocus={(e) => e.target.select()}
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/share/journal/${entry.id}`)
+                          .then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+                      }}
+                      className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded text-[11px] font-medium transition-all text-white"
+                      style={{ background: copied ? '#22c55e' : 'var(--color-butter-primary)' }}
+                    >
+                      {copied
+                        ? <><Check size={10} /> {locale === 'ko' ? '완료' : 'Done'}</>
+                        : <><Copy size={10} /> {locale === 'ko' ? '복사' : 'Copy'}</>}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
         </div>{/* /우측 본문 */}

@@ -1,14 +1,13 @@
-import { useLocale, localizeEmotion } from '../../hooks/useLocale';
+import { useLocale } from '../../hooks/useLocale';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, ChevronDown, Bookmark, PenLine } from 'lucide-react';
-import { Book, JournalEntry } from '../../types';
-import { useJournal } from '../../hooks/useJournal';
-import { useAuth } from '../../hooks/useAuth';
-import { EmptyState, BookCoverImage } from '../ui';
+import { Heart, MessageSquare, BookOpen, ArrowLeft, ChevronDown, Bookmark, Share2, Copy, Check } from 'lucide-react';
+import { Reflection, Book } from '../../types';
+import { useReflections } from '../../hooks/useReflections';
+import { EmptyState, AvatarImage, BookCoverImage } from '../ui';
 import { formatDate } from '../../lib/format';
-import { useEffect, useState, useRef } from 'react';
-import { getFeaturedBooks, addToBookShelf } from '../../lib/api';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { getFeaturedBooks, getBook, addToBookShelf } from '../../lib/api';
 import { openExternal } from '../../lib/native';
 
 // ── 좌측 사이드바 ──────────────────────────────────────────────────────────
@@ -22,6 +21,8 @@ const BookSidebar = ({ book, loading }: BookSidebarProps) => {
   const { locale } = useLocale();
   const [shelved, setShelved] = useState(false);
   const [shelving, setShelving] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleAddToShelf = async () => {
     if (!book || shelved || shelving) return;
@@ -31,6 +32,11 @@ const BookSidebar = ({ book, loading }: BookSidebarProps) => {
       setShelved(true);
     } catch { setShelved(true); }
     finally { setShelving(false); }
+  };
+
+  const handleCopy = () => {
+    const url = `${window.location.origin}/share/${book?.id}`;
+    navigator.clipboard.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   };
 
   if (loading) return (
@@ -149,96 +155,144 @@ const BookSidebar = ({ book, loading }: BookSidebarProps) => {
             }
             {shelved ? '✓' : (locale === 'ko' ? '서재에 추가' : 'Save')}
           </button>
+
+          {/* 공유하기 */}
+          <button
+            onClick={() => setShareOpen(p => !p)}
+            className="flex-1 flex items-center justify-center gap-1 py-2 font-medium uppercase tracking-[0.1em] transition-all"
+            style={{
+              fontSize: '10px', border: '1px solid var(--color-butter-rule)', borderRadius: '2px',
+              color: shareOpen ? 'var(--color-butter-primary)' : 'var(--color-butter-muted)',
+              background: shareOpen ? 'rgba(107,82,0,0.04)' : 'transparent',
+            }}
+          >
+            <Share2 size={10} strokeWidth={1.5} />
+            {locale === 'ko' ? '공유하기' : 'Share'}
+          </button>
         </div>
+
+        {/* 공유 링크 패널 */}
+        {shareOpen && (
+          <div className="space-y-1.5">
+            <input
+              readOnly
+              value={`${window.location.origin}/share/${book?.id}`}
+              className="w-full rounded px-2.5 py-1.5 text-[11px] font-mono truncate focus:outline-none"
+              style={{ background: 'var(--color-butter-surface)', color: 'var(--color-butter-muted)', border: 'none' }}
+              onFocus={(e) => e.target.select()}
+            />
+            <button
+              onClick={handleCopy}
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 font-medium uppercase tracking-[0.1em] transition-all"
+              style={{
+                fontSize: '10px', borderRadius: '2px',
+                background: copied ? '#22c55e' : 'var(--color-butter-primary)',
+                color: 'white',
+              }}
+            >
+              {copied ? <><Check size={10} /> {locale === 'ko' ? '복사됨' : 'Copied'}</> : <><Copy size={10} /> {locale === 'ko' ? '링크 복사' : 'Copy Link'}</>}
+            </button>
+          </div>
+        )}
         <button
           onClick={() => navigate('/journal', { state: { bookId: book.id, bookTitle: book.title, bookAuthor: book.author, bookCover: book.cover } })}
           className="w-full py-2 font-medium uppercase tracking-[0.1em]"
           style={{ fontSize: '10px', border: '1px solid var(--color-butter-rule)', borderRadius: '2px', color: 'var(--color-butter-muted)', background: 'transparent' }}>
-          {locale === 'ko' ? '기록 남기기' : 'Write Entry'}
+          {locale === 'ko' ? '감상 남기기' : 'Write Reflection'}
         </button>
       </div>
     </motion.div>
   );
 };
 
-// ── 내 기록 카드 ───────────────────────────────────────────────────────────
-// 커뮤니티 피드를 대체 — 남의 글이 아니라 내가 쓴 저널만 보여준다.
-interface MyEntryCardProps {
-  entry: JournalEntry;
+// ── 피드 아이템 ────────────────────────────────────────────────────────────
+interface ReflectionCardProps {
+  reflection: Reflection;
   index: number;
+  onBookClick: (bookId: string) => void;
 }
 
-const MyEntryCard = ({ entry, index }: MyEntryCardProps) => {
+const ReflectionCard = ({ reflection, index, onBookClick }: ReflectionCardProps) => {
   const { locale } = useLocale();
-  const navigate = useNavigate();
 
-  const preview =
-    entry.content.length > 220 ? entry.content.slice(0, 220).trimEnd() + '…' : entry.content;
-
-  const emotions = (entry.emotions ?? []).filter(Boolean);
-  const mood = emotions[0] ?? entry.mood;
+  // reflection에 저장된 bookTitle 사용, 없으면 title 파싱으로 fallback
+  const bookTitleMatch = reflection.title.match(/^A reflection on:\s*(.+?)…?$/i);
+  const displayBookTitle = reflection.bookTitle || (bookTitleMatch ? bookTitleMatch[1].trim() : null);
 
   return (
     <motion.article
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.05, 0.3), duration: 0.35 }}
-      onClick={() => navigate('/journal')}
-      className="py-10 cursor-pointer group"
+      transition={{ delay: index * 0.05, duration: 0.35 }}
+      className="group py-10"
       style={{ borderTop: '1px solid var(--color-butter-rule)' }}
     >
-      {mood && (
-        <p
-          className="uppercase tracking-[0.18em] mb-3"
-          style={{ fontSize: '10px', color: 'var(--color-butter-primary)', opacity: 0.8 }}
-        >
-          {localizeEmotion(mood, locale)}
+      {/* 감정 태그 */}
+      {(reflection.tags || []).length > 0 && (
+        <p className="uppercase tracking-[0.2em] font-medium mb-3"
+          style={{ fontSize: '10px', color: 'var(--color-butter-muted)', opacity: 0.6 }}>
+          {reflection.tags[0]}
         </p>
       )}
 
-      {entry.bookTitle && (
-        <p
-          className="font-serif italic mb-2"
-          style={{ fontSize: '13px', color: 'var(--color-butter-muted)' }}
-        >
-          {locale === 'ko' ? `『${entry.bookTitle}』` : `on "${entry.bookTitle}"`}
-        </p>
-      )}
-
-      {entry.highlight && (
-        <blockquote
-          className="font-serif italic mb-4 pl-4"
-          style={{
-            fontSize: '15px',
-            lineHeight: 1.8,
-            color: 'var(--color-butter-text)',
-            borderLeft: '2px solid var(--color-butter-accent)',
-          }}
-        >
-          "{entry.highlight}"
-        </blockquote>
-      )}
-
-      <p
-        className="mb-5 group-hover:text-butter-text transition-colors"
-        style={{ fontSize: '14.5px', lineHeight: 1.85, color: 'var(--color-butter-muted)' }}
+      {/* 제목 */}
+      <h2
+        className="font-serif font-light leading-[1.2] mb-3 group-hover:text-butter-primary transition-colors duration-300"
+        style={{ fontSize: 'clamp(1.3rem, 2.2vw, 1.65rem)', color: 'var(--color-butter-text)' }}
       >
-        {preview}
+        {reflection.title}
+      </h2>
+
+      {/* 책 제목 링크 — bookId가 있을 때 */}
+      {reflection.bookId && displayBookTitle && (
+        <button
+          onClick={() => onBookClick(reflection.bookId!)}
+          className="flex items-center gap-1.5 mb-3 group/book"
+        >
+          <span
+            className="font-serif italic font-light group-hover/book:text-butter-primary transition-colors duration-200"
+            style={{ fontSize: '12px', color: 'var(--color-butter-muted)', opacity: 0.7 }}
+          >
+            {locale === 'ko' ? '— ' : '— from '}
+          </span>
+          <span
+            className="font-serif italic font-light group-hover/book:text-butter-primary transition-colors duration-200 underline underline-offset-2"
+            style={{ fontSize: '12px', color: 'var(--color-butter-muted)', opacity: 0.7, textDecorationColor: 'var(--color-butter-rule)' }}
+          >
+            {displayBookTitle}
+          </span>
+        </button>
+      )}
+
+      {/* 본문 */}
+      <p className="font-light leading-[1.85] mb-6 line-clamp-3"
+        style={{ fontSize: '14px', color: 'var(--color-butter-muted)' }}>
+        {reflection.content}
       </p>
 
+      {/* 메타 */}
       <div className="flex items-center justify-between">
-        <span
-          className="uppercase tracking-[0.14em]"
-          style={{ fontSize: '10px', color: 'var(--color-butter-muted)', opacity: 0.55 }}
-        >
-          {formatDate(entry.date)}
-        </span>
-        <span
-          className="uppercase tracking-[0.14em]"
-          style={{ fontSize: '10px', color: 'var(--color-butter-muted)', opacity: 0.4 }}
-        >
-          {locale === 'ko' ? '강도' : 'Intensity'} {entry.intensity}/10
-        </span>
+        <div className="flex items-center gap-2.5">
+          <AvatarImage src={reflection.authorAvatar} alt={reflection.author} className="w-7 h-7 rounded-full opacity-90" />
+          <div>
+            <p className="font-medium" style={{ fontSize: '13px', color: 'var(--color-butter-text)' }}>
+              {reflection.author}
+            </p>
+            <p className="tracking-wide" style={{ fontSize: '10px', color: 'var(--color-butter-muted)', opacity: 0.65 }}>
+              {formatDate(reflection.date)}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-5" style={{ color: 'var(--color-butter-muted)' }}>
+          <button className="flex items-center gap-1.5 hover:text-butter-primary transition-colors">
+            <Heart size={13} strokeWidth={1.5} />
+            <span style={{ fontSize: '11px' }}>24</span>
+          </button>
+          <button className="flex items-center gap-1.5 hover:text-butter-primary transition-colors">
+            <MessageSquare size={13} strokeWidth={1.5} />
+            <span style={{ fontSize: '11px' }}>8</span>
+          </button>
+        </div>
       </div>
     </motion.article>
   );
@@ -247,14 +301,46 @@ const MyEntryCard = ({ entry, index }: MyEntryCardProps) => {
 // ── 홈 페이지 ──────────────────────────────────────────────────────────────
 export const Home = () => {
   const { locale, t } = useLocale();
-  const navigate = useNavigate();
 
   // 사이드바 책 상태 — 초기 랜덤 + 클릭 시 변경
   const [sidebarBook, setSidebarBook] = useState<Book | null>(null);
   const [sidebarLoading, setSidebarLoading] = useState(true);
 
+  // 선택된 책 필터 (null = 전체)
+  const [filteredBookId, setFilteredBookId] = useState<string | null>(null);
+  const [filteredBookTitle, setFilteredBookTitle] = useState<string>('');
+
   // 초기 featured 책 로드 — 베스트셀러 pool에서 랜덤 1권
   useEffect(() => {
+    setSidebarLoading(true);
+    getFeaturedBooks(locale, 1)
+      .then((books: Book[]) => {
+        if (books.length === 0) return;
+        setSidebarBook(books[0]);
+      })
+      .catch(() => {})
+      .finally(() => setSidebarLoading(false));
+  }, [locale]);
+
+  // 피드에서 책 제목 클릭 → 사이드바 + 피드 모두 변경
+  const handleBookClick = useCallback(async (bookId: string) => {
+    setFilteredBookId(bookId);
+    setSidebarLoading(true);
+    try {
+      const book = await getBook(bookId);
+      setSidebarBook(book);
+      setFilteredBookTitle(book.title || bookId);
+    } catch {
+      setFilteredBookTitle(bookId);
+    } finally {
+      setSidebarLoading(false);
+    }
+  }, []);
+
+  // 전체 보기로 복귀
+  const handleClearFilter = useCallback(() => {
+    setFilteredBookId(null);
+    setFilteredBookTitle('');
     setSidebarLoading(true);
     getFeaturedBooks(locale, 1)
       .then((books: Book[]) => {
@@ -269,10 +355,11 @@ export const Home = () => {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // 내 저널 기록 — 비로그인 시엔 호출하지 않는다
-  const { user } = useAuth();
-  const { entries, loading: entriesLoading, error: entriesError } = useJournal();
-  const recentEntries = entries.slice(0, 10);
+
+  const { reflections, loading: refLoading, error: refError } = useReflections({
+    bookId: filteredBookId ?? undefined,
+    limit: filteredBookId ? undefined : 10,
+  });
 
   return (
     <div className="pt-20 pb-24 px-6 md:px-12 max-w-6xl mx-auto">
@@ -362,6 +449,9 @@ export const Home = () => {
                 {t('home.title')} {t('home.title.em')}
               </h1>
               <div style={{ textAlign: 'right', flexShrink: 0, paddingBottom: '0.15rem' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.65, marginBottom: '0.25rem' }}>
+                  REF. COM-FEED
+                </p>
                 <p style={{ fontSize: '0.5rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.32 }}>
                   {locale === 'ko'
                     ? new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -375,28 +465,51 @@ export const Home = () => {
               </p>
               <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
                 <p style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-butter-muted)', opacity: 0.5 }}>
-                  {t('home.tagline')}
+                  {locale === 'ko' ? '독자 감상 · 짧은 메모 · 책 기반 기록' : 'Reader reflections · passing notes · book-based entries'}
                 </p>
               </div>
             </div>
           </header>
 
-          {/* 내 기록 */}
-          {!user && (
-            <div className="mt-4">
-              <EmptyState message={t('home.signin')} />
-              <button
-                onClick={() => navigate('/login')}
-                className="mt-4 flex items-center gap-1.5 hover:text-butter-primary transition-colors"
-                style={{ fontSize: '12px', color: 'var(--color-butter-muted)' }}
+          {/* 책 필터 배너 */}
+          <AnimatePresence>
+            {filteredBookId && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mt-6 overflow-hidden"
               >
-                <PenLine size={12} strokeWidth={1.5} />
-                {t('home.signin.cta')}
-              </button>
-            </div>
-          )}
+                <div
+                  className="flex items-center justify-between py-3 px-4 rounded-sm"
+                  style={{ background: 'var(--color-butter-surface)' }}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="font-serif italic font-light"
+                      style={{ fontSize: '13px', color: 'var(--color-butter-muted)', opacity: 0.7 }}
+                    >
+                      {locale === 'ko' ? `『${filteredBookTitle}』의 감상` : `Reflections on "${filteredBookTitle}"`}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleClearFilter}
+                    className="flex items-center gap-1.5 transition-colors hover:text-butter-primary"
+                    style={{ fontSize: '11px', color: 'var(--color-butter-muted)', opacity: 0.7 }}
+                  >
+                    <ArrowLeft size={11} strokeWidth={1.5} />
+                    <span className="uppercase tracking-[0.12em] font-medium" style={{ fontSize: '10px' }}>
+                      {locale === 'ko' ? '전체 감상 보기' : 'All reflections'}
+                    </span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {user && entriesLoading && (
+          {/* 피드 */}
+          {refLoading && (
             <div className="mt-4">
               {[1, 2, 3].map(i => (
                 <div key={i} className="py-10" style={{ borderTop: '1px solid var(--color-butter-rule)' }}>
@@ -412,30 +525,36 @@ export const Home = () => {
             </div>
           )}
 
-          {user && !entriesLoading && entriesError && (
+          {!refLoading && refError && (
             <p className="mt-12 font-serif italic" style={{ fontSize: '15px', color: 'var(--color-butter-muted)' }}>
-              {entriesError}
+              {refError}
             </p>
           )}
 
-          {user && !entriesLoading && !entriesError && recentEntries.length === 0 && (
+          {!refLoading && !refError && reflections.length === 0 && (
             <div className="mt-4">
-              <EmptyState message={t('home.empty')} />
-              <button
-                onClick={() => navigate('/journal')}
-                className="mt-4 flex items-center gap-1.5 hover:text-butter-primary transition-colors"
-                style={{ fontSize: '12px', color: 'var(--color-butter-muted)' }}
-              >
-                <PenLine size={12} strokeWidth={1.5} />
-                {t('home.write')}
-              </button>
+              <EmptyState message={
+                filteredBookId
+                  ? (locale === 'ko' ? '이 책에 남긴 감상이 없습니다.' : 'No reflections for this book yet.')
+                  : t('home.empty')
+              } />
+              {filteredBookId && (
+                <button
+                  onClick={handleClearFilter}
+                  className="mt-4 flex items-center gap-1.5 hover:text-butter-primary transition-colors"
+                  style={{ fontSize: '12px', color: 'var(--color-butter-muted)' }}
+                >
+                  <ArrowLeft size={12} strokeWidth={1.5} />
+                  {locale === 'ko' ? '전체 감상 보기' : 'View all reflections'}
+                </button>
+              )}
             </div>
           )}
 
-          {user && !entriesLoading && !entriesError && recentEntries.length > 0 && (
+          {!refLoading && !refError && reflections.length > 0 && (
             <div>
-              {recentEntries.map((e, i) => (
-                <MyEntryCard key={e.id} entry={e} index={i} />
+              {reflections.map((r, i) => (
+                <ReflectionCard key={r.id} reflection={r} index={i} onBookClick={handleBookClick} />
               ))}
             </div>
           )}

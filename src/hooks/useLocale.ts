@@ -18,11 +18,13 @@ const translations = {
   'nav.search.placeholder': { en: 'Search the library…', ko: '책 검색…' },
 
   // ── Footer ──
+  'footer.manifesto': { en: 'The Manifesto', ko: '선언문' },
+  'footer.archive': { en: 'Library Archive', ko: '도서관 기록 보관함' },
+  'footer.ethics': { en: 'Journaling Ethics', ko: '기록 윤리' },
   'footer.privacy': { en: 'Privacy', ko: '개인정보' },
   'footer.contact': { en: 'Contact', ko: '문의' },
   'footer.deletion': { en: 'Delete Account', ko: '계정 삭제' },
   'footer.support': { en: 'Support', ko: '고객 지원' },
-  'footer.colophon': { en: 'Butter Reading Journal · Personal Edition', ko: 'Butter Reading Journal · Personal Edition' },
   'footer.tagline': { en: 'For readers who like to think while they read.', ko: '읽으면서 생각하는 사람들을 위해.' },
   'footer.quiet': { en: 'A quiet place on the internet.', ko: '인터넷 속 조용한 공간.' },
 
@@ -51,15 +53,12 @@ const translations = {
   'explore.didyouknow': { en: 'Did you know?', ko: '알고 계셨나요?' },
 
   // ── Home ──
-  'home.label': { en: 'Your Journal', ko: '내 기록' },
-  'home.title': { en: 'What you have', ko: '내가 쓴' },
-  'home.title.em': { en: 'been writing', ko: '기록들' },
-  'home.subtitle': { en: 'Your reading notes, kept private — only you can see them.', ko: '나만 볼 수 있는 독서 기록입니다.' },
-  'home.tagline': { en: 'Your reflections · passing notes · book-based entries', ko: '내 감상 · 짧은 메모 · 책 기반 기록' },
+  'home.label': { en: 'Community', ko: '커뮤니티' },
+  'home.title': { en: 'What people are', ko: '지금 쓰이고' },
+  'home.title.em': { en: 'writing', ko: '있는 것들' },
+  'home.subtitle': { en: 'Notes, reactions, and passing thoughts from readers in the community.', ko: '독자들이 남긴 감상과 짧은 기록들.' },
   'home.empty': { en: 'Nothing written yet', ko: '아직 남긴 기록이 없습니다.' },
-  'home.write': { en: 'Write your first entry', ko: '첫 기록 남기기' },
-  'home.signin': { en: 'Sign in to see your journal', ko: '로그인하면 내 기록을 볼 수 있습니다.' },
-  'home.signin.cta': { en: 'Sign in', ko: '로그인하기' },
+  'home.from': { en: 'from', ko: '' },
 
   // ── BookDetail ──
   'book.start': { en: 'Start Reading', ko: '읽기 시작' },
@@ -80,6 +79,8 @@ const translations = {
   'book.author_note': { en: "Author's Note", ko: '저자 한마디' },
   'book.historical': { en: 'Historical Context', ko: '배경 정보' },
   'book.about': { en: 'About the Author', ko: '저자 소개' },
+  'book.reflections': { en: 'Reader Notes', ko: '독자 감상' },
+  'book.no_reflections': { en: 'No notes for this book yet', ko: '아직 이 책에 남긴 감상이 없습니다.' },
   'book.collection': { en: 'More Like This', ko: '비슷한 책' },
   'book.back': { en: 'Explore', ko: '둘러보기로' },
 

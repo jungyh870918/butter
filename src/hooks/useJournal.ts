@@ -38,6 +38,7 @@ export function useJournal(bookId?: string) {
     bookTitle?: string | null;
     bookAuthor?: string | null;
     bookCover?: string | null;
+    isPublic?: boolean;
   }): Promise<{ id: string }> => {
     const entry = await createJournalEntry({
       content: payload.content,
@@ -50,8 +51,7 @@ export function useJournal(bookId?: string) {
       bookAuthor: payload.bookAuthor ?? null,
       bookCover: payload.bookCover ?? null,
       highlight: payload.highlight ?? null,
-      // 커뮤니티 기능 제거 — 모든 기록은 비공개. (백엔드 스키마 기본값이 true 라 명시 필수)
-      isPublic: false,
+      isPublic: payload.isPublic ?? true,
     });
 
     // 로컬 상태에 즉시 추가
@@ -68,9 +68,10 @@ export function useJournal(bookId?: string) {
       emotions?: string[];
       intensity: number;
       highlight?: string | null;
+      isPublic?: boolean;
     },
   ) => {
-    await updateJournalEntry(id, { ...payload, isPublic: false });
+    await updateJournalEntry(id, payload);
     setEntries((prev) =>
       prev.map((e) => (e.id === id ? { ...e, ...payload } : e)),
     );
