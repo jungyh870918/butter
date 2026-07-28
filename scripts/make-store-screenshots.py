@@ -8,7 +8,7 @@
 
 입력 : scripts/screenshot-src/*.png  (기기 원본 캡처)
 출력 : store-assets/screenshots/android/*.png  (1080×1920)
-       store-assets/screenshots/ios-6.7/*.png  (1290×2796)
+       store-assets/screenshots/ios-6.9/*.png  (1320×2868)
 
 재생성: python3 scripts/make-store-screenshots.py
 """
@@ -19,7 +19,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "scripts", "screenshot-src")
 OUT_A = os.path.join(ROOT, "store-assets", "screenshots", "android")
-OUT_I = os.path.join(ROOT, "store-assets", "screenshots", "ios-6.7")
+OUT_I = os.path.join(ROOT, "store-assets", "screenshots", "ios-6.9")
 
 # ── 브랜드 컬러 ───────────────────────────────────────────────────────────
 CREAM = (250, 248, 244)
@@ -117,7 +117,9 @@ def compose(shot_path, title, subtitle, canvas_size):
     avail_h = H - top - int(90 * scale)
     dev_h = avail_h
     dev_w = int(shot.width * (dev_h / shot.height))
-    max_w = int(W * 0.62)
+    # 폰 가로폭은 캔버스의 72% — 이보다 좁으면 앱 화면 글씨가 안 읽힌다.
+    # (실제 통과한 Voyage 스크린샷과 동일 비율)
+    max_w = int(W * 0.72)
     if dev_w > max_w:
         dev_w = max_w
         dev_h = int(shot.height * (dev_w / shot.width))
@@ -147,8 +149,10 @@ def main():
         pa = os.path.join(OUT_A, f"{i:02d}.png")
         a.save(pa, "PNG")
 
-        # iOS 6.7" — 1290×2796
-        b = compose(src, title, sub, (1290, 2796))
+        # iOS 6.9" — 1320×2868 (iPhone 16 Pro Max)
+        # ⚠️ App Store Connect 는 6.9" 를 요구하고 나머지 크기는 이걸로 자동 축소한다.
+        #    6.7"(1290×2796) 로 만들면 6.9" 칸을 채우지 못한다.
+        b = compose(src, title, sub, (1320, 2868))
         pb = os.path.join(OUT_I, f"{i:02d}.png")
         b.save(pb, "PNG")
 

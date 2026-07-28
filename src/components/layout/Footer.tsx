@@ -10,6 +10,7 @@ export const Footer = () => {
   const FOOTER_LINKS = [
     { label: t('footer.privacy'), to: '/privacy' },
     { label: t('footer.deletion'), to: '/account-deletion' },
+    { label: t('footer.support'), to: '/support' },
   ];
 
   return (

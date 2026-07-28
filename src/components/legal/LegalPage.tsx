@@ -129,6 +129,12 @@ export const LegalPage = ({ titleKo, titleEn, children }: LegalPageProps) => (
         >
           계정 삭제
         </Link>
+        <Link
+          to="/support"
+          style={{ fontSize: '11px', color: 'var(--color-butter-primary)', letterSpacing: '0.04em' }}
+        >
+          고객 지원
+        </Link>
       </div>
     </div>
   </div>

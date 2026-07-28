@@ -21,6 +21,7 @@ const translations = {
   'footer.privacy': { en: 'Privacy', ko: '개인정보' },
   'footer.contact': { en: 'Contact', ko: '문의' },
   'footer.deletion': { en: 'Delete Account', ko: '계정 삭제' },
+  'footer.support': { en: 'Support', ko: '고객 지원' },
   'footer.tagline': { en: 'For readers who like to think while they read.', ko: '읽으면서 생각하는 사람들을 위해.' },
   'footer.quiet': { en: 'A quiet place on the internet.', ko: '인터넷 속 조용한 공간.' },
 

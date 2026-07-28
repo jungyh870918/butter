@@ -134,21 +134,91 @@ Butter는 읽은 책에 대해 '무엇을 써야 할지' 대신 물어봐 주는
 읽은 문장과 그날의 감정을 함께 남겨보세요. 피드도 팔로우도 없는, 나만 보는 기록장입니다.
 ```
 
-## 지원 URL
+## 지원 URL (필수 — 심사자가 실제로 열어본다)
 ```
-https://butter-black.vercel.app
+https://butter-black.vercel.app/support
+```
+> ⚠️ 앱 홈이 아니라 **전용 지원 페이지**를 넣을 것. 문의 수단·응답 시간·FAQ 가 있어야 한다.
+
+## 개인정보처리방침 URL
+```
+https://butter-black.vercel.app/privacy
 ```
 
-## 심사 메모 (App Review Notes)
+## 로그인 정보 (Sign-in required → Yes)
 ```
-· 로그인 계정: 아이디를 처음 입력하면 자동으로 가입됩니다.
-  테스트 계정 — ID: reviewer / PW: ButterReview2026
-  (운영 서버에 실제로 생성해 두었고, 샘플 기록 3건이 들어있습니다)
-· 커뮤니티/공유 기능은 없습니다. 모든 기록은 작성자 본인만 볼 수 있습니다.
-· 계정 삭제: 앱 내 설정 → 계정 삭제, 또는
-  https://butter-black.vercel.app/account-deletion
-· 작성한 기록 요약·회고 질문 생성을 위해 OpenAI API 를 사용합니다.
+ID: reviewer
+PW: ButterReview2026
 ```
+> 운영 서버에 실제로 생성해 두었고 샘플 기록 3건·책장 3권이 들어있다.
+
+## 심사 메모 (App Review Notes) — ⚠️ **영문으로 붙여넣을 것**
+> 애플 심사자는 영어로 읽는다. 한글로 넣으면 확인이 늦어지거나 문의가 온다.
+
+```
+Thank you for reviewing Butter.
+
+■ What the app is
+Butter is a private reading journal. Users write about books they read —
+following six guided prompts — and log the passage that stayed with them
+along with how it made them feel.
+
+■ Test account
+    ID: reviewer
+    PW: ButterReview2026
+This account already contains three sample entries and three saved books,
+so the main screens are populated on first launch.
+
+■ Sign-up works without email
+There is no separate sign-up step and we do not collect email addresses.
+Entering any username and password on the login screen creates that account.
+
+■ No social features
+Butter has no feed, followers, likes, comments, or sharing. Nothing a user
+writes is visible to anyone else. All entries are private to their author.
+
+■ Account deletion
+In the app: Settings (gear icon in the header) → Delete account → confirm
+with the password. Deletion is immediate and permanent.
+Also documented at https://butter-black.vercel.app/account-deletion
+
+■ Third-party processing
+To generate reflection prompts and a reading profile, journal text is sent
+to the OpenAI API. This is disclosed in the privacy policy. Book search uses
+the Google Books and Kakao APIs. The app contains no ads and no analytics or
+tracking SDKs, and requests no camera, microphone, or location permissions.
+
+■ Contact
+jungyh870918@gmail.com
+
+Thank you.
+```
+
+## App Privacy 신고 (App Store Connect → App Privacy)
+> ⚠️ Play 의 "데이터 보안"과 **항목 이름·구조가 다르다.** 아래대로 답하면 개인정보처리방침과 일치한다.
+
+**1단계 — "Do you collect data from this app?"** → **Yes**
+
+**2단계 — 수집 데이터 유형** (아래만 체크, 나머지 전부 해제)
+
+| 카테고리 | 항목 | 이유 |
+|---|---|---|
+| Identifiers | **User ID** | 계정 식별용 아이디 |
+| User Content | **Other User Content** | 저널 본문·구절·감정 기록·책장 |
+
+**체크하지 않는 것**: Contact Info(이메일 수집 안 함) · Location · Financial Info ·
+Health & Fitness · Contacts · Browsing History · Search History · Purchases ·
+Advertising Data · Sensitive Info · Diagnostics · Usage Data
+
+**3단계 — 항목별 질문 (두 항목 모두 동일)**
+
+| 질문 | 답 |
+|---|---|
+| Used for | **App Functionality** 만 |
+| Linked to the user? | **Yes** (계정에 연결됨) |
+| Used for tracking? | **No** (광고 추적 없음) |
+
+> "Used for tracking" 에 Yes 를 하면 ATT 권한 요청이 필수가 된다. Butter 는 추적하지 않으므로 반드시 No.
 
 ---
 
@@ -217,8 +287,12 @@ reading journal,book log,reading diary,book notes,reading tracker,mood journal,b
 | Play 그래픽 이미지 | 1024×500 | `store-assets/play-feature-graphic-1024x500.png` |
 | Play 스크린샷 | **1080×1920 (9:16)** ×5 | `store-assets/screenshots/android/01~05.png` |
 | App Store 아이콘 | 1024×1024 | `store-assets/appstore-icon-1024.png` |
-| iOS 스크린샷 6.7" | **1290×2796** ×5 | `store-assets/screenshots/ios-6.7/01~05.png` |
+| iOS 스크린샷 6.9" | **1320×2868** ×5 | `store-assets/screenshots/ios-6.9/01~05.png` |
 
 ⚠️ Play Console 은 **앱 아이콘 / 그래픽 이미지(가로 배너) / 휴대전화 스크린샷(세로)** 칸이
 각각 다르다. 스크린샷을 그래픽 이미지 칸에 넣으면 계속 "자르기"를 요구한다.
 업로드 후 뜨는 **"용도" 드롭다운에서 "9:16 세로 모드"** 를 정확히 고를 것.
+
+⚠️ iOS 는 **6.9"(1320×2868) 한 세트만** 올리면 나머지 기기 크기는 App Store 가 자동으로
+축소해 쓴다. 6.7"(1290×2796) 로 만들면 6.9" 칸을 채우지 못한다.
+(실제 통과한 Voyage 제출본이 1320×2868 이었음)

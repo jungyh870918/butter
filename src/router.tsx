@@ -11,6 +11,7 @@ import { Cartography } from './components/pages/Cartography';
 import { Settings } from './components/pages/Settings';
 import { AccountDeletion } from './components/pages/AccountDeletion';
 import { Privacy } from './components/pages/Privacy';
+import { Support } from './components/pages/Support';
 import { NotFound } from './components/pages/NotFound';
 
 // 네이티브(WebView)에서는 hash 라우터를 쓴다.
@@ -23,6 +24,7 @@ export const router = createRouter([
   // 법적 고지 — 스토어 심사자가 로그인 없이 열어봐야 하므로 공개 라우트
   { path: '/privacy', element: <Privacy /> },
   { path: '/account-deletion', element: <AccountDeletion /> },
+  { path: '/support', element: <Support /> },
   {
     path: '/',
     element: <RootLayout />,
