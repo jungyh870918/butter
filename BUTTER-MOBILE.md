@@ -21,41 +21,31 @@
 
 ## ⚠️ 출시 전 반드시 해야 할 일
 
-### 1. 백엔드 CORS 에 앱 origin 추가 — ⚠️ **현재 앱에서 API 가 막혀 있음**
+### 1. 백엔드 CORS — ✅ 해결 완료 (코드에 내장)
 
-API 주소는 [.env.mobile](.env.mobile) 에 반영 완료
-(`https://butter-backend-production.up.railway.app` — Vercel `VITE_API_BASE_URL` 과 동일).
-
-문제는 **CORS**. 앱의 WebView origin 은 웹사이트 주소가 아니다:
+앱의 WebView origin 은 웹사이트 주소가 아니다:
 
 | 플랫폼 | origin |
 |---|---|
 | iOS | `capacitor://localhost` |
-| Android | `https://localhost` |
+| Android | `https://localhost`  (server.androidScheme 기본값이 https) |
 
-butter-backend 의 `src/app.ts` 는 `ALLOWED_ORIGINS` 를 콤마로 잘라 **정확히 일치**하는지만 보고,
-불일치하면 `callback(new Error(...))` → errorHandler → **500** 을 던진다.
+이 값들은 **배포 환경과 무관한 고정값**이라 env 설정 대상이 아니라고 보고,
+`butter-backend/src/app.ts` 의 `NATIVE_APP_ORIGINS` 로 코드에 넣었다.
+→ **Railway 의 `ALLOWED_ORIGINS` 는 건드릴 필요 없다.**
 
-**Railway 의 `ALLOWED_ORIGINS` 를 아래로 교체할 것:**
-```
-https://butter-black.vercel.app,capacitor://localhost,https://localhost
-```
-
-검증:
+검증 (세 줄 모두 헤더가 나와야 정상, 마지막은 차단되어야 정상):
 ```bash
-for o in "https://butter-black.vercel.app" "capacitor://localhost" "https://localhost"; do
-  printf "%-38s " "$o"
+for o in "https://butter-black.vercel.app" "capacitor://localhost" "https://localhost" "https://evil.example.com"; do
+  printf "%-36s " "$o"
   curl -s -D - -o /dev/null -H "Origin: $o" \
     https://butter-backend-production.up.railway.app/api/books \
     | grep -i "access-control-allow-origin" || echo "차단됨"
 done
 ```
-세 줄 모두 `access-control-allow-origin` 이 나와야 정상.
 
 > 인증은 별도 조치 불필요 — 백엔드가 login 응답 **body 에 `token`** 을 담아주고
 > 프론트가 localStorage + `Authorization: Bearer` 로 쓰므로 쿠키 SameSite 와 무관하게 동작한다.
-
-> 앱 origin 을 바꾸는 방법(`server.hostname`)도 있으나, 백엔드 화이트리스트에 추가하는 쪽이 정석.
 
 - API 주소는 반드시 **https**. Android 릴리스는 평문 http 차단(`allowMixedContent: false`), iOS 는 ATS 차단.
 - 웹 빌드(`npm run build`)는 `.env` / `.env.local` 을, 모바일 빌드(`npm run build:mobile`)는 `.env.mobile` 을 읽는다.

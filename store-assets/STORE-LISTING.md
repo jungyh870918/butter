@@ -142,7 +142,8 @@ https://butter-black.vercel.app
 ## 심사 메모 (App Review Notes)
 ```
 · 로그인 계정: 아이디를 처음 입력하면 자동으로 가입됩니다.
-  테스트 계정 — ID: reviewer / PW: (별도 전달)
+  테스트 계정 — ID: reviewer / PW: ButterReview2026
+  (운영 서버에 실제로 생성해 두었고, 샘플 기록 3건이 들어있습니다)
 · 커뮤니티/공유 기능은 없습니다. 모든 기록은 작성자 본인만 볼 수 있습니다.
 · 계정 삭제: 앱 내 설정 → 계정 삭제, 또는
   https://butter-black.vercel.app/account-deletion
